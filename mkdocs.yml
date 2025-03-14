@@ -1,0 +1,83 @@
+site_name: sandbox-cli
+site_description: Documentation of the sandbox-cli project
+
+theme:
+  name: material
+  language: en
+  icon:
+    repo: fontawesome/brands/github
+  favicon: assets/main_logo_no_text.svg
+  logo: assets/main_logo_no_text.svg
+  palette:
+    - scheme: default
+      primary: white
+      toggle:
+        icon: material/toggle-switch
+        name: Dark
+    - scheme: slate
+      primary: black
+      toggle:
+        icon: material/toggle-switch-off
+        name: Light
+  features:
+    - content.code.copy
+    - content.code.annotate
+    - content.tabs.link
+    - navigation.instant
+    - navigation.expand
+    - navigation.sections
+    - navigation.top
+
+# repo information
+repo_url: https://github.com/Security-Experts-Community/sandbox-cli
+repo_name: sandbox-cli
+
+plugins:
+  - search:
+      lang:
+        - en
+  - termynal:
+      title: bash
+      buttons: macos
+      prompt_literal_start:
+        - '$'
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - admonition
+  - attr_list
+  - md_in_html
+  - pymdownx.blocks.caption
+  - pymdownx.details
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+
+nav:
+  - Overview: index.md
+  - Installation: installing.md
+  - Tutorial:
+    - Getting started: tutorial/getting-started.md
+    - Images: tutorial/images.md
+    - Scans:
+      - Advanced scan: tutorial/scans/scan-new.md
+      - Rescan: tutorial/scans/rescan.md
+      - Scan: tutorial/scans/scan.md
+    - Analyzing logs: tutorial/logs.md
+    - View report: tutorial/report.md
+    - Download files: tutorial/download.md
+    - Analyze emails: tutorial/email.md
+
+  - Configuration: configuration.md
+  - Changelog: changelog.md
+
+extra_css:
+  - css/style.css

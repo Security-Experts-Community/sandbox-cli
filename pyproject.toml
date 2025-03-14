@@ -1,0 +1,109 @@
+[project]
+name = "sandbox-cli"
+version = "0.2.26"
+description = "Command line tool for interaction with sandboxes"
+readme = "README.md"
+requires-python = ">=3.11"
+license = "MIT"
+license-files = ["LICENSE", "NOTICE"]
+authors = [{ name = "Alexey Kolesnikov" }]
+dependencies = [
+  "aiofiles>=24.1.0",
+  "asyncssh>=2.19.0",
+  "cryptography>=44.0.0",
+  "cyclopts>=3.9.0",
+  "docker>=7.1.0",
+  "ptsandbox",
+  "pyzipper>=0.3.6",
+  "rich>=13.9.4",
+  "zstandard>=0.23.0",
+]
+
+[dependency-groups]
+dev = [
+  "black>=24.10.0",
+  "isort>=5.13.2",
+  "mypy>=1.14.1",
+  "types-aiofiles>=24.1.0.20241221",
+  "types-docker>=7.1.0.20241229",
+]
+docs = ["mkdocs>=1.6.1", "mkdocs-material>=9.6.7", "termynal>=0.13.0"]
+
+[project.scripts]
+sandbox-cli = "sandbox_cli.__main__:main"
+
+# uv settings
+[tool.uv]
+package = true
+
+# TODO: remove after pypi release
+[tool.uv.sources]
+ptsandbox = { path = "../py-ptsandbox", editable = true }
+
+# build system
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build]
+include = ["sandbox_cli"]
+
+# tools settings
+[tool.pylint]
+max-line-length = 120
+
+[tool.pyright]
+reportUnknownArgumentType = false
+reportArgumentType = false
+
+[tool.black]
+line-length = 120
+target-version = ['py311']
+include = '\.pyi?$'
+exclude = '''
+(
+  /(
+      \.eggs         # exclude a few common directories in the
+    | \.git          # root of the project
+    | \.hg
+    | \.mypy_cache
+    | \.tox
+    | \.venv
+    | _build
+    | buck-out
+    | build
+    | dist
+  )/
+)
+'''
+
+[[tool.mypy.overrides]]
+strict = true
+module = ["ptsandbox.*", "docker.*", "pyzipper.*"]
+ignore_missing_imports = true
+
+[tool.ruff]
+lint.select = [
+  "E",  # pycodestyle errors
+  "W",  # pycodestyle warnings
+  "F",  # pyflakes
+  "I",  # isort
+  "B",  # flake8-bugbear
+  "C4", # flake8-comprehensions
+  "UP", # pyupgrade
+]
+lint.ignore = [
+  "E501", # line too long, handled by black
+  "B008", # do not perform function calls in argument defaults
+  "W191", # indentation contains tabs
+]
+line-length = 120
+target-version = "py311"
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "auto"
+
+[tool.ruff.lint.per-file-ignores]
+"sandbox_cli/cli/*.py" = ["UP007"]

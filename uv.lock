@@ -918,7 +918,7 @@ wheels = [
 [[package]]
 name = "ptsandbox"
 version = "5.0.0"
-source = { editable = "../py-ptsandbox" }
+source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "aiohttp" },
     { name = "aiohttp-socks" },
@@ -926,25 +926,9 @@ dependencies = [
     { name = "orjson" },
     { name = "pydantic" },
 ]
-
-[package.metadata]
-requires-dist = [
-    { name = "aiohttp", specifier = ">=3.11.11" },
-    { name = "aiohttp-socks", specifier = ">=0.10.1" },
-    { name = "loguru", specifier = ">=0.7.3" },
-    { name = "orjson", specifier = ">=3.10.15" },
-    { name = "pydantic", specifier = ">=2.10.5" },
-]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "mypy", specifier = ">=1.14.1" },
-    { name = "pytest", specifier = ">=8.3.4" },
-    { name = "pytest-asyncio", specifier = ">=0.25.2" },
-]
-docs = [
-    { name = "mkdocs", specifier = ">=1.6.1" },
-    { name = "mkdocs-material", specifier = ">=9.6.7" },
+sdist = { url = "https://files.pythonhosted.org/packages/9b/56/770e00bb3cb27e646861c2dd285871e95d545e77592cf6f6954d8f1f9280/ptsandbox-5.0.0.tar.gz", hash = "sha256:7cfd5a025b6e36b141035becd1b1e8d10d8c080053240a8a13407fafb21e9c47", size = 42341 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/94/9c/957c1acb0e89a9d9eef85f24b41859905b46337c36c973719c1bf6db4836/ptsandbox-5.0.0-py3-none-any.whl", hash = "sha256:5db555c994571c69379f74d287266a1074482c4ba772a4c6ad081ff4b6ed826c", size = 53786 },
 ]
 
 [[package]]
@@ -1237,7 +1221,7 @@ requires-dist = [
     { name = "cryptography", specifier = ">=44.0.0" },
     { name = "cyclopts", specifier = ">=3.9.0" },
     { name = "docker", specifier = ">=7.1.0" },
-    { name = "ptsandbox", editable = "../py-ptsandbox" },
+    { name = "ptsandbox", specifier = ">=5.0.0" },
     { name = "pyzipper", specifier = ">=0.3.6" },
     { name = "rich", specifier = ">=13.9.4" },
     { name = "zstandard", specifier = ">=0.23.0" },

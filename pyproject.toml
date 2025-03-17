@@ -19,6 +19,12 @@ dependencies = [
   "zstandard>=0.23.0",
 ]
 
+[project.urls]
+Homepage = "https://github.com/Security-Experts-Community/sandbox-cli"
+Documentation = "https://security-experts-community.github.io/sandbox-cli"
+Repository = "https://github.com/Security-Experts-Community/sandbox-cli"
+Issues = "https://github.com/Security-Experts-Community/sandbox-cli/issues"
+
 [dependency-groups]
 dev = [
   "black>=24.10.0",
@@ -35,10 +41,6 @@ sandbox-cli = "sandbox_cli.__main__:main"
 # uv settings
 [tool.uv]
 package = true
-
-# TODO: remove after pypi release
-[tool.uv.sources]
-ptsandbox = { path = "../py-ptsandbox", editable = true }
 
 # build system
 [build-system]

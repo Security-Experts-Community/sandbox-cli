@@ -1,4 +1,4 @@
-![Image](./docs/assets/logo_with_text.svg)
+![Image](https://raw.githubusercontent.com/Security-Experts-Community/sandbox-cli/refs/heads/main/docs/assets/logo_with_text.svg)
 
 <p align="center">
     <em>Work with PT Sandbox like a pro</em>
@@ -65,7 +65,7 @@ Windows:
 - `rules` - Working with raw sandbox rules.
 
 <p align="middle">
-    <img width="50%" src="./docs/assets/pic_right.svg">
+    <img width="50%" src="https://raw.githubusercontent.com/Security-Experts-Community/sandbox-cli/refs/heads/main/docs/assets/pic_right.svg">
 </p>
 
 ## Usage examples
@@ -103,7 +103,7 @@ sandbox-cli scanner scan-new -i windows -t 60 -U malware.exe
 ```
 
 <p align="middle">
-    <img width="50%" src="./docs/assets/pic_left.svg">
+    <img width="50%" src="https://raw.githubusercontent.com/Security-Experts-Community/sandbox-cli/refs/heads/main/docs/assets/pic_left.svg">
 </p>
 
 ## Development

@@ -25,6 +25,7 @@ semaphore = asyncio.Semaphore(value=12)
 async def _save_artifact(
     scan_id: UUID,
     sandbox: Sandbox,
+    out_dir: Path,
     path: Path,
     file_uri: str,
     decompress: bool = False,
@@ -38,7 +39,7 @@ async def _save_artifact(
         return
 
     # sanitize path
-    path = Path(str(path).replace(" ", "_"))
+    path = out_dir / Path(str(path).replace(" ", "_"))
     task_id: TaskID = None  # type: ignore
 
     async with semaphore:
@@ -100,11 +101,12 @@ async def download(
 ) -> None:
     tasks: list[Coroutine[Any, Any, None]] = []
 
-    def add_task(path: Path, file_uri: str, decompress: bool = False) -> None:
+    def add_task(out_dir: Path, path: Path, file_uri: str, decompress: bool = False) -> None:
         tasks.append(
             _save_artifact(
                 scan_id=report.scan_id,
                 sandbox=sandbox,
+                out_dir=out_dir,
                 path=path,
                 file_uri=file_uri,
                 progress=progress,
@@ -134,16 +136,16 @@ async def download(
                 LogType.EVENT_RAW,
                 LogType.NETWORK,
             }:
-                add_task(out_dir / log.file_name, log.file_uri)
+                add_task(out_dir, log.file_name, log.file_uri)
 
             if (all or video) and log.type == LogType.SCREENSHOT:
-                add_task(out_dir / log.file_name, log.file_uri)
+                add_task(out_dir, log.file_name, log.file_uri)
 
             if (all or crashdumps) and log.file_name in {"crashdump.bin", "crashdump.metadata"}:
-                add_task(out_dir / "crashdumps" / log.file_name, log.file_uri)
+                add_task(out_dir / "crashdumps", log.file_name, log.file_uri)
 
             if (all or debug) and log.type in {LogType.DEBUG, LogType.GRAPH}:
-                add_task(out_dir / "debug" / log.file_name, log.file_uri)
+                add_task(out_dir / "debug", log.file_name, log.file_uri)
 
         if artifacts or files or procdumps or all:
             if not sandbox_result.details:
@@ -161,14 +163,14 @@ async def download(
 
                 if artifact.type == ArtifactType.FILE and (files or artifacts or all):
                     add_task(
-                        out_dir / "artifacts" / artifact.file_info.file_path.removeprefix("/"),
+                        out_dir / "artifacts",
+                        artifact.file_info.file_path.removeprefix("/"),
                         artifact.file_info.file_uri,
                     )
                 if artifact.type == ArtifactType.PROCESS_DUMP and (procdumps or artifacts or all):
                     add_task(
-                        out_dir
-                        / "process_dump"
-                        / artifact.file_info.details.process_dump.process_name.removeprefix("/"),  # type: ignore
+                        out_dir / "process_dump",
+                        artifact.file_info.details.process_dump.process_name.removeprefix("/"),  # type: ignore
                         artifact.file_info.file_uri,
                         decompress=decompress,
                     )

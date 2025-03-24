@@ -202,7 +202,7 @@ async def rescan_internal(
                 drakvuf_trace = trace / "drakvuf-trace.log.zst"
                 if not drakvuf_trace.exists():
                     console.error(
-                        f"drakvuf-trace.log.gz or drakvuf-trace.log.zst doesn't exists in {trace.expanduser().resolve()}"
+                        f"drakvuf-trace.log.gz or drakvuf-trace.log.zst doesn't exist in {trace.expanduser().resolve()}"
                     )
                     sys.exit(1)
 

@@ -7,7 +7,7 @@ from cyclopts import App, Parameter, Token, validators
 from ptsandbox.models import VNCMode
 
 from sandbox_cli.console import console
-from sandbox_cli.internal.config import VMImage, settings
+from sandbox_cli.internal.config import Platform, VMImage, settings
 from sandbox_cli.internal.helpers import validate_key
 from sandbox_cli.utils.scanner import scan_internal
 from sandbox_cli.utils.scanner.advanced import scan_internal_advanced
@@ -34,6 +34,20 @@ def image_converter(_: Any, tokens: Sequence[Token]) -> set[VMImage | str]:
     return images
 
 
+def rules_path_resolver(_: Any, tokens: Sequence[Token]) -> Path | None:
+    path: Path | None = None
+    for token in tokens:
+        if token.value in {Platform.LINUX, Platform.WINDOWS}:
+            if not settings.rules_path:
+                console.error("You can't use aliases without specifying the path in the config")
+                sys.exit(1)
+
+            path = settings.rules_path / token.value
+            break
+
+    return path
+
+
 @scanner.command(name="re-scan")
 async def re_scan(
     traces: Annotated[
@@ -48,7 +62,8 @@ async def re_scan(
         Path | None,
         Parameter(
             name=["--rules", "-r"],
-            help="The path to the folder with the rules or the default rules from the sandbox",
+            help="The path to the folder with the rules or the default rules from the sandbox or platform alias (windows, linux)",
+            converter=rules_path_resolver,
         ),
     ] = None,
     out_dir: Annotated[
@@ -136,7 +151,8 @@ async def scan(
         Path | None,
         Parameter(
             name=["--rules", "-r"],
-            help="The path to the folder with the rules or the default rules from the sandbox",
+            help="The path to the folder with the rules or the default rules from the sandbox or platform alias (windows, linux)",
+            converter=rules_path_resolver,
         ),
     ] = None,
     out_dir: Annotated[
@@ -372,7 +388,8 @@ async def scan_new(
         Path | None,
         Parameter(
             name=["--rules", "-r"],
-            help="The path to the folder with the rules or the default rules from the sandbox",
+            help="The path to the folder with the rules or the default rules from the sandbox or platform alias (windows, linux)",
+            converter=rules_path_resolver,
         ),
     ] = None,
     out_dir: Annotated[

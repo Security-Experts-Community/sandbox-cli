@@ -44,6 +44,11 @@ class VMImage(str, Enum):
         return str(self.value)
 
 
+class Platform(str, Enum):
+    LINUX = "linux"
+    WINDOWS = "windows"
+
+
 class Settings(BaseModel):
     class Docker(BaseModel):
         username: str = ""
@@ -113,9 +118,11 @@ class Settings(BaseModel):
     passwords: list[str] = ["infected", "311138", "password", "12345678", "P@ssw0rd!"]
     docker: Docker = Docker()
     sandbox: list[Sandbox] = []
+    rules_path: Path | None = Field(default=None, alias="rules-path")
 
     def model_post_init(self, __context: Any) -> None:
         self.sandbox_keys = [x.sandbox_key for x in self.sandbox]
+        self.rules_path = Path(self.rules_path) if self.rules_path else None
 
 
 def load_config(path: Path) -> Settings:

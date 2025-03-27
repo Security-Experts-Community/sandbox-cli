@@ -31,9 +31,8 @@ pip install sandbox-cli
 
 NixOS:
 
-```
-Add inputs.sandbox-cli.overlays.default to your nixpkgs overlay
-TBA: ...
+```sh
+nix shell 'github:Security-Experts-Community/sandbox-cli'
 ```
 
 ### Config

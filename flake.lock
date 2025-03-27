@@ -47,11 +47,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1742221016,
-        "narHash": "sha256-RlfNSc6w6mzXFMvzOgpyesBigww0hVjfiMuDKROEW/c=",
+        "lastModified": 1743064982,
+        "narHash": "sha256-GS1yhdwDxMK6+/ucjN5wsrSVsWkd3/pW/Fipvtcw4uQ=",
         "owner": "Security-Experts-Community",
         "repo": "py-ptsandbox",
-        "rev": "becc5fe7df813533b479013a051c59af974fd046",
+        "rev": "76514188ce0d6c23c6c54bcc525a46cb16ef1ff8",
         "type": "github"
       },
       "original": {

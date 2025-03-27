@@ -7,27 +7,27 @@ flake: {
   cfg = config.programs.sandbox-cli;
 
   # copypasted from library function, except one part
-  filterAttrsRecursive = pred: set:
+  filterAttrsRecursive = pred: set: let
+    filterInner = v: (
+      if lib.isAttrs v
+      then filterAttrsRecursive pred v
+      else
+        # in library version here just `v` returns
+        # but here we need to recursively crawl through lists
+        (
+          if lib.isList v
+          then (lib.map filterInner v)
+          else v
+        )
+    );
+  in
     lib.listToAttrs (
       lib.concatMap (
         name: let
           v = set.${name};
         in
           if pred name v
-          then [
-            (lib.nameValuePair name (
-              if lib.isAttrs v
-              then filterAttrsRecursive pred v
-              else
-                # in library version here just `v` returns
-                # but here we need to recursively crawl through lists
-                (
-                  if lib.isList v
-                  then (lib.map (filterAttrsRecursive pred) v)
-                  else v
-                )
-            ))
-          ]
+          then [(lib.nameValuePair name (filterInner v))]
           else []
       ) (lib.attrNames set)
     );
@@ -61,7 +61,7 @@ in {
           };
 
           rules-path = mkOption {
-            type = types.str;
+            type = types.nullOr (types.str);
             default = null;
           };
 

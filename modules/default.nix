@@ -1,41 +1,40 @@
-flake:
-{
+flake: {
   config,
   lib,
   pkgs,
   ...
-}:
-let
+}: let
   cfg = config.programs.sandbox-cli;
 
   # copypasted from library function, except one part
-  filterAttrsRecursive =
-    pred: set:
+  filterAttrsRecursive = pred: set:
     lib.listToAttrs (
       lib.concatMap (
-        name:
-        let
+        name: let
           v = set.${name};
         in
-        if pred name v then
-          [
+          if pred name v
+          then [
             (lib.nameValuePair name (
-              if lib.isAttrs v then
-                filterAttrsRecursive pred v
+              if lib.isAttrs v
+              then filterAttrsRecursive pred v
               else
                 # in library version here just `v` returns
                 # but here we need to recursively crawl through lists
-                (if lib.isList v then (lib.map (filterAttrsRecursive pred) v) else v)
+                (
+                  if lib.isList v
+                  then (lib.map (filterAttrsRecursive pred) v)
+                  else v
+                )
             ))
           ]
-        else
-          [ ]
+          else []
       ) (lib.attrNames set)
     );
 
   recursiveRemoveNull = attrs: filterAttrsRecursive (n: v: v != null) attrs;
 
-  tomlFormat = pkgs.formats.toml { };
+  tomlFormat = pkgs.formats.toml {};
 
   # need to remove nulls from settings before passing to toml generator, because toml generator
   # screams about nulls and don't want to work properly.
@@ -43,8 +42,7 @@ let
 
   nullOrSubmodule = submod: lib.types.nullOr (lib.types.submodule submod);
   listOfSubmodule = submod: lib.types.listOf (lib.types.submodule submod);
-in
-{
+in {
   options.programs.sandbox-cli = with lib; {
     enable = mkEnableOption "sandbox-cli";
 
@@ -59,6 +57,11 @@ in
         options = {
           passwords = mkOption {
             type = types.nullOr (types.listOf types.str);
+            default = null;
+          };
+
+          rules-path = mkOption {
+            type = types.str;
             default = null;
           };
 
@@ -133,12 +136,12 @@ in
               };
             };
 
-            default = [ ];
+            default = [];
           };
         };
       };
 
-      default = { };
+      default = {};
 
       example = lib.literalExpression ''
         {
@@ -186,9 +189,9 @@ in
   };
 
   config = lib.mkIf cfg.enable {
-    home.packages = [ cfg.package ];
+    home.packages = [cfg.package];
 
-    xdg.configFile."sandbox-cli/config.toml" = lib.mkIf (cfg.settings != { }) {
+    xdg.configFile."sandbox-cli/config.toml" = lib.mkIf (cfg.settings != {}) {
       source = tomledSettings;
     };
   };

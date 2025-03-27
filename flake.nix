@@ -18,53 +18,49 @@
     };
   };
 
-  outputs =
-    {
-      self,
-      nixpkgs,
-      pyproject-nix,
-      flake-utils,
-      ptsandbox,
-      ...
-    }:
-    let
-      outputs = flake-utils.lib.eachDefaultSystem (
-        system:
-        let
-          pkgs = nixpkgs.legacyPackages.${system};
+  outputs = {
+    self,
+    nixpkgs,
+    pyproject-nix,
+    flake-utils,
+    ptsandbox,
+    ...
+  }: let
+    outputs = flake-utils.lib.eachDefaultSystem (
+      system: let
+        pkgs = nixpkgs.legacyPackages.${system};
 
-          python = pkgs.python3.override {
-            packageOverrides = self: super: {
-              ptsandbox = ptsandbox.packages.${system}.py-ptsandbox;
-            };
+        python = pkgs.python3.override {
+          packageOverrides = self: super: {
+            ptsandbox = ptsandbox.packages.${system}.py-ptsandbox;
           };
+        };
 
-          project = pyproject-nix.lib.project.loadUVPyproject {
-            projectRoot = ./.;
-          };
+        project = pyproject-nix.lib.project.loadUVPyproject {
+          projectRoot = ./.;
+        };
 
-          projectAttrsForApp = project.renderers.buildPythonPackage { inherit python; };
-          projectAttrsForEnv = project.renderers.withPackages { inherit python; };
-          projectEnv = python.withPackages projectAttrsForEnv;
-        in
-        {
-          packages = {
-            sandbox-cli = python.pkgs.buildPythonApplication (projectAttrsForApp // { });
-            default = self.packages.${system}.sandbox-cli;
-          };
+        projectAttrsForApp = project.renderers.buildPythonPackage {inherit python;};
+        projectAttrsForEnv = project.renderers.withPackages {inherit python;};
+        projectEnv = python.withPackages projectAttrsForEnv;
+      in {
+        packages = {
+          sandbox-cli = python.pkgs.buildPythonApplication (projectAttrsForApp // {});
+          default = self.packages.${system}.sandbox-cli;
+        };
 
-          devShells.default = pkgs.mkShell {
-            packages = [
-              projectEnv
-            ];
+        devShells.default = pkgs.mkShell {
+          packages = [
+            projectEnv
+          ];
 
-            shellHook = ''
-              unlink .nix-venv; ln -s ${projectEnv} ./.nix-venv
-            '';
-          };
-        }
-      );
-    in
+          shellHook = ''
+            unlink .nix-venv; ln -s ${projectEnv} ./.nix-venv
+          '';
+        };
+      }
+    );
+  in
     outputs
     // {
       homeManagerModules = {

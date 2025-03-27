@@ -29,7 +29,7 @@
 === "Nix"
 
     ```sh
-    TBA
+    nix shell 'github:Security-Experts-Community/sandbox-cli'
     ```
 
 We recommend installing the utility using `pipx`. It allows you to install packages in your isolated environments and not break the global venv.

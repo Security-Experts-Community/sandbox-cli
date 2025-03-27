@@ -3,54 +3,77 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-    pyproject-nix.url = "github:nix-community/pyproject.nix";
     flake-utils.url = "github:numtide/flake-utils";
-    ptsandbox.url = "github:Security-Experts-Community/py-ptsandbox";
+
+    pyproject-nix = {
+      url = "github:nix-community/pyproject.nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    ptsandbox = {
+      url = "github:Security-Experts-Community/py-ptsandbox";
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.pyproject-nix.follows = "pyproject-nix";
+      inputs.flake-utils.follows = "flake-utils";
+    };
   };
 
-  outputs = {
-    nixpkgs,
-    pyproject-nix,
-    flake-utils,
-    ptsandbox,
-    ...
-  }: let
-    outputs = flake-utils.lib.eachDefaultSystem (system: let
-      pkgs = nixpkgs.legacyPackages.${system};
+  outputs =
+    {
+      self,
+      nixpkgs,
+      pyproject-nix,
+      flake-utils,
+      ptsandbox,
+      ...
+    }:
+    let
+      outputs = flake-utils.lib.eachDefaultSystem (
+        system:
+        let
+          pkgs = nixpkgs.legacyPackages.${system};
 
-      python = pkgs.python3.override {
-        packageOverrides = self: super: {
-          ptsandbox-pt27b15e = ptsandbox.packages.${system}.py-ptsandbox;
-        };
-      };
+          python = pkgs.python3.override {
+            packageOverrides = self: super: {
+              ptsandbox = ptsandbox.packages.${system}.py-ptsandbox;
+            };
+          };
 
-      project = pyproject-nix.lib.project.loadUVPyproject {
-        projectRoot = ./.;
-      };
-    in rec {
-      packages = {
-        sandbox-cli = let
-          attrs = project.renderers.buildPythonPackage {inherit python;};
+          project = pyproject-nix.lib.project.loadUVPyproject {
+            projectRoot = ./.;
+          };
+
+          projectAttrsForApp = project.renderers.buildPythonPackage { inherit python; };
+          projectAttrsForEnv = project.renderers.withPackages { inherit python; };
+          projectEnv = python.withPackages projectAttrsForEnv;
         in
-          python.pkgs.buildPythonApplication attrs
-          // {};
-      };
+        {
+          packages = {
+            sandbox-cli = python.pkgs.buildPythonApplication (projectAttrsForApp // { });
+            default = self.packages.${system}.sandbox-cli;
+          };
 
-      defaultPackage = packages.sandbox-cli;
+          devShells.default = pkgs.mkShell {
+            packages = [
+              projectEnv
+            ];
 
-      homeManagerModules.sandbox-cli = {
-        imports = [./modules];
-      };
-    });
-  in
+            shellHook = ''
+              unlink .nix-venv; ln -s ${projectEnv} ./.nix-venv
+            '';
+          };
+        }
+      );
+    in
     outputs
     // {
-      homeManagerModules.default = {
-        imports = [./modules];
+      homeManagerModules = {
+        sandbox-cli = import ./modules self;
+        default = self.homeManagerModules.sandbox-cli;
       };
 
       overlays.default = final: prev: {
-        sandbox-cli = outputs.packages.${prev.system}.sandbox-cli;
+        sandbox-cli = self.packages.${prev.system}.sandbox-cli;
       };
     };
 }

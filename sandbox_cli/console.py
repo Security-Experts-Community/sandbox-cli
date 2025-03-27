@@ -21,4 +21,3 @@ class SandboxConsole(Console):
 
 
 console = SandboxConsole(color_system="auto", emoji=True)
-console = SandboxConsole(color_system="auto", emoji=True)

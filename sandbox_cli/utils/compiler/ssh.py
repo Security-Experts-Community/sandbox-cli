@@ -153,7 +153,7 @@ class RemoteCompiler(AbstractCompiler):
 
         rules_dir = rules_dir.expanduser().resolve()
         if not rules_dir.is_dir():
-            console.error("Invalid rules directory: {rules_dir}")
+            console.error(f"Invalid rules directory: {rules_dir}")
             sys.exit(1)
 
         # always take new version of taxonomy

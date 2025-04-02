@@ -44,6 +44,9 @@ def rules_path_resolver(_: Any, tokens: Sequence[Token]) -> Path | None:
 
             path = settings.rules_path / token.value
             break
+        else:
+            # if not found any platform, use specifed value as path
+            path = Path(token.value)
 
     return path
 

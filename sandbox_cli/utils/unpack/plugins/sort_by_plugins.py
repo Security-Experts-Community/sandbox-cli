@@ -15,7 +15,7 @@ class SortByPlugins(BasePlugin):
             console.warning(f"{file} not exist")
             return
 
-        with open(file, errors="ignore") as fd:
+        with open(file, errors="ignore", encoding="utf-8") as fd:
             raw_trace = fd.readlines()
 
         plugins: defaultdict[str, list[str]] = defaultdict(list)

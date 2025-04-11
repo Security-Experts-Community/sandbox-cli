@@ -40,6 +40,14 @@ async def _save_artifact(
 
     # sanitize path
     path = out_dir / Path(str(path).replace(" ", "_"))
+    n = 1
+    while path.exists():
+        if not path.with_name(path.name + f"_{n}").exists():
+            path = path.with_name(path.name + f"_{n}")
+            break
+        n += 1
+    path.parent.mkdir(exist_ok=True, parents=True)
+    path.touch()
     task_id: TaskID = None  # type: ignore
 
     async with semaphore:
@@ -53,8 +61,6 @@ async def _save_artifact(
                 )
             else:
                 task_id = progress.add_task(rf"\[[green1]{scan_id}[/]] {escape(path.name)}")
-
-        path.parent.mkdir(exist_ok=True, parents=True)
         try:
             downloaded_data = await sandbox.get_file(uri)
         except SandboxFileNotFoundException:

@@ -110,6 +110,14 @@ async def re_scan(
             group="Download options",
         ),
     ] = False,
+    open_browser: Annotated[
+        bool,
+        Parameter(
+            name=["--open-browser", "-ob"],
+            help="Open analysis link in the default browser",
+            negative="",
+        ),
+    ] = False,
 ) -> None:
     """
     Send traces to re-scan.
@@ -137,6 +145,7 @@ async def re_scan(
         is_local=is_local,
         unpack=unpack,
         debug=debug,
+        open_browser=open_browser,
     )
 
 
@@ -312,6 +321,14 @@ async def scan(
             negative="",
         ),
     ] = False,
+    open_browser: Annotated[
+        bool,
+        Parameter(
+            name=["--open-browser", "-ob"],
+            help="Open analysis link in the default browser",
+            negative="",
+        ),
+    ] = False,
 ) -> None:
     """
     Send files to scan with the sandbox.
@@ -374,6 +391,7 @@ async def scan(
         crashdumps=crashdumps,
         procdumps=procdumps,
         decompress=decompress,
+        open_browser=open_browser,
     )
 
 
@@ -630,6 +648,14 @@ async def scan_new(
             negative="",
         ),
     ] = False,
+    open_browser: Annotated[
+        bool,
+        Parameter(
+            name=["--open-browser", "-ob"],
+            help="Open analysis link in the default browser",
+            negative="",
+        ),
+    ] = False,
 ) -> None:
     """
     Send files to scan with the sandbox (advanced scan).
@@ -698,4 +724,5 @@ async def scan_new(
         crashdumps=crashdumps,
         procdumps=procdumps,
         decompress=decompress,
+        open_browser=open_browser,
     )

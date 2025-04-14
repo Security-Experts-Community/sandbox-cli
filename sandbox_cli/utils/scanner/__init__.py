@@ -1,3 +1,4 @@
+import webbrowser
 import asyncio
 import sys
 from collections.abc import Coroutine
@@ -56,6 +57,11 @@ def format_link(
         return "Unknown"
 
     return f"https://{key.host}/tasks/{short_report.scan_id}"
+
+
+def open_link(link: str):
+    if not webbrowser.open(link):
+        console.error(f"Can't open link in default browser.")
 
 
 async def _get_compiled_rules(rules_dir: Path | None, is_local: bool) -> bytes | None:
@@ -188,6 +194,7 @@ async def scan_internal(
     crashdumps: bool,
     procdumps: bool,
     decompress: bool,
+    open_browser: bool,
 ) -> None:
     key = get_key_by_name(key_name)
     sandbox_sem = asyncio.Semaphore(value=key.max_workers)
@@ -222,6 +229,10 @@ async def scan_internal(
             console.info(
                 rf"{idx} [magenta]\[{sandbox_options.sandbox.image_id}][/magenta] Waiting [yellow]{file_path.name}[/]: {format_link(scan_result, key=key)}"
             )
+
+            if open_browser:
+                open_link(format_link(scan_result, key=key))
+
             awaited_report = await sandbox.wait_for_report(scan_result, wait_time)
             if not awaited_report:
                 console.error(f"{idx} Scan [yellow]{file_path.name}[/] failed: {scan_result=}")

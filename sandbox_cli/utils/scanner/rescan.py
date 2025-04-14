@@ -21,7 +21,7 @@ from sandbox_cli.internal.config import settings
 from sandbox_cli.internal.helpers import get_key_by_name
 from sandbox_cli.utils.compiler import compile_rules_internal
 from sandbox_cli.utils.downloader import download
-from sandbox_cli.utils.scanner import format_link
+from sandbox_cli.utils.scanner import format_link, open_link
 from sandbox_cli.utils.unpack import Unpack
 
 
@@ -92,6 +92,7 @@ async def rescan_internal(
     is_local: bool,
     unpack: bool,
     debug: bool,
+    open_browser: bool,
 ) -> None:
     key = get_key_by_name(key_name)
     sandbox_sem = asyncio.Semaphore(value=key.max_workers)
@@ -147,6 +148,9 @@ async def rescan_internal(
 
             formatted_link = f"[medium_purple]{format_link(rescan_result, key=key)}[/]"
             final_output = f"[yellow]{trace.name}[/] • {formatted_link}"
+
+            if open_browser:
+                open_link(format_link(rescan_result, key=key))
 
             progress.update(
                 task_id=task_id,

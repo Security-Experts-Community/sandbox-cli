@@ -355,7 +355,7 @@ wheels = [
 
 [[package]]
 name = "cyclopts"
-version = "3.11.2"
+version = "3.12.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "attrs" },
@@ -363,9 +363,9 @@ dependencies = [
     { name = "rich" },
     { name = "rich-rst" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/6c/9d/0bd69065ecd56e0d367fd5ba1a43ab63ef3cd18a91128d1de9d016ea50b8/cyclopts-3.11.2.tar.gz", hash = "sha256:9aa85743a70247e0e862bb0e0e92794f53beea0ec632d1a37d561276547f4012", size = 69275 }
+sdist = { url = "https://files.pythonhosted.org/packages/bf/34/cdaab9490024b3b9c753f55ee8a82721236a0ff8eee11a51032788440912/cyclopts-3.12.0.tar.gz", hash = "sha256:21a3e4d8a0f362644669fb3c002b869a8aedb48e0b319f82ef6375157d801609", size = 69793 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/79/39/37f1f613a906ebd2d24fc073d3d0bd025bcc796140cbf247face1e46b663/cyclopts-3.11.2-py3-none-any.whl", hash = "sha256:5ad22d84617944388e6f95bb01e8100ebc7f3355da064c62471a3fbf3fc8688c", size = 78977 },
+    { url = "https://files.pythonhosted.org/packages/7d/4b/b8b8bddefcff9863372a4703c729a407b163760b84746f743d43fa29a8e2/cyclopts-3.12.0-py3-none-any.whl", hash = "sha256:7d46fa5289ba0ded999bd5802ffa5889f7ff665dd68eeb074e5700b1492a316a", size = 79498 },
 ]
 
 [[package]]
@@ -1216,7 +1216,7 @@ wheels = [
 
 [[package]]
 name = "sandbox-cli"
-version = "0.2.29"
+version = "0.2.30"
 source = { editable = "." }
 dependencies = [
     { name = "aiofiles" },
@@ -1247,13 +1247,13 @@ docs = [
 [package.metadata]
 requires-dist = [
     { name = "aiofiles", specifier = ">=24.1.0" },
-    { name = "asyncssh", specifier = ">=2.19.0" },
-    { name = "cryptography", specifier = ">=44.0.0" },
-    { name = "cyclopts", specifier = ">=3.9.0" },
+    { name = "asyncssh", specifier = ">=2.20.0" },
+    { name = "cryptography", specifier = ">=44.0.2" },
+    { name = "cyclopts", specifier = ">=3.12.0" },
     { name = "docker", specifier = ">=7.1.0" },
     { name = "ptsandbox", specifier = ">=5.0.0" },
     { name = "pyzipper", specifier = ">=0.3.6" },
-    { name = "rich", specifier = ">=13.9.4" },
+    { name = "rich", specifier = ">=14.0.0" },
     { name = "zstandard", specifier = ">=0.23.0" },
 ]
 

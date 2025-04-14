@@ -68,7 +68,7 @@ in {
                 };
 
                 args = mkOption {
-                  type = types.str;
+                  type = types.listOf types.str;
                 };
               };
             };

@@ -9,12 +9,15 @@ from ptsandbox.models import SandboxBaseTaskResponse
 from rich.table import Table
 
 from sandbox_cli.console import console
+from sandbox_cli.internal.helpers import get_key_by_name
+from sandbox_cli.models.sandbox_arguments import SandboxArguments
 from sandbox_cli.utils.extractors import (
     extract_memory,
     extract_network_from_trace,
     extract_static,
     extract_verdict_from_trace,
 )
+from sandbox_cli.utils.scanner import format_link, open_link
 
 
 class TableData(TypedDict):
@@ -144,3 +147,34 @@ def generate_report(
             console.print(table)
         case _:
             pass
+
+
+def open_browser(
+    path: Annotated[
+        Path,
+        Parameter(
+            help="Folder with sandbox report (report.json and scan_config.json)",
+        ),
+    ],
+):
+    report_file = path / "report.json"
+    if not report_file.exists():
+        console.error(f"Can't find report.json: {path}")
+        return
+
+    scan_config_file = path / "scan_config.json"
+    if not scan_config_file.exists():
+        console.error(f"Can't find scan_config.json: {path}")
+        return
+
+    with open(report_file, encoding="utf-8") as fd:
+        report_data = fd.read()
+        report = SandboxBaseTaskResponse.model_validate_json(report_data)
+
+    with open(scan_config_file, encoding="utf-8") as fd:
+        scan_config_data = fd.read()
+        scan_config = SandboxArguments.model_validate_json(scan_config_data)
+
+    key = get_key_by_name(scan_config.sandbox_key_name)
+    link = format_link(report, key=key)
+    open_link(link)

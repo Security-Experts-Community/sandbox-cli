@@ -4,7 +4,7 @@ Register all commands here
 
 from cyclopts import App
 
-from sandbox_cli.cli.reporter import generate_report
+from sandbox_cli.cli.reporter import generate_report, open_browser
 from sandbox_cli.cli.unpack import unpack_logs
 from sandbox_cli.console import console
 from sandbox_cli.internal.config import configpath, settings
@@ -32,6 +32,7 @@ app = App(
 
 app.command(name=["conv", "unpack"])(unpack_logs)
 app.command(name="report")(generate_report)
+app.command(name="browser")(open_browser)
 
 if len(settings.sandbox_keys) > 0:
     from sandbox_cli.cli.downloader import download_command, download_email

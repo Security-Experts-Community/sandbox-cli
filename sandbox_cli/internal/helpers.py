@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Any, overload
 
 from ptsandbox import Sandbox, SandboxKey
-from ptsandbox.models import SandboxBaseTaskResponse, SandboxKey
+from ptsandbox.models import SandboxBaseTaskResponse
 
 from sandbox_cli.console import console
 from sandbox_cli.internal.config import settings
@@ -72,11 +72,11 @@ def format_link(
     return f"https://{key.host}/tasks/{short_report.scan_id}"
 
 
-def save_scan_arguments(out_dir: Path, scan_args: SandboxArguments):
+def save_scan_arguments(out_dir: Path, scan_args: SandboxArguments) -> None:
     scan_config_path = out_dir / "scan_config.json"
     scan_config_path.write_text(scan_args.model_dump_json(exclude="debug_options", indent=4), encoding="utf-8")
 
 
-def open_link(link: str):
-    if not webbrowser.open(link):
-        console.error(f"Can't open link in default browser.")
+def open_link(link: str) -> None:
+    if not webbrowser.open_new_tab(link):
+        console.error("Can't open link in default browser.")

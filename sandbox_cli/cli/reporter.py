@@ -74,6 +74,10 @@ def generate_report(
             if not report_file.exists():
                 continue
 
+            scan_config_file = root / "scan_config.json"
+            if not scan_config_file.exists():
+                continue
+
             if latest and (
                 datetime.datetime.now() - datetime.datetime.fromtimestamp(report_file.stat().st_mtime)
             ) > datetime.timedelta(hours=2):
@@ -82,6 +86,10 @@ def generate_report(
             with open(report_file, encoding="utf-8") as fd:
                 report_data = fd.read()
                 scan_data = SandboxBaseTaskResponse.model_validate_json(report_data)
+
+            with open(scan_config_file, encoding="utf-8") as fd:
+                scan_config_data = fd.read()
+                scan_config = SandboxArguments.model_validate_json(scan_config_data)
 
             if (report := scan_data.get_long_report()) is None:
                 console.warning(f"A report without behavioral analysis: {root}")
@@ -103,6 +111,9 @@ def generate_report(
                 if image is None:
                     image = root.name
 
+            key = get_key_by_name(scan_config.sandbox_key_name)
+            link = format_link(scan_data, key=key)
+
             data.append(
                 {
                     "sample": report.artifacts[0].file_info.file_path,  # type: ignore
@@ -111,6 +122,7 @@ def generate_report(
                     "static": delimeter.join(extract_static(report)),
                     "memory": delimeter.join(extract_memory(report)),
                     "network": delimeter.join(extract_network_from_trace(corr_trace)),
+                    "sandbox": link,
                 }
             )
 
@@ -118,8 +130,8 @@ def generate_report(
         case "md":
             md_report_head = textwrap.dedent(
                 """
-            | Sample | Image | Verdict | Static | Memory | Network |
-            | --- | --- | --- | --- | --- | --- |"""
+            | Sample | Image | Verdict | Static | Memory | Network | Sandbox |
+            | --- | --- | --- | --- | --- | --- | --- |"""
             ).strip()
 
             md_report_base = "|{sample}|{image}|{verdict}|{static}|{memory}|{network}|"
@@ -134,6 +146,8 @@ def generate_report(
             table.add_column("Static", overflow="fold", style="bold")
             table.add_column("Memory", overflow="fold")
             table.add_column("Network", overflow="fold")
+            table.add_column("Sandbox", overflow="fold")
+
             for d in data:
                 table.add_row(
                     d["sample"],
@@ -142,6 +156,7 @@ def generate_report(
                     d["static"],
                     d["memory"],
                     d["network"],
+                    d["sandbox"],
                 )
             console.print(table)
         case _:
@@ -154,8 +169,12 @@ def open_browser(
         Parameter(
             help="Folder with sandbox report (report.json and scan_config.json)",
         ),
-    ],
+    ] = Path(),
 ) -> None:
+    """
+    Open sandbox link in the default browser.
+    """
+
     report_file = path / "report.json"
     if not report_file.exists():
         console.error(f"Can't find report.json: {path}")

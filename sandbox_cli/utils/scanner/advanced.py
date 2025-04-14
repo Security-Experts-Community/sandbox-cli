@@ -13,13 +13,17 @@ from rich.markup import escape
 from rich.progress import Progress, SpinnerColumn, TaskID, TextColumn, TimeElapsedColumn
 
 from sandbox_cli.console import console
-from sandbox_cli.models.sandbox_arguments import SandboxArguments, ScanType
 from sandbox_cli.internal.config import VMImage, settings
-from sandbox_cli.internal.helpers import get_key_by_name, save_scan_arguments
+from sandbox_cli.internal.helpers import (
+    format_link,
+    get_key_by_name,
+    open_link,
+    save_scan_arguments,
+)
+from sandbox_cli.models.sandbox_arguments import SandboxArguments, ScanType
 from sandbox_cli.utils.compiler import compile_rules_internal
 from sandbox_cli.utils.downloader import download
 from sandbox_cli.utils.merge_dll_hooks import merge_dll_hooks
-from sandbox_cli.utils.scanner import format_link, open_link
 from sandbox_cli.utils.unpack import Unpack
 
 DELIMETER = "\n"
@@ -318,8 +322,13 @@ async def scan_internal_advanced(
         out_dir: Path,
         idx: str,
     ) -> None:
-        sandbox_arguments = SandboxArguments(type=ScanType.SCAN_NEW, sandbox_key_name=key.name, sandbox_options=sandbox_options)
+        sandbox_arguments = SandboxArguments(
+            type=ScanType.SCAN_NEW,
+            sandbox_key_name=key.name,
+            sandbox_options=sandbox_options,
+        )
         save_scan_arguments(out_dir, sandbox_arguments)
+
         # try:
         await process_file(sandbox_options, file_path, out_dir, idx)
         # except Exception as ex:

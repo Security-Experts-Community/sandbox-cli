@@ -1,8 +1,10 @@
 import sys
+import webbrowser
 from pathlib import Path
-from typing import Any
+from typing import Any, overload
 
-from ptsandbox import SandboxKey
+from ptsandbox import Sandbox, SandboxKey
+from ptsandbox.models import SandboxBaseTaskResponse, SandboxKey
 
 from sandbox_cli.console import console
 from sandbox_cli.internal.config import settings
@@ -34,6 +36,47 @@ def validate_key(_: Any, value: Any) -> None:
         sys.exit(1)
 
 
+@overload
+def format_link(
+    report: SandboxBaseTaskResponse,
+    *,
+    sandbox: Sandbox,
+    key: SandboxKey | None = None,
+) -> str: ...
+
+
+@overload
+def format_link(
+    report: SandboxBaseTaskResponse,
+    *,
+    sandbox: Sandbox | None = None,
+    key: SandboxKey,
+) -> str: ...
+
+
+def format_link(
+    report: SandboxBaseTaskResponse,
+    *,
+    sandbox: Sandbox | None = None,
+    key: SandboxKey | None = None,
+) -> str:
+    key = key or (sandbox.api.key if sandbox else None)
+
+    if not key:
+        console.error("Key not provided")
+        sys.exit(1)
+
+    if not (short_report := report.get_short_report()):
+        return "Unknown"
+
+    return f"https://{key.host}/tasks/{short_report.scan_id}"
+
+
 def save_scan_arguments(out_dir: Path, scan_args: SandboxArguments):
     scan_config_path = out_dir / "scan_config.json"
     scan_config_path.write_text(scan_args.model_dump_json(exclude="debug_options", indent=4), encoding="utf-8")
+
+
+def open_link(link: str):
+    if not webbrowser.open(link):
+        console.error(f"Can't open link in default browser.")

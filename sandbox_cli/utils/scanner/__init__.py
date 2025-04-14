@@ -1,68 +1,26 @@
-import webbrowser
 import asyncio
 import sys
 from collections.abc import Coroutine
 from pathlib import Path
-from typing import Any, overload
+from typing import Any
 
 import aiofiles
 from ptsandbox import Sandbox
-from ptsandbox.models import (
-    SandboxBaseScanTaskRequest,
-    SandboxBaseTaskResponse,
-    SandboxKey,
-    SandboxOptions,
-)
+from ptsandbox.models import SandboxBaseScanTaskRequest, SandboxKey, SandboxOptions
 
 from sandbox_cli.console import console
-from sandbox_cli.models.sandbox_arguments import SandboxArguments, ScanType
 from sandbox_cli.internal.config import VMImage, settings
-from sandbox_cli.internal.helpers import get_key_by_name, save_scan_arguments
+from sandbox_cli.internal.helpers import (
+    format_link,
+    get_key_by_name,
+    open_link,
+    save_scan_arguments,
+)
+from sandbox_cli.models.sandbox_arguments import SandboxArguments, ScanType
 from sandbox_cli.utils.compiler import compile_rules_internal
 from sandbox_cli.utils.downloader import download
 from sandbox_cli.utils.merge_dll_hooks import merge_dll_hooks
 from sandbox_cli.utils.unpack import Unpack
-
-
-@overload
-def format_link(
-    report: SandboxBaseTaskResponse,
-    *,
-    sandbox: Sandbox,
-    key: SandboxKey | None = None,
-) -> str: ...
-
-
-@overload
-def format_link(
-    report: SandboxBaseTaskResponse,
-    *,
-    sandbox: Sandbox | None = None,
-    key: SandboxKey,
-) -> str: ...
-
-
-def format_link(
-    report: SandboxBaseTaskResponse,
-    *,
-    sandbox: Sandbox | None = None,
-    key: SandboxKey | None = None,
-) -> str:
-    key = key or (sandbox.api.key if sandbox else None)
-
-    if not key:
-        console.error("Key not provided")
-        sys.exit(1)
-
-    if not (short_report := report.get_short_report()):
-        return "Unknown"
-
-    return f"https://{key.host}/tasks/{short_report.scan_id}"
-
-
-def open_link(link: str):
-    if not webbrowser.open(link):
-        console.error(f"Can't open link in default browser.")
 
 
 async def _get_compiled_rules(rules_dir: Path | None, is_local: bool) -> bytes | None:
@@ -275,8 +233,13 @@ async def scan_internal(
         out_dir: Path,
         idx: str,
     ) -> None:
-        sandbox_arguments = SandboxArguments(type=ScanType.SCAN, sandbox_key_name=key.name, sandbox_options=sandbox_options.sandbox)
+        sandbox_arguments = SandboxArguments(
+            type=ScanType.SCAN,
+            sandbox_key_name=key.name,
+            sandbox_options=sandbox_options.sandbox,
+        )
         save_scan_arguments(out_dir, sandbox_arguments)
+
         # try:
         await process_file(sandbox_options, file_path, out_dir, idx)
         # except Exception as ex:

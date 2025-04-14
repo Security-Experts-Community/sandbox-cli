@@ -9,7 +9,7 @@ from ptsandbox.models import SandboxBaseTaskResponse
 from rich.table import Table
 
 from sandbox_cli.console import console
-from sandbox_cli.internal.helpers import get_key_by_name
+from sandbox_cli.internal.helpers import format_link, get_key_by_name, open_link
 from sandbox_cli.models.sandbox_arguments import SandboxArguments
 from sandbox_cli.utils.extractors import (
     extract_memory,
@@ -17,7 +17,6 @@ from sandbox_cli.utils.extractors import (
     extract_static,
     extract_verdict_from_trace,
 )
-from sandbox_cli.utils.scanner import format_link, open_link
 
 
 class TableData(TypedDict):
@@ -156,7 +155,7 @@ def open_browser(
             help="Folder with sandbox report (report.json and scan_config.json)",
         ),
     ],
-):
+) -> None:
     report_file = path / "report.json"
     if not report_file.exists():
         console.error(f"Can't find report.json: {path}")
@@ -177,4 +176,5 @@ def open_browser(
 
     key = get_key_by_name(scan_config.sandbox_key_name)
     link = format_link(report, key=key)
+
     open_link(link)

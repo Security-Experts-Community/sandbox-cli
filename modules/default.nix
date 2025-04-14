@@ -60,6 +60,22 @@ in {
             default = null;
           };
 
+          browser = mkOption {
+            type = nullOrSubmodule {
+              options = {
+                path = mkOption {
+                  type = types.str;
+                };
+
+                args = mkOption {
+                  type = types.str;
+                };
+              };
+            };
+
+            default = null;
+          };
+
           rules-path = mkOption {
             type = types.nullOr (types.str);
             default = null;

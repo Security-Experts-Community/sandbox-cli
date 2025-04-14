@@ -84,6 +84,10 @@ class Settings(BaseModel):
                 description=self.description,
             )
 
+    class Browser(BaseModel):
+        path: Path
+        args: list[str]
+
     # default settings (not changable)
     linux_images: set[VMImage] = {
         VMImage.ALTWORKSTATION_X64,
@@ -119,10 +123,13 @@ class Settings(BaseModel):
     docker: Docker = Docker()
     sandbox: list[Sandbox] = []
     rules_path: Path | None = Field(default=None, alias="rules-path")
+    browser: Browser | None = Field(default=None)
 
     def model_post_init(self, __context: Any) -> None:
         self.sandbox_keys = [x.sandbox_key for x in self.sandbox]
         self.rules_path = Path(self.rules_path) if self.rules_path else None
+        if self.browser:
+            self.browser.args.append("%s")
 
 
 def load_config(path: Path) -> Settings:

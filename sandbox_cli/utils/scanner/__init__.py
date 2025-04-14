@@ -15,8 +15,9 @@ from ptsandbox.models import (
 )
 
 from sandbox_cli.console import console
+from sandbox_cli.models.sandbox_arguments import SandboxArguments, ScanType
 from sandbox_cli.internal.config import VMImage, settings
-from sandbox_cli.internal.helpers import get_key_by_name
+from sandbox_cli.internal.helpers import get_key_by_name, save_scan_arguments
 from sandbox_cli.utils.compiler import compile_rules_internal
 from sandbox_cli.utils.downloader import download
 from sandbox_cli.utils.merge_dll_hooks import merge_dll_hooks
@@ -274,6 +275,8 @@ async def scan_internal(
         out_dir: Path,
         idx: str,
     ) -> None:
+        sandbox_arguments = SandboxArguments(type=ScanType.SCAN, sandbox_key_name=key.name, sandbox_options=sandbox_options.sandbox)
+        save_scan_arguments(out_dir, sandbox_arguments)
         # try:
         await process_file(sandbox_options, file_path, out_dir, idx)
         # except Exception as ex:

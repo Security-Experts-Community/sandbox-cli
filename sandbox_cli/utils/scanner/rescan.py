@@ -18,7 +18,8 @@ from rich.progress import Progress, SpinnerColumn, TaskID, TextColumn, TimeElaps
 
 from sandbox_cli.console import console
 from sandbox_cli.internal.config import settings
-from sandbox_cli.internal.helpers import get_key_by_name
+from sandbox_cli.internal.helpers import get_key_by_name, save_scan_arguments
+from sandbox_cli.models.sandbox_arguments import SandboxArguments, ScanType
 from sandbox_cli.utils.compiler import compile_rules_internal
 from sandbox_cli.utils.downloader import download
 from sandbox_cli.utils.scanner import format_link, open_link
@@ -241,10 +242,12 @@ async def rescan_internal(
     tasks: list[Coroutine[Any, Any, None]] = []
     with progress:
         sandbox, sandbox_options = await _prepare_rescan_options(progress, rules_dir, key, is_local)
+        sandbox_arguments = SandboxArguments(type=ScanType.RE_SCAN, sandbox_key_name=key.name, sandbox_options=sandbox_options.sandbox)
 
         if len(traces) == 1:
             local_out_dir = out_dir / "rescan"
             local_out_dir.mkdir(parents=True, exist_ok=True)
+            save_scan_arguments(local_out_dir, sandbox_arguments)
             tasks.append(wrapper(traces[0], local_out_dir, "1/1"))
         else:
             for i, trace in enumerate(traces):
@@ -255,6 +258,7 @@ async def rescan_internal(
                     local_out_dir = out_dir / trace.stem
 
                 local_out_dir.mkdir(parents=True, exist_ok=True)
+                save_scan_arguments(local_out_dir, sandbox_arguments)
                 idx = f"{i + 1}/{len(traces)}"
                 tasks.append(wrapper(trace, local_out_dir, idx))
 

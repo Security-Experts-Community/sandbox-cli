@@ -50,11 +50,32 @@ Default: `["infected"]`
 | login    | The user's login on the server    | `None`  |
 | password | The user's password on the server | `None`  |
 
+#### `browser`
+
+Here you can specify custom browser to use for opening the analysis links.
+
+| Option   | Description                       | Default |
+| -------- | --------------------------------- | ------- |
+| path     | Path to custom browser            | `None`  |
+| args     | Args to start the browser with    | `None`  |
+
+!!! note "Note"
+
+    Every argument must be in separate string.
+
 ## Full configuration
 
 ```toml title="Config example"
 # passwords that will be sent to the sandbox for unpacking archives
 passwords = ["infected"]
+
+# Use this section only if you don't want to use your default browser
+# or it works incorrectly
+# [browser]
+# path to your browser
+# path = "C:\\Program Files\\Mozilla Firefox\\firefox.exe"
+# args to run your browser with
+# args = ["-new-tab"]
 
 # Specify available sandboxes
 # Keep in mind that first sandbox is used by default

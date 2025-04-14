@@ -78,5 +78,11 @@ def save_scan_arguments(out_dir: Path, scan_args: SandboxArguments) -> None:
 
 
 def open_link(link: str) -> None:
+    if settings.browser != None:
+        webbrowser.register("new_default_browser", None, webbrowser.GenericBrowser([settings.browser.path, *settings.browser.args]), preferred=True)
+        if not webbrowser.open(link):
+            console.error("Can't open link in the specified browser. Please check browser path and args.")
+        return
+    
     if not webbrowser.open_new_tab(link):
-        console.error("Can't open link in default browser.")
+        console.error("Can't open link in the default browser. Try adding path and args for your browser to the config file.")

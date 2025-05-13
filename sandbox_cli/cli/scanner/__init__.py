@@ -514,11 +514,11 @@ async def scan_new(
             group="Sandbox Options",
         ),
     ] = 3,
-    procdump_new_processes_on_finish: Annotated[
+    no_procdumps_on_finish: Annotated[
         bool,
         Parameter(
-            name=["--procdump-new-processes-on-finish", "-P"],
-            help="Collect dumps for all created and not finished processes",
+            name=["--no-procdumps-on-finish", "-P"],
+            help="Disable dumps for all created and not finished processes",
             group="Sandbox Options",
             negative="",
         ),
@@ -708,7 +708,7 @@ async def scan_new(
         fake_name=fake_name,
         unpack=unpack,
         priority=priority,
-        procdump_new_processes_on_finish=procdump_new_processes_on_finish,
+        no_procdumps_on_finish=no_procdumps_on_finish,
         bootkitmon=bootkitmon,
         bootkitmon_duration=bootkitmon_duration,
         mitm_disabled=mitm_disabled,

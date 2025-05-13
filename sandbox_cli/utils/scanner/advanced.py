@@ -74,7 +74,7 @@ async def _prepare_sandbox_new_scan(
     syscall_hooks: Path | None,
     dll_hooks_dir: Path | None,
     custom_command: str | None,
-    procdump_new_processes_on_finish: bool,
+    no_procdumps_on_finish: bool,
     bootkitmon: bool,
     bootkitmon_duration: int,
     mitm_disabled: bool,
@@ -161,7 +161,7 @@ async def _prepare_sandbox_new_scan(
         sandbox_options.custom_command = custom_command
 
     # add extra options
-    sandbox_options.procdump_new_processes_on_finish = procdump_new_processes_on_finish
+    sandbox_options.procdump_new_processes_on_finish = not no_procdumps_on_finish
     sandbox_options.bootkitmon = bootkitmon
     sandbox_options.analysis_duration_bootkitmon = bootkitmon_duration
     sandbox_options.mitm_enabled = not mitm_disabled
@@ -189,7 +189,7 @@ async def scan_internal_advanced(
     fake_name: str | None,
     unpack: bool,
     priority: int,
-    procdump_new_processes_on_finish: bool,
+    no_procdumps_on_finish: bool,
     bootkitmon: bool,
     bootkitmon_duration: int,
     mitm_disabled: bool,
@@ -348,7 +348,7 @@ async def scan_internal_advanced(
             syscall_hooks,
             dll_hooks_dir,
             custom_command,
-            procdump_new_processes_on_finish,
+            no_procdumps_on_finish,
             bootkitmon,
             bootkitmon_duration,
             mitm_disabled,

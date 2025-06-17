@@ -64,6 +64,7 @@ The options allow you to additionally configure which files will be downloaded f
 | `--skip-sample-run / -S`                  | Read more about it in [py-ptsandbox](https://security-experts-community.github.io/py-ptsandbox/usage/public-api/scanning/scan/#advanced-scan). | `False`          |
 | `--vnc-mode / -V`                         | Read more about it in [py-ptsandbox](https://security-experts-community.github.io/py-ptsandbox/usage/public-api/scanning/scan/#advanced-scan). | `disabled`       |
 | `--extra-files / -e`                      | Read more about it in [py-ptsandbox](https://security-experts-community.github.io/py-ptsandbox/usage/public-api/scanning/scan/#advanced-scan). | `None`           |
+| `--outbound-connections / -oc`            | Whitelist of IP addresses to which connections from a VM are allowed (backconnect)                                                             | `None`           |
 
 !!! tip "Tip"
 

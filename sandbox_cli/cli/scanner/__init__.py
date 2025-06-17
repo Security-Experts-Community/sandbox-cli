@@ -586,6 +586,15 @@ async def scan_new(
             negative="",
         ),
     ] = None,
+    outbound_connections: Annotated[
+        list[str] | None,
+        Parameter(
+            name=["--outbound-connections", "-oc"],
+            help="Whitelist of IP addresses to which connections from a VM are allowed (backconnect)",
+            group="Sandbox Options",
+            negative="",
+        ),
+    ] = None,
     all: Annotated[
         bool,
         Parameter(
@@ -725,4 +734,5 @@ async def scan_new(
         procdumps=procdumps,
         decompress=decompress,
         open_browser=open_browser,
+        outbound_connections=outbound_connections,
     )

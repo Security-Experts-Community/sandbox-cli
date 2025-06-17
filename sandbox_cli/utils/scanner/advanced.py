@@ -81,6 +81,7 @@ async def _prepare_sandbox_new_scan(
     disable_clicker: bool,
     skip_sample_run: bool,
     vnc_mode: VNCMode,
+    outbound_connections: list[str] | None,
 ) -> tuple[Sandbox, SandboxOptionsAdvanced, set[VMImage | str]]:
     sandbox = Sandbox(key=sandbox_key)
 
@@ -161,6 +162,7 @@ async def _prepare_sandbox_new_scan(
         sandbox_options.custom_command = custom_command
 
     # add extra options
+    sandbox_options.debug_options["allowed_outbound_connections"] = outbound_connections or []
     sandbox_options.procdump_new_processes_on_finish = not no_procdumps_on_finish
     sandbox_options.bootkitmon = bootkitmon
     sandbox_options.analysis_duration_bootkitmon = bootkitmon_duration
@@ -206,6 +208,7 @@ async def scan_internal_advanced(
     procdumps: bool,
     decompress: bool,
     open_browser: bool,
+    outbound_connections: list[str] | None,
 ) -> None:
     key = get_key_by_name(key_name)
     sandbox_sem = asyncio.Semaphore(value=key.max_workers)
@@ -355,6 +358,7 @@ async def scan_internal_advanced(
             disable_clicker,
             skip_sample_run,
             vnc_mode,
+            outbound_connections,
         )
         max_image_length = max(len(x) for x in images)
         for i, image_id in enumerate(images):

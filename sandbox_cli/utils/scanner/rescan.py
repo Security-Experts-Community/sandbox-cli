@@ -98,6 +98,7 @@ async def rescan_internal(
     unpack: bool,
     debug: bool,
     open_browser: bool,
+    timeout: int,
 ) -> None:
     key = get_key_by_name(key_name)
     sandbox_sem = asyncio.Semaphore(value=key.max_workers)
@@ -128,19 +129,13 @@ async def rescan_internal(
         async with sandbox_sem:
             task_id = progress.add_task(description="Creating task", idx=idx, url="...")
 
-            wait_time = (
-                round(sandbox_options.sandbox.analysis_duration * 1.5)
-                if sandbox_options.sandbox.analysis_duration > 70
-                else 70
-            )
-
             try:
                 rescan_result = await sandbox.create_rescan(
                     drakvuf_trace,
                     tcpdump_pcap,
                     options=sandbox_options,
                     rules=None,
-                    read_timeout=wait_time,
+                    read_timeout=timeout,
                 )
             except SandboxUploadException as e:
                 console.error(f"[yellow]{trace}[/] • an error occurred when uploading a file to the server • {e}")
@@ -162,7 +157,7 @@ async def rescan_internal(
                 description=f"Waiting for full report for [yellow]{trace.name}[/]",
                 url=formatted_link,
             )
-            if not (awaited_report := await sandbox.wait_for_report(rescan_result, wait_time)):
+            if not (awaited_report := await sandbox.wait_for_report(rescan_result, timeout)):
                 console.error(f"Rescan failed for [yellow]{trace.name}[/] • {formatted_link} • {rescan_result}")
                 progress.remove_task(task_id)
                 return

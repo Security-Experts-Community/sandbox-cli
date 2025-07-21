@@ -118,6 +118,14 @@ async def re_scan(
             negative="",
         ),
     ] = False,
+    timeout: Annotated[
+        int,
+        Parameter(
+            name=["--timeout", "-t"],
+            help="Response waiting time (increase this value if large traces are scanned)",
+            validator=validators.Number(gt=0, lt=3600),
+        ),
+    ] = 300,
 ) -> None:
     """
     Send traces to re-scan.
@@ -146,6 +154,7 @@ async def re_scan(
         unpack=unpack,
         debug=debug,
         open_browser=open_browser,
+        timeout=timeout,
     )
 
 

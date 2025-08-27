@@ -1,5 +1,6 @@
 import asyncio
 import os
+import sys
 from collections.abc import Coroutine
 from http import HTTPStatus
 from pathlib import Path
@@ -11,6 +12,7 @@ import aiofiles
 import aiohttp
 import aiohttp.client_exceptions
 import orjson
+from colorama import init
 from cyclopts import Parameter
 from ptsandbox import Sandbox
 from ptsandbox.models import Artifact, SandboxBaseTaskResponse
@@ -182,6 +184,8 @@ async def download_command(
     Download any artifact from the sandbox.
     """
 
+    init() # colorama stuff for working on windows
+
     progress = Progress(
         SpinnerColumn(),
         TextColumn("{task.description}"),
@@ -233,19 +237,23 @@ async def download_command(
     async def create_task(sandbox: Sandbox, task_id: str) -> None:
         progress_task_id = progress.add_task(description=rf"\[[green1]{task_id}[/]] fetching info", start=True)
 
+        def finalize_progress() -> None:
+            progress.remove_task(task_id=progress_task_id)
+
         try:
             result = await sandbox.get_report(task_id=task_id)
         except aiohttp.client_exceptions.ClientResponseError as e:
             if e.status == HTTPStatus.NOT_FOUND:
-                console.warning(f"Not found information for {task_id}")
+                console.warning(f"Got 404 error for {task_id}")
+            finalize_progress()
             return
 
         if (report := result.get_long_report()) is None:
             console.warning(f"Not found information for {task_id}")
+            finalize_progress()
             return
 
-        progress.stop_task(task_id=progress_task_id)
-        progress.update(task_id=progress_task_id, visible=False)
+        finalize_progress()
 
         tasks.append(
             worker(
@@ -273,14 +281,16 @@ async def download_command(
         limit = 40 if count > 40 else count
         viewed, next_cursor = 0, ""
 
-        while viewed <= count:
-            response = await sandbox.get_tasks(query=query, limit=limit, next_cursor=next_cursor)
-
-            with progress:
+        with progress:
+            while viewed <= count:
+                response = await sandbox.get_tasks(query=query, limit=limit, next_cursor=next_cursor)
                 await asyncio.gather(*(create_task(sandbox, task.id) for task in response.tasks))
 
-            viewed += limit
-            next_cursor = response.next_cursor
+                viewed += limit
+                next_cursor = response.next_cursor
+
+        # clear last line
+        sys.stdout.write("\033[F\033[K")
 
     for task in tasks_id:
         sandbox, task_id = get_key_and_task(key, task)
@@ -292,6 +302,8 @@ async def download_command(
     with progress:
         await asyncio.gather(*tasks)
 
+    # clear last line
+    sys.stdout.write("\033[F\033[K")
 
 def download_email(
     emails: Annotated[

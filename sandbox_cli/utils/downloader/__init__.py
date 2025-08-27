@@ -139,7 +139,7 @@ async def download(
             if sandbox_result.details.sandbox is None:
                 continue
 
-            if sandbox_result.details.sandbox.image and (image_id := sandbox_result.details.sandbox.image.image_id):
+            if sandbox_result.details.sandbox.image and (image_id := sandbox_result.details.sandbox.image.image_id) and out_dir.parts[-1] != image_id:
                 output = out_dir / image_id
             else:
                 output = out_dir

@@ -1,5 +1,5 @@
 version = 1
-revision = 2
+revision = 3
 requires-python = ">=3.11"
 
 [[package]]
@@ -1237,11 +1237,12 @@ wheels = [
 
 [[package]]
 name = "sandbox-cli"
-version = "0.2.33"
+version = "0.2.36"
 source = { editable = "." }
 dependencies = [
     { name = "aiofiles" },
     { name = "asyncssh" },
+    { name = "colorama" },
     { name = "cryptography" },
     { name = "cyclopts" },
     { name = "docker" },
@@ -1269,6 +1270,7 @@ docs = [
 requires-dist = [
     { name = "aiofiles", specifier = ">=24.1.0" },
     { name = "asyncssh", specifier = ">=2.21.0" },
+    { name = "colorama", specifier = ">=0.4.6" },
     { name = "cryptography", specifier = ">=45.0.4" },
     { name = "cyclopts", specifier = ">=3.22.5" },
     { name = "docker", specifier = ">=7.1.0" },

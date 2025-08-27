@@ -1,6 +1,6 @@
 [project]
 name = "sandbox-cli"
-version = "0.2.36"
+version = "0.2.37"
 description = "Command line tool for interaction with sandboxes"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -10,6 +10,7 @@ authors = [{ name = "Alexey Kolesnikov" }]
 dependencies = [
   "aiofiles>=24.1.0",
   "asyncssh>=2.21.0",
+  "colorama>=0.4.6",
   "cryptography>=45.0.4",
   "cyclopts>=3.22.5",
   "docker>=7.1.0",

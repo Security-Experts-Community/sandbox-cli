@@ -236,14 +236,14 @@ async def rescan_internal(
 
         await process_trace(drakvuf_trace, tcpdump_pcap, trace, out_dir, idx)
 
-    console.info(f"Using key: name={key.name} max_workers={key.max_workers}")
+    console.info(f"Using key: name={key.name.get_secret_value()} max_workers={key.max_workers}")
 
     tasks: list[Coroutine[Any, Any, None]] = []
     with progress:
         sandbox, sandbox_options = await _prepare_rescan_options(progress, rules_dir, key, is_local)
         sandbox_arguments = SandboxArguments(
             type=ScanType.RE_SCAN,
-            sandbox_key_name=key.name,
+            sandbox_key_name=key.name.get_secret_value(),
             sandbox_options=sandbox_options.sandbox,
         )
 

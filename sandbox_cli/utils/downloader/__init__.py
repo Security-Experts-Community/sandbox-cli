@@ -18,8 +18,9 @@ from rich.markup import escape
 from rich.progress import Progress, TaskID
 
 from sandbox_cli.console import console
+from sandbox_cli.internal.config import settings
 
-semaphore = asyncio.Semaphore(value=12)
+semaphore = asyncio.Semaphore(value=16)
 
 
 async def _save_artifact(
@@ -28,6 +29,7 @@ async def _save_artifact(
     out_dir: Path,
     path: Path,
     file_uri: str,
+    overwrite: bool = False,
     decompress: bool = False,
     progress: Progress | None = None,
     idx: str | None = None,
@@ -40,12 +42,14 @@ async def _save_artifact(
 
     # sanitize path
     path = out_dir / Path(str(path).replace(" ", "_"))
-    n = 1
-    while path.exists():
-        if not path.with_name(path.name + f"_{n}").exists():
-            path = path.with_name(path.name + f"_{n}")
-            break
-        n += 1
+    if not overwrite:
+        n = 1
+        while path.exists():
+            if not path.with_name(path.name + f"_{n}").exists():
+                path = path.with_name(path.name + f"_{n}")
+                break
+            n += 1
+
     path.parent.mkdir(exist_ok=True, parents=True)
     path.touch()
     task_id: TaskID = None  # type: ignore
@@ -107,7 +111,7 @@ async def download(
 ) -> None:
     tasks: list[Coroutine[Any, Any, None]] = []
 
-    def add_task(out_dir: Path, path: Path, file_uri: str, decompress: bool = False) -> None:
+    def add_task(out_dir: Path, path: Path, file_uri: str, decompress: bool = False, overwrite: bool = False) -> None:
         tasks.append(
             _save_artifact(
                 scan_id=report.scan_id,
@@ -120,66 +124,73 @@ async def download(
                 image=image,
                 link=link,
                 decompress=decompress,
+                overwrite=overwrite,
             )
         )
 
     for artifact in report.artifacts:
-        sandbox_result = artifact.find_sandbox_result()
-        if sandbox_result is None:
-            continue
-
-        if sandbox_result.details is None:
-            continue
-
-        if sandbox_result.details.sandbox is None:
-            continue
-
-        for log in sandbox_result.details.sandbox.logs:
-            # download default logs by default
-            if (all or logs) and log.type in {
-                LogType.EVENT_CORRELATED,
-                LogType.EVENT_NORMALIZED,
-                LogType.EVENT_RAW,
-                LogType.NETWORK,
-            }:
-                add_task(out_dir, log.file_name, log.file_uri)
-
-            if (all or video) and log.type == LogType.SCREENSHOT:
-                add_task(out_dir, log.file_name, log.file_uri)
-
-            if (all or crashdumps) and log.file_name in {"crashdump.bin", "crashdump.metadata"}:
-                add_task(out_dir / "crashdumps", log.file_name, log.file_uri)
-
-            if (all or debug) and log.type in {LogType.DEBUG, LogType.GRAPH}:
-                add_task(out_dir / "debug", log.file_name, log.file_uri)
-
-        if artifacts or files or procdumps or all:
-            if not sandbox_result.details:
+        for sandbox_result in artifact.get_sandbox_results():
+            if sandbox_result is None:
                 continue
 
-            if not sandbox_result.details.sandbox:
+            if sandbox_result.details is None:
                 continue
 
-            if not sandbox_result.details.sandbox.artifacts:
+            if sandbox_result.details.sandbox is None:
                 continue
 
-            for artifact in sandbox_result.details.sandbox.artifacts:
-                if not artifact.file_info:
+            if sandbox_result.details.sandbox.image and (image_id := sandbox_result.details.sandbox.image.image_id):
+                output = out_dir / image_id
+            else:
+                output = out_dir
+
+            for log in sandbox_result.details.sandbox.logs:
+                # download default logs by default
+                if (all or logs) and log.type in {
+                    LogType.EVENT_CORRELATED,
+                    LogType.EVENT_NORMALIZED,
+                    LogType.EVENT_RAW,
+                    LogType.NETWORK,
+                }:
+                    add_task(output, log.file_name, log.file_uri, overwrite=True)
+
+                if (all or video) and log.type == LogType.SCREENSHOT:
+                    add_task(output, log.file_name, log.file_uri, overwrite=True)
+
+                if (all or crashdumps) and log.file_name in {"crashdump.bin", "crashdump.metadata"}:
+                    add_task(output / "crashdumps", log.file_name, log.file_uri)
+
+                if (all or debug) and log.type in {LogType.DEBUG, LogType.GRAPH}:
+                    add_task(output / "debug", log.file_name, log.file_uri)
+
+            if artifacts or files or procdumps or all:
+                if not sandbox_result.details:
                     continue
 
-                if artifact.type == ArtifactType.FILE and (files or artifacts or all):
-                    add_task(
-                        out_dir / "artifacts",
-                        artifact.file_info.file_path.removeprefix("/"),
-                        artifact.file_info.file_uri,
-                    )
-                if artifact.type == ArtifactType.PROCESS_DUMP and (procdumps or artifacts or all):
-                    add_task(
-                        out_dir / "process_dump",
-                        artifact.file_info.details.process_dump.process_name.removeprefix("/"),  # type: ignore
-                        artifact.file_info.file_uri,
-                        decompress=decompress,
-                    )
+                if not sandbox_result.details.sandbox:
+                    continue
+
+                if not sandbox_result.details.sandbox.artifacts:
+                    continue
+
+                for artifact in sandbox_result.details.sandbox.artifacts:
+                    if not artifact.file_info:
+                        continue
+
+                    if artifact.type == ArtifactType.FILE and (files or artifacts or all):
+                        add_task(
+                            output / "artifacts",
+                            artifact.file_info.file_path.removeprefix("/"),
+                            artifact.file_info.file_uri,
+                        )
+                    if artifact.type == ArtifactType.PROCESS_DUMP and (procdumps or artifacts or all):
+                        add_task(
+                            output / "process_dump",
+                            artifact.file_info.details.process_dump.process_name.removeprefix("/"),  # type: ignore
+                            artifact.file_info.file_uri,
+                            decompress=decompress,
+                        )
+
     if not tasks:
         console.info(f"Nothing to download from {report.scan_id}")
 

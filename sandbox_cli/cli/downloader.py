@@ -1,4 +1,5 @@
 import asyncio
+import os
 from collections.abc import Coroutine
 from http import HTTPStatus
 from pathlib import Path
@@ -9,10 +10,11 @@ from uuid import UUID
 import aiofiles
 import aiohttp
 import aiohttp.client_exceptions
+import orjson
 from cyclopts import Parameter
 from ptsandbox import Sandbox
 from ptsandbox.models import Artifact, SandboxBaseTaskResponse
-from rich.progress import Progress, SpinnerColumn, TextColumn, TimeElapsedColumn
+from rich.progress import Progress, SpinnerColumn, TaskID, TextColumn, TimeElapsedColumn
 
 from sandbox_cli.console import console
 from sandbox_cli.internal.config import settings
@@ -51,20 +53,19 @@ async def download_command(
         Parameter(
             help="Links to tasks or task ids",
             negative="",
-            required=True,
         ),
-    ],
+    ] = [],
     /,
     *,
     key: Annotated[
         str,
         Parameter(
             name=["--key", "-k"],
-            help=f"The key to access the sandbox **{'**,**'.join(x.name for x in settings.sandbox_keys)}**",
+            help=f"The key to access the sandbox **{'**,**'.join(x.name.get_secret_value() for x in settings.sandbox_keys)}**",
             validator=validate_key,
             group="Sandbox",
         ),
-    ] = settings.sandbox_keys[0].name,
+    ] = settings.sandbox_keys[0].name.get_secret_value(),
     out_dir: Annotated[
         Path,
         Parameter(
@@ -127,7 +128,7 @@ async def download_command(
     crashdumps: Annotated[
         bool,
         Parameter(
-            name=["--crashdumps", "-c"],
+            name=["--crashdumps", "-C"],
             help="Download crashdumps (maybe be more 1GB)",
             negative="",
             group="Download options",
@@ -160,10 +161,34 @@ async def download_command(
             group="Download options",
         ),
     ] = False,
+    query: Annotated[
+        str | None,
+        Parameter(
+            name=["--query", "-q"],
+            help="Query for searching tasks (leave empty for last tasks)",
+            group="Search",
+        )
+    ] = None,
+    count: Annotated[
+        int,
+        Parameter(
+            name=["--count", "-c"],
+            help="How many tasks find and download",
+            group="Search",
+        )
+    ] = 20,
 ) -> None:
     """
     Download any artifact from the sandbox.
     """
+
+    progress = Progress(
+        SpinnerColumn(),
+        TextColumn("{task.description}"),
+        TimeElapsedColumn(),
+        console=console,
+        transient=True,
+    )
 
     async def worker(
         report: SandboxBaseTaskResponse.LongReport,
@@ -197,39 +222,30 @@ async def download_command(
         )
 
         if unpack and out_dir.exists():
-            Unpack(out_dir).run()
+            # multiple images can be downloaded from the task
+            if not (out_dir / "events-correlated.log.gz").exists():
+                subfolders = [f.path for f in os.scandir(out_dir) if f.is_dir()]
+                for folder in subfolders:
+                    Unpack(Path(folder)).run()
+            else:
+                Unpack(out_dir).run()
 
-    progress = Progress(
-        SpinnerColumn(),
-        TextColumn("{task.description}"),
-        TimeElapsedColumn(),
-        console=console,
-        transient=True,
-    )
-
-    tasks: list[Coroutine[Any, Any, Artifact.EngineResult | None]] = []
-
-    for task in tasks_id:
-        sandbox, task_id = get_key_and_task(key, task)
-        if not sandbox or not task_id:
-            continue
+    async def create_task(sandbox: Sandbox, task_id: str) -> None:
+        progress_task_id = progress.add_task(description=rf"\[[green1]{task_id}[/]] fetching info", start=True)
 
         try:
             result = await sandbox.get_report(task_id=task_id)
         except aiohttp.client_exceptions.ClientResponseError as e:
             if e.status == HTTPStatus.NOT_FOUND:
-                console.warning(
-                    f"The report cannot be accessed from {task_id}.\n"
-                    "Read more about it in: https://security-experts-community.github.io/py-ptsandbox/usage/public-api/download-files/"
-                )
-            continue
+                console.warning(f"Not found information for {task_id}")
+            return
 
         if (report := result.get_long_report()) is None:
-            console.warning(
-                f"The report cannot be accessed from {task_id}.\n"
-                "Read more about it in: https://security-experts-community.github.io/py-ptsandbox/usage/public-api/download-files/"
-            )
-            continue
+            console.warning(f"Not found information for {task_id}")
+            return
+
+        progress.stop_task(task_id=progress_task_id)
+        progress.update(task_id=progress_task_id, visible=False)
 
         tasks.append(
             worker(
@@ -248,6 +264,30 @@ async def download_command(
                 progress=progress,
             )
         )
+
+    tasks: list[Coroutine[Any, Any, Artifact.EngineResult | None]] = []
+
+    if query is not None:
+        sandbox = Sandbox(get_key_by_name(key_name=key))
+
+        limit = 40 if count > 40 else count
+        viewed, next_cursor = 0, ""
+
+        while viewed <= count:
+            response = await sandbox.get_tasks(query=query, limit=limit, next_cursor=next_cursor)
+
+            with progress:
+                await asyncio.gather(*(create_task(sandbox, task.id) for task in response.tasks))
+
+            viewed += limit
+            next_cursor = response.next_cursor
+
+    for task in tasks_id:
+        sandbox, task_id = get_key_and_task(key, task)
+        if not sandbox or not task_id:
+            continue
+
+        await create_task(sandbox, task_id)
 
     with progress:
         await asyncio.gather(*tasks)
@@ -273,11 +313,11 @@ def download_email(
         str,
         Parameter(
             name=["--key", "-k"],
-            help=f"The key to access the sandbox **{'**,**'.join(x.name for x in settings.sandbox_keys)}**",
+            help=f"The key to access the sandbox **{'**,**'.join(x.name.get_secret_value() for x in settings.sandbox_keys)}**",
             validator=validate_key,
             group="Sandbox",
         ),
-    ] = settings.sandbox_keys[0].name,
+    ] = settings.sandbox_keys[0].name.get_secret_value(),
 ) -> None:
     """
     Upload an email and get its headers.

@@ -13,7 +13,7 @@ from sandbox_cli.models.sandbox_arguments import SandboxArguments
 
 def get_key_by_name(key_name: str) -> SandboxKey:
     for sandbox_key in settings.sandbox_keys:
-        if sandbox_key.name == key_name:
+        if sandbox_key.name.get_secret_value() == key_name:
             return sandbox_key
     raise KeyError()
 
@@ -30,8 +30,9 @@ def validate_key(_: Any, value: Any) -> None:
     try:
         get_key_by_name(value)
     except KeyError:
+        available = "', '".join(x.name.get_secret_value() for x in settings.sandbox_keys)
         console.error(
-            f'Key "{value}" doesn\'t exists in config. Available keys: "{'","'.join(x.name for x in settings.sandbox_keys)}"'
+            f'Key "{value}" doesn\'t exist in config. Available keys: "{available}"'
         )
         sys.exit(1)
 
@@ -78,11 +79,11 @@ def save_scan_arguments(out_dir: Path, scan_args: SandboxArguments) -> None:
 
 
 def open_link(link: str) -> None:
-    if settings.browser != None:
+    if settings.browser is not None:
         webbrowser.register("new_default_browser", None, webbrowser.GenericBrowser([settings.browser.path, *settings.browser.args]), preferred=True)
         if not webbrowser.open(link):
             console.error("Can't open link in the specified browser. Please check browser path and args.")
         return
-    
+
     if not webbrowser.open_new_tab(link):
         console.error("Can't open link in the default browser. Try adding path and args for your browser to the config file.")

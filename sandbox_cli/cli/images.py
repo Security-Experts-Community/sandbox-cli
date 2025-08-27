@@ -15,11 +15,11 @@ async def get_images(
         str,
         Parameter(
             name=["--key", "-k"],
-            help=f"The key to access the sandbox **{'**,**'.join(x.name for x in settings.sandbox_keys)}**",
+            help=f"The key to access the sandbox **{'**,**'.join(x.name.get_secret_value() for x in settings.sandbox_keys)}**",
             validator=validate_key,
             group="Sandbox",
         ),
-    ] = settings.sandbox_keys[0].name,
+    ] = settings.sandbox_keys[0].name.get_secret_value(),
 ) -> None:
     """
     Get available images in the sandbox.

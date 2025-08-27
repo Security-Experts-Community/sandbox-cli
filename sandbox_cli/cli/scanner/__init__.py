@@ -80,11 +80,11 @@ async def re_scan(
         str,
         Parameter(
             name=["--key", "-k"],
-            help=f"The key to access the sandbox **{'**,**'.join(x.name for x in settings.sandbox_keys)}**",
+            help=f"The key to access the sandbox **{'**,**'.join(x.name.get_secret_value() for x in settings.sandbox_keys)}**",
             validator=validate_key,
             group="Sandbox Options",
         ),
-    ] = settings.sandbox_keys[0].name,
+    ] = settings.sandbox_keys[0].name.get_secret_value(),
     is_local: Annotated[
         bool,
         Parameter(
@@ -198,11 +198,11 @@ async def scan(
         str,
         Parameter(
             name=["--key", "-k"],
-            help=f"The key to access the sandbox **{'**,**'.join(x.name for x in settings.sandbox_keys)}**",
+            help=f"The key to access the sandbox **{'**,**'.join(x.name.get_secret_value() for x in settings.sandbox_keys)}**",
             validator=validate_key,
             group="Sandbox Options",
         ),
-    ] = settings.sandbox_keys[0].name,
+    ] = settings.sandbox_keys[0].name.get_secret_value(),
     is_local: Annotated[
         bool,
         Parameter(
@@ -444,11 +444,11 @@ async def scan_new(
         str,
         Parameter(
             name=["--key", "-k"],
-            help=f"The key to access the sandbox **{'**,**'.join(x.name for x in settings.sandbox_keys)}**",
+            help=f"The key to access the sandbox **{'**,**'.join(x.name.get_secret_value() for x in settings.sandbox_keys)}**",
             validator=validate_key,
             group="Sandbox Options",
         ),
-    ] = settings.sandbox_keys[0].name,
+    ] = settings.sandbox_keys[0].name.get_secret_value(),
     is_local: Annotated[
         bool,
         Parameter(

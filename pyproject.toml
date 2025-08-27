@@ -9,13 +9,13 @@ license-files = ["LICENSE", "NOTICE"]
 authors = [{ name = "Alexey Kolesnikov" }]
 dependencies = [
   "aiofiles>=24.1.0",
-  "asyncssh>=2.20.0",
-  "cryptography>=44.0.2",
-  "cyclopts>=3.16.0",
+  "asyncssh>=2.21.0",
+  "cryptography>=45.0.4",
+  "cyclopts>=3.22.5",
   "docker>=7.1.0",
-  "ptsandbox>=5.0.4",
+  "ptsandbox>=5.0.6",
   "pyzipper>=0.3.6",
-  "rich>=14.0.0",
+  "rich>=14.1.0",
   "zstandard>=0.23.0",
 ]
 

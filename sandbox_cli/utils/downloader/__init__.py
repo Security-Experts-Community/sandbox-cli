@@ -18,7 +18,6 @@ from rich.markup import escape
 from rich.progress import Progress, TaskID
 
 from sandbox_cli.console import console
-from sandbox_cli.internal.config import settings
 
 semaphore = asyncio.Semaphore(value=16)
 

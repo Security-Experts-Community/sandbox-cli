@@ -2,6 +2,7 @@
 Register all commands here
 """
 
+from colorama import init
 from cyclopts import App
 
 from sandbox_cli.cli.reporter import generate_report, open_browser
@@ -9,6 +10,7 @@ from sandbox_cli.cli.unpack import unpack_logs
 from sandbox_cli.console import console
 from sandbox_cli.internal.config import configpath, settings
 
+init() # colorama stuff for working on windows
 
 def get_version() -> str:
     import importlib.metadata

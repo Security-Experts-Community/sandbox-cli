@@ -3,7 +3,6 @@ from pathlib import Path
 
 import orjson
 
-from sandbox_cli.console import console
 from sandbox_cli.models.detections import DetectionType
 from sandbox_cli.utils.unpack.plugins.abc import BasePlugin
 
@@ -13,7 +12,6 @@ class CorrelatedRules(BasePlugin):
         base_path = self.trace / "correlated"
         file = Path(base_path / "events-correlated.log")
         if not file.exists():
-            console.warning(f"{file} not exist")
             return
 
         with open(file, errors="ignore", encoding="utf-8") as fd:

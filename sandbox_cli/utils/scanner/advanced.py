@@ -133,7 +133,7 @@ async def _prepare_sandbox_new_scan(
     )
 
     # some enabled options by default
-    # All debug options available in library
+    # all debug options available in library
     sandbox_options.debug_options["save_debug_files"] = True
     sandbox_options.debug_options["extract_crashdumps"] = True
 
@@ -378,3 +378,6 @@ async def scan_internal_advanced(
 
         await asyncio.gather(*tasks)
         await sandbox.api.session.close()
+
+    # clear last line
+    sys.stdout.write("\033[F\033[K")

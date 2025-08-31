@@ -3,7 +3,6 @@ from pathlib import Path
 
 import orjson
 
-from sandbox_cli.console import console
 from sandbox_cli.utils.unpack.plugins.abc import BasePlugin
 
 
@@ -12,7 +11,6 @@ class SortByPlugins(BasePlugin):
         base_path = self.trace / "normalized"
         file = Path(base_path / "events-normalized.log")
         if not file.exists():
-            console.warning(f"{file} not exist")
             return
 
         with open(file, errors="ignore", encoding="utf-8") as fd:

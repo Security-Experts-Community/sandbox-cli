@@ -15,7 +15,6 @@ rules = App(
 
 @rules.command(name="compile")
 async def compile_rules(
-    *,
     rules: Annotated[
         Path,
         Parameter(
@@ -24,6 +23,7 @@ async def compile_rules(
             validator=validators.Path(exists=True),
         ),
     ],
+    /,
     out: Annotated[
         Path,
         Parameter(
@@ -57,7 +57,6 @@ async def compile_rules(
 
 @rules.command(name="test")
 async def test_rules(
-    *,
     rules: Annotated[
         Path,
         Parameter(
@@ -66,6 +65,7 @@ async def test_rules(
             validator=validators.Path(exists=True),
         ),
     ],
+    /,
     is_local: Annotated[
         bool,
         Parameter(

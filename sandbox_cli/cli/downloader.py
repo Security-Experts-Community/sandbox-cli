@@ -11,12 +11,10 @@ from uuid import UUID
 import aiofiles
 import aiohttp
 import aiohttp.client_exceptions
-import orjson
-from colorama import init
 from cyclopts import Parameter
 from ptsandbox import Sandbox
 from ptsandbox.models import Artifact, SandboxBaseTaskResponse
-from rich.progress import Progress, SpinnerColumn, TaskID, TextColumn, TimeElapsedColumn
+from rich.progress import Progress, SpinnerColumn, TextColumn, TimeElapsedColumn
 
 from sandbox_cli.console import console
 from sandbox_cli.internal.config import settings
@@ -51,12 +49,12 @@ def get_key_and_task(key: str, task: str) -> tuple[Sandbox, UUID] | tuple[None, 
 
 async def download_command(
     tasks_id: Annotated[
-        list[str],
+        list[str] | None,
         Parameter(
             help="Links to tasks or task ids",
             negative="",
         ),
-    ] = [],
+    ] = None,
     /,
     *,
     key: Annotated[
@@ -184,7 +182,8 @@ async def download_command(
     Download any artifact from the sandbox.
     """
 
-    init() # colorama stuff for working on windows
+    if tasks_id is None:
+        tasks_id = []
 
     progress = Progress(
         SpinnerColumn(),

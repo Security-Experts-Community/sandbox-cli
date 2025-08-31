@@ -80,17 +80,24 @@ class Unpack:
     def run(self) -> None:
         if Path(self.trace / "drakvuf-trace.log.gz").exists():
             self.logs["drakvuf-trace"] = Path(self.trace / "drakvuf-trace.log.gz")
-        if Path(self.trace / "drakvuf-trace.log.zst").exists():
+        elif Path(self.trace / "drakvuf-trace.log.zst").exists():
             self.logs["drakvuf-trace"] = Path(self.trace / "drakvuf-trace.log.zst")
 
         self._extract_logs()
         self._create_dirs()
         self._move_files()
 
-        # Run plugins
+        # run plugins
         for plugin in self.plugins:
             plugin.run()
 
-        # Remove files
+        # remove files
         for log in self.logs.values():
+            # drakvuf trace not found
+            if log == Path(""):
+                continue
+
+            if not log.exists():
+                continue
+
             log.unlink(missing_ok=True)

@@ -5,9 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.2.38
+
+### Added
+
+- Correct handling of the timeout that occurred during scan and re-scan
+
 ## 0.2.34
 
-### Addded
+### Added
 
 - Options for downloading all tasks from the sandbox (requires a key with a special permission and support for the new API)
 

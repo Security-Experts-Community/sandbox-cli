@@ -8,7 +8,12 @@ import aiofiles
 import aiohttp
 import aiohttp.client_exceptions
 from ptsandbox import Sandbox, SandboxKey
-from ptsandbox.models import SandboxOptionsAdvanced, SandboxUploadException, VNCMode
+from ptsandbox.models import (
+    SandboxOptionsAdvanced,
+    SandboxUploadException,
+    SandboxWaitTimeoutException,
+    VNCMode,
+)
 from rich.markup import escape
 from rich.progress import Progress, SpinnerColumn, TaskID, TextColumn, TimeElapsedColumn
 
@@ -276,8 +281,13 @@ async def scan_internal_advanced(
                 description=f"Waiting [yellow]{file_path.name}[/]",
                 url=formatted_link,
             )
-            if not (awaited_report := await sandbox.wait_for_report(scan_result, wait_time)):
-                console.error(f"{final_output} • scan failed")
+            try:
+                if not (awaited_report := await sandbox.wait_for_report(scan_result, wait_time)):
+                    console.error(f"{final_output} • scan failed")
+                    progress.remove_task(task_id)
+                    return
+            except SandboxWaitTimeoutException:
+                console.error(f"{final_output} • got timeout while waiting")
                 progress.remove_task(task_id)
                 return
 

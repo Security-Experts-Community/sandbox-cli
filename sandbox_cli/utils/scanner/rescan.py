@@ -13,6 +13,7 @@ from ptsandbox.models import (
     SandboxBaseScanTaskRequest,
     SandboxKey,
     SandboxUploadException,
+    SandboxWaitTimeoutException,
 )
 from rich.progress import Progress, SpinnerColumn, TaskID, TextColumn, TimeElapsedColumn
 
@@ -157,8 +158,13 @@ async def rescan_internal(
                 description=f"Waiting for full report for [yellow]{trace.name}[/]",
                 url=formatted_link,
             )
-            if not (awaited_report := await sandbox.wait_for_report(rescan_result, timeout)):
-                console.error(f"Rescan failed for [yellow]{trace.name}[/] • {formatted_link} • {rescan_result}")
+            try:
+                if not (awaited_report := await sandbox.wait_for_report(rescan_result, timeout)):
+                    console.error(f"Rescan failed for [yellow]{trace.name}[/] • {formatted_link} • {rescan_result}")
+                    progress.remove_task(task_id)
+                    return
+            except SandboxWaitTimeoutException:
+                console.error(f"{final_output} • got timeout while waiting")
                 progress.remove_task(task_id)
                 return
 

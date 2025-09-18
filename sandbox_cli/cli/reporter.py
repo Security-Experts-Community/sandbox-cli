@@ -53,6 +53,14 @@ def generate_report(
             negative="",
         ),
     ] = False,
+    suspicious: Annotated[
+        bool,
+        Parameter(
+            name=["--supicious", "-s"],
+            help="Include suspicious detects",
+            negative="",
+        )
+    ] = False,
 ) -> None:
     """
     Generate short report from sandbox scans.
@@ -118,7 +126,7 @@ def generate_report(
                 {
                     "sample": report.artifacts[0].file_info.file_path,  # type: ignore
                     "image": image,
-                    "verdict": delimeter.join(extract_verdict_from_trace(corr_trace)),
+                    "verdict": delimeter.join(extract_verdict_from_trace(corr_trace, suspicious)),
                     "static": delimeter.join(extract_static(report)),
                     "memory": delimeter.join(extract_memory(report)),
                     "network": delimeter.join(extract_network_from_trace(corr_trace)),

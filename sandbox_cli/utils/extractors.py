@@ -4,18 +4,14 @@ from ptsandbox.models import ArtifactType, EngineSubsystem, SandboxBaseTaskRespo
 from sandbox_cli.models.detections import Detections
 
 
-def extract_verdict_from_trace(trace: bytes) -> set[str]:
-    non_generics: set[str] = set()
-    generics: set[str] = set()
-
+def extract_verdict_from_trace(trace: bytes, suspicious: bool = False) -> list[str]:
     d = Detections(trace)
-    for detect in d.malware:
-        if detect.name.split(".")[-2] == "Generic":
-            generics.add(detect.name)
-        else:
-            non_generics.add(detect.name)
+    detects: set[str] = {detect.name for detect in d.malware}
+    if suspicious:
+        for detect in d.suspicious:
+            detects.add(detect.name)
 
-    return non_generics if len(non_generics) != 0 else generics
+    return sorted(detects)
 
 
 def extract_network_from_trace(trace: bytes) -> set[str]:

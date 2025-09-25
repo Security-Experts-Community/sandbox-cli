@@ -303,24 +303,29 @@ async def scan_internal_advanced(
 
         progress.update(task_id=task_id, description="Downloading results...")
 
-        await download(
-            long_report,
-            sandbox,
-            out_dir,
-            all=all,
-            artifacts=artifacts,
-            crashdumps=crashdumps,
-            debug=debug,
-            decompress=decompress,
-            files=download_files,
-            logs=True,  # by default download logs
-            procdumps=procdumps,
-            progress=progress,
-            video=True,  # by default download video
-            idx=idx,
-            image=formatted_image,
-            link=formatted_link,
-        )
+        try:
+            await download(
+                long_report,
+                sandbox,
+                out_dir,
+                all=all,
+                artifacts=artifacts,
+                crashdumps=crashdumps,
+                debug=debug,
+                decompress=decompress,
+                files=download_files,
+                logs=True,  # by default download logs
+                procdumps=procdumps,
+                progress=progress,
+                video=True,  # by default download video
+                idx=idx,
+                image=formatted_image,
+                link=formatted_link,
+            )
+        except aiohttp.SocketTimeoutError:
+            console.error(f"{final_output} • got timeout while downloading results")
+            progress.remove_task(task_id)
+            return
 
         console.done(final_output)
 

@@ -6,6 +6,7 @@ from typing import Any
 from uuid import UUID
 
 import aiofiles
+import aiohttp
 import zstandard
 from ptsandbox import Sandbox
 from ptsandbox.models import (
@@ -65,13 +66,20 @@ async def _save_artifact(
             else:
                 task_id = progress.add_task(rf"\[[green1]{scan_id}[/]] {escape(path.name)}")
         try:
-            downloaded_data = await sandbox.get_file(uri)
+            # a 5-minute timeout for downloading large files
+            downloaded_data = await sandbox.get_file(uri, read_timeout=300)
         except SandboxFileNotFoundException:
             console.warning(f"File {path.name} not found in storage: {uri=} {scan_id=}")
             if progress:
                 progress.stop_task(task_id)
                 progress.update(task_id=task_id, visible=False)
             return
+        except aiohttp.SocketTimeoutError as e:
+            if progress:
+                progress.stop_task(task_id)
+                progress.update(task_id=task_id, visible=False)
+
+            raise e
 
         if decompress:
             try:
@@ -138,7 +146,11 @@ async def download(
             if sandbox_result.details.sandbox is None:
                 continue
 
-            if sandbox_result.details.sandbox.image and (image_id := sandbox_result.details.sandbox.image.image_id) and out_dir.parts[-1] != image_id:
+            if (
+                sandbox_result.details.sandbox.image
+                and (image_id := sandbox_result.details.sandbox.image.image_id)
+                and out_dir.parts[-1] != image_id
+            ):
                 output = out_dir / image_id
             else:
                 output = out_dir

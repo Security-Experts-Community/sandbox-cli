@@ -59,7 +59,7 @@ def generate_report(
             name=["--supicious", "-s"],
             help="Include suspicious detects",
             negative="",
-        )
+        ),
     ] = False,
 ) -> None:
     """

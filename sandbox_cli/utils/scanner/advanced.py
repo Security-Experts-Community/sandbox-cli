@@ -15,7 +15,14 @@ from ptsandbox.models import (
     VNCMode,
 )
 from rich.markup import escape
-from rich.progress import Progress, SpinnerColumn, TaskID, TextColumn, TimeElapsedColumn
+from rich.progress import (
+    Progress,
+    SpinnerColumn,
+    Task,
+    TaskID,
+    TextColumn,
+    TimeElapsedColumn,
+)
 
 from sandbox_cli.console import console
 from sandbox_cli.internal.config import VMImage, settings
@@ -67,6 +74,13 @@ async def _get_compiled_rules(progress: Progress, rules_dir: Path | None, is_loc
     progress.start()
 
     return result
+
+
+def get_elapsed_time(task: Task) -> str:
+    hours = int(task.elapsed) // 3600
+    minutes = (int(task.elapsed) % 3600) // 60
+    seconds = int(task.elapsed) % 60
+    return f"[yellow]{hours}:{minutes:02d}:{seconds:02d}[/]"
 
 
 async def _prepare_sandbox_new_scan(
@@ -246,6 +260,7 @@ async def scan_internal_advanced(
 
         async with sandbox_sem:
             task_id = progress.add_task(description="Creating task", idx=idx, image=formatted_image, url="...")
+            task = progress.tasks[task_id]
 
             wait_time = sandbox_options.analysis_duration * 4 + (300 if sandbox_options.analysis_duration < 80 else 120)
 
@@ -266,7 +281,7 @@ async def scan_internal_advanced(
                 progress.remove_task(task_id)
                 return
             except aiohttp.client_exceptions.ClientResponseError as e:
-                console.error(f"{image_string} • [yellow]{file_path.name}[/] • {e}")
+                console.error(f"{image_string} • [yellow]{file_path.name}[/] • {e} • {get_elapsed_time(task)}")
                 progress.remove_task(task_id)
                 return
 
@@ -283,11 +298,11 @@ async def scan_internal_advanced(
             )
             try:
                 if not (awaited_report := await sandbox.wait_for_report(scan_result, wait_time)):
-                    console.error(f"{final_output} • scan failed")
+                    console.error(f"{final_output} • scan failed • {get_elapsed_time(task)}")
                     progress.remove_task(task_id)
                     return
             except SandboxWaitTimeoutException:
-                console.error(f"{final_output} • got timeout while waiting")
+                console.error(f"{final_output} • got timeout while waiting • {get_elapsed_time(task)}")
                 progress.remove_task(task_id)
                 return
 
@@ -297,7 +312,7 @@ async def scan_internal_advanced(
         (out_dir / settings.report_name).write_text(scan_result.model_dump_json(indent=4), encoding="utf-8")
 
         if not (long_report := scan_result.get_long_report()):
-            console.error(f"{final_output} • full report not available")
+            console.error(f"{final_output} • full report not available • {get_elapsed_time(task)}")
             progress.remove_task(task_id)
             return
 
@@ -323,11 +338,11 @@ async def scan_internal_advanced(
                 link=formatted_link,
             )
         except aiohttp.SocketTimeoutError:
-            console.error(f"{final_output} • got timeout while downloading results")
+            console.error(f"{final_output} • got timeout while downloading results • {get_elapsed_time(task)}")
             progress.remove_task(task_id)
             return
 
-        console.done(final_output)
+        console.done(f"{final_output} • {get_elapsed_time(task)}")
 
         progress.remove_task(task_id)
 

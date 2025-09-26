@@ -260,7 +260,8 @@ async def scan_internal_advanced(
 
         async with sandbox_sem:
             task_id = progress.add_task(description="Creating task", idx=idx, image=formatted_image, url="...")
-            task = progress.tasks[task_id]
+            # because progress.tasks is .values() from dict, not an actual list
+            task = next(t for t in progress.tasks if t.id == task_id)
 
             wait_time = sandbox_options.analysis_duration * 4 + (300 if sandbox_options.analysis_duration < 80 else 120)
 

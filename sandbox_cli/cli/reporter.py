@@ -130,7 +130,7 @@ def generate_report(
                     "static": delimeter.join(extract_static(report)),
                     "memory": delimeter.join(extract_memory(report)),
                     "network": delimeter.join(extract_network_from_trace(corr_trace)),
-                    "sandbox": link,
+                    "sandbox": f"[link={link}]{link}[/link]",
                 }
             )
 

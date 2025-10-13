@@ -465,6 +465,14 @@ async def scan_new(
             validator=validators.Number(gt=0),
         ),
     ] = 300,
+    wait_timeout: Annotated[
+        int | None,
+        Parameter(
+            name=["--wait-timeout", "-W"],
+            help="Task waiting time in seconds (useful for heavy samples)",
+            validator=validators.Number(gt=0),
+        ),
+    ] = None,
     fake_name: Annotated[
         str | None,
         Parameter(
@@ -735,6 +743,7 @@ async def scan_new(
         vnc_mode=vnc_mode,
         extra_files=extra_files,
         upload_timeout=upload_timeout,
+        wait_timeout=wait_timeout,
         all=all,
         debug=debug,
         artifacts=artifacts,

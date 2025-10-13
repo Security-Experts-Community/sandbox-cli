@@ -219,6 +219,7 @@ async def scan_internal_advanced(
     vnc_mode: VNCMode,
     extra_files: list[Path] | None,
     upload_timeout: int,
+    wait_timeout: int | None,
     all: bool,
     debug: bool,
     artifacts: bool,
@@ -264,6 +265,8 @@ async def scan_internal_advanced(
             task = next(t for t in progress.tasks if t.id == task_id)
 
             wait_time = sandbox_options.analysis_duration * 4 + (300 if sandbox_options.analysis_duration < 80 else 120)
+            if wait_timeout is not None:
+                wait_time = wait_timeout
 
             try:
                 scan_result = await sandbox.create_advanced_scan(

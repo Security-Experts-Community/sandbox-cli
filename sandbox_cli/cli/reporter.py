@@ -69,7 +69,7 @@ def generate_report(
     data: list[TableData] = []
     match mode:
         case "md":
-            delimeter = "&nbsp;"
+            delimeter = "<br/>"
         case _:
             delimeter = "\n"
 
@@ -130,7 +130,8 @@ def generate_report(
                     "static": delimeter.join(extract_static(report)),
                     "memory": delimeter.join(extract_memory(report)),
                     "network": delimeter.join(extract_network_from_trace(corr_trace)),
-                    "sandbox": f"[link={link}]{link}[/link]",
+                    # "sandbox": f"[link={link}]{link}[/link]",
+                    "sandbox": link,
                 }
             )
 
@@ -142,7 +143,7 @@ def generate_report(
             | --- | --- | --- | --- | --- | --- | --- |"""
             ).strip()
 
-            md_report_base = "|{sample}|{image}|{verdict}|{static}|{memory}|{network}|"
+            md_report_base = "|{sample}|{image}|{verdict}|{static}|{memory}|{network}|{sandbox}|"
             table_md = md_report_head + "\n"
             table_md += "\n".join(md_report_base.format(**d) for d in data)
             print(table_md)
@@ -157,6 +158,7 @@ def generate_report(
             table.add_column("Sandbox", overflow="fold")
 
             for d in data:
+                sandbox = f"[link={d['sandbox']}]{d['sandbox']}[/link]"
                 table.add_row(
                     d["sample"],
                     d["image"],
@@ -164,7 +166,8 @@ def generate_report(
                     d["static"],
                     d["memory"],
                     d["network"],
-                    d["sandbox"],
+                    # special case for sandbox link
+                    sandbox,
                 )
             console.print(table)
         case _:

@@ -10,7 +10,8 @@ from sandbox_cli.cli.unpack import unpack_logs
 from sandbox_cli.console import console
 from sandbox_cli.internal.config import configpath, settings
 
-init() # colorama stuff for working on windows
+init()  # colorama stuff for working on windows
+
 
 def get_version() -> str:
     import importlib.metadata
@@ -31,6 +32,8 @@ app = App(
     version=get_version,
     console=console,
 )
+
+app.register_install_completion_command(add_to_startup=False)
 
 app.command(name=["conv", "unpack"])(unpack_logs)
 app.command(name="report")(generate_report)

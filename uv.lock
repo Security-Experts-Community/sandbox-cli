@@ -407,7 +407,7 @@ wheels = [
 
 [[package]]
 name = "cyclopts"
-version = "4.0.0"
+version = "4.3.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "attrs" },
@@ -415,9 +415,9 @@ dependencies = [
     { name = "rich" },
     { name = "rich-rst" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/9a/d1/2f2b99ec5ea54ac18baadfc4a011e2a1743c1eaae1e39838ca520dcf4811/cyclopts-4.0.0.tar.gz", hash = "sha256:0dae712085e91d32cc099ea3d78f305b0100a3998b1dec693be9feb0b1be101f", size = 143546, upload-time = "2025-10-20T18:33:01.456Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/1b/0f/fe026df2ab8301e30a2b0bd425ff1462ad858fd4f991c1ac0389c2059c24/cyclopts-4.3.0.tar.gz", hash = "sha256:e95179cd0a959ce250ecfb2f0262a5996a92c1f9467bccad2f3d829e6833cef5", size = 151411, upload-time = "2025-11-25T02:59:33.572Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/44/0e/0a22e076944600aeb06f40b7e03bbd762a42d56d43a2f5f4ab954aed9005/cyclopts-4.0.0-py3-none-any.whl", hash = "sha256:e64801a2c86b681f08323fd50110444ee961236a0bae402a66d2cc3feda33da7", size = 178837, upload-time = "2025-10-20T18:33:00.191Z" },
+    { url = "https://files.pythonhosted.org/packages/7a/e8/77a231ae531cf38765b75ddf27dae28bb5f70b41d8bb4f15ce1650e93f57/cyclopts-4.3.0-py3-none-any.whl", hash = "sha256:91a30b69faf128ada7cfeaefd7d9649dc222e8b2a8697f1fc99e4ee7b7ca44f3", size = 187184, upload-time = "2025-11-25T02:59:32.21Z" },
 ]
 
 [[package]]
@@ -1283,7 +1283,7 @@ wheels = [
 
 [[package]]
 name = "sandbox-cli"
-version = "0.2.41"
+version = "0.2.42"
 source = { editable = "." }
 dependencies = [
     { name = "aiofiles" },
@@ -1317,8 +1317,8 @@ requires-dist = [
     { name = "aiofiles", specifier = ">=24.1.0" },
     { name = "asyncssh", specifier = ">=2.21.1" },
     { name = "colorama", specifier = ">=0.4.6" },
-    { name = "cryptography", specifier = ">=46.0.1" },
-    { name = "cyclopts", specifier = ">=3.24.0" },
+    { name = "cryptography", specifier = ">=46.0.2" },
+    { name = "cyclopts", specifier = ">=4.2.5" },
     { name = "docker", specifier = ">=7.1.0" },
     { name = "ptsandbox", specifier = ">=5.0.6" },
     { name = "pyzipper", specifier = ">=0.3.6" },

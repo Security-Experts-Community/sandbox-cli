@@ -22,6 +22,17 @@ from sandbox_cli.console import console
 
 semaphore = asyncio.Semaphore(value=16)
 
+# At first glance, it's counter-intuitive, but ArtifactType can contain not only predefined fields in it, but also newly added.
+# This usually happens when a new feature is released in the sandbox.
+_KNOWN_ARTIFACT_TYPES = {
+    ArtifactType.ARCHIVE,
+    ArtifactType.COMPRESSED,
+    ArtifactType.EMAIL,
+    ArtifactType.FILE,
+    ArtifactType.PROCESS_DUMP,
+    ArtifactType.URL,
+}
+
 
 async def _save_artifact(
     scan_id: UUID,
@@ -200,6 +211,13 @@ async def download(
                             artifact.file_info.details.process_dump.process_name.removeprefix("/"),  # type: ignore
                             artifact.file_info.file_uri,
                             decompress=decompress,
+                        )
+
+                    if all and artifact.type not in _KNOWN_ARTIFACT_TYPES:
+                        add_task(
+                            output / "other",
+                            artifact.file_info.sha256,
+                            artifact.file_info.file_uri,
                         )
 
     if not tasks:

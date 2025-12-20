@@ -23,6 +23,6 @@ class SortByPlugins(BasePlugin):
                 plugins[data["plugin"]].append(line)
 
         for plugin, lines in plugins.items():
-            with open(f"{file}.{plugin}", "w", encoding="utf-8") as fd:
+            with open(base_path / f"{plugin}.log", "w", encoding="utf-8") as fd:
                 for line in lines:
                     fd.write(line)

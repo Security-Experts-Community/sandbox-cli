@@ -35,16 +35,16 @@ class CorrelatedRules(BasePlugin):
                         pass
 
         if len(malware) > 0:
-            with open(f"{file}.malware", "w", encoding="utf-8") as fd:
+            with open(base_path / "malware.log", "w", encoding="utf-8") as fd:
                 for line in malware:
                     fd.write(line)
 
         for key, lines in silent.items():
-            with open(f"{file}.silent.{key}", "w", encoding="utf-8") as fd:
+            with open(base_path / f"{key}.silent.log", "w", encoding="utf-8") as fd:
                 for line in lines:
                     fd.write(line)
 
         for key, lines in suspicious.items():
-            with open(f"{file}.suspicious.{key}", "w", encoding="utf-8") as fd:
+            with open(base_path / f"{key}.suspicious.log", "w", encoding="utf-8") as fd:
                 for line in lines:
                     fd.write(line)

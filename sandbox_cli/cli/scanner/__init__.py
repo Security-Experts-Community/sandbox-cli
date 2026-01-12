@@ -494,7 +494,7 @@ async def scan_new(
         Path | None,
         Parameter(
             name=["--syscall-hooks", "-s"],
-            help="Path to files with syscall hooks (file with syscall names splitted by newline)",
+            help="Path to file with syscall hooks (file with syscall names splitted by newline)",
             group="Sandbox Options",
         ),
     ] = None,
@@ -503,6 +503,14 @@ async def scan_new(
         Parameter(
             name=["--dll-hooks-dir", "-dll"],
             help="Path to directory with dll hooks",
+            group="Sandbox Options",
+        ),
+    ] = None,
+    unimon_hooks: Annotated[
+        Path | None,
+        Parameter(
+            name=["--unimon-hooks", "-u"],
+            help="Path to file with unimon hooks",
             group="Sandbox Options",
         ),
     ] = None,
@@ -536,6 +544,15 @@ async def scan_new(
         Parameter(
             name=["--no-procdumps-on-finish", "-P"],
             help="Disable dumps for all created and not finished processes",
+            group="Sandbox Options",
+            negative="",
+        ),
+    ] = False,
+    disable_lightweight_dumps: Annotated[
+        bool,
+        Parameter(
+            name=["--disable-lightweight-dumps", "-dl"],
+            help="Disable lightweight memory dumps (mostly for testing purposes)",
             group="Sandbox Options",
             negative="",
         ),
@@ -729,12 +746,14 @@ async def scan_new(
         is_local=is_local,
         analysis_duration=analysis_duration,
         syscall_hooks=syscall_hooks,
+        unimon_hooks=unimon_hooks,
         custom_command=custom_command,
         dll_hooks_dir=dll_hooks_dir,
         fake_name=fake_name,
         unpack=unpack,
         priority=priority,
         no_procdumps_on_finish=no_procdumps_on_finish,
+        disable_lightweight_dumps=disable_lightweight_dumps,
         bootkitmon=bootkitmon,
         bootkitmon_duration=bootkitmon_duration,
         mitm_disabled=mitm_disabled,

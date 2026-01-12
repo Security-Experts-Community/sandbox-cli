@@ -91,9 +91,11 @@ async def _prepare_sandbox_new_scan(
     is_local: bool,
     analysis_duration: int,
     syscall_hooks: Path | None,
+    unimon_hooks: Path | None,
     dll_hooks_dir: Path | None,
     custom_command: str | None,
     no_procdumps_on_finish: bool,
+    disable_lightweight_dumps: bool,
     bootkitmon: bool,
     bootkitmon_duration: int,
     mitm_disabled: bool,
@@ -155,6 +157,8 @@ async def _prepare_sandbox_new_scan(
     # all debug options available in library
     sandbox_options.debug_options["save_debug_files"] = True
     sandbox_options.debug_options["extract_crashdumps"] = True
+    # by default we want to use lightweight memory dumps
+    sandbox_options.debug_options["procdump_lightweight_mode"] = not disable_lightweight_dumps
 
     # process custom options
     compiled_rules = await _get_compiled_rules(rules_dir=rules_dir, is_local=is_local, progress=progress)
@@ -169,6 +173,13 @@ async def _prepare_sandbox_new_scan(
             data = await fd.read()
         syscall_hooks_uri = (await sandbox.api.upload_file(data)).data.file_uri
         sandbox_options.debug_options["custom_syscall_hooks"] = syscall_hooks_uri
+
+    if unimon_hooks:
+        progress.console.print(f"{console.INFO} Upload unimon hooks: {unimon_hooks}")
+        async with aiofiles.open(unimon_hooks, mode="rb") as fd:
+            data = await fd.read()
+        unimon_hooks_uri = (await sandbox.api.upload_file(data)).data.file_uri
+        sandbox_options.debug_options["custom_unimon_hooks"] = unimon_hooks_uri
 
     if dll_hooks_dir:
         progress.console.print(f"{console.INFO} Upload dll hooks: {dll_hooks_dir}")
@@ -205,12 +216,14 @@ async def scan_internal_advanced(
     is_local: bool,
     analysis_duration: int,
     syscall_hooks: Path | None,
+    unimon_hooks: Path | None,
     dll_hooks_dir: Path | None,
     custom_command: str | None,
     fake_name: str | None,
     unpack: bool,
     priority: int,
     no_procdumps_on_finish: bool,
+    disable_lightweight_dumps: bool,
     bootkitmon: bool,
     bootkitmon_duration: int,
     mitm_disabled: bool,
@@ -383,9 +396,11 @@ async def scan_internal_advanced(
             is_local,
             analysis_duration,
             syscall_hooks,
+            unimon_hooks,
             dll_hooks_dir,
             custom_command,
             no_procdumps_on_finish,
+            disable_lightweight_dumps,
             bootkitmon,
             bootkitmon_duration,
             mitm_disabled,

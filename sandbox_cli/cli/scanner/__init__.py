@@ -514,6 +514,14 @@ async def scan_new(
             group="Sandbox Options",
         ),
     ] = None,
+    fileextractor_excludes: Annotated[
+        Path | None,
+        Parameter(
+            name=["--fileextractor-excludes", "-fe"],
+            help="Path to file with fileextractor excludes",
+            group="Sandbox Options",
+        ),
+    ] = None,
     custom_command: Annotated[
         str | None,
         Parameter(
@@ -749,6 +757,7 @@ async def scan_new(
         unimon_hooks=unimon_hooks,
         custom_command=custom_command,
         dll_hooks_dir=dll_hooks_dir,
+        fileextractor_excludes=fileextractor_excludes,
         fake_name=fake_name,
         unpack=unpack,
         priority=priority,

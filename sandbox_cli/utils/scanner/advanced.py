@@ -93,6 +93,7 @@ async def _prepare_sandbox_new_scan(
     syscall_hooks: Path | None,
     unimon_hooks: Path | None,
     dll_hooks_dir: Path | None,
+    filextractor_excludes: Path | None,
     custom_command: str | None,
     no_procdumps_on_finish: bool,
     disable_lightweight_dumps: bool,
@@ -187,6 +188,13 @@ async def _prepare_sandbox_new_scan(
         dll_hooks_uri = (await sandbox.api.upload_file(data)).data.file_uri
         sandbox_options.debug_options["custom_dll_hooks"] = dll_hooks_uri
 
+    if filextractor_excludes:
+        progress.console.print(f"{console.INFO} Upload fileextractor excludes: {filextractor_excludes}")
+        async with aiofiles.open(filextractor_excludes, mode="rb") as fd:
+            data = await fd.read()
+        fileextractor_excludes_uri = (await sandbox.api.upload_file(data)).data.file_uri
+        sandbox_options.debug_options["custom_fileextractor_exclude"] = fileextractor_excludes_uri
+
     if custom_command:
         progress.console.print(f"{console.INFO} Commandline: {custom_command}")
         sandbox_options.custom_command = custom_command
@@ -218,6 +226,7 @@ async def scan_internal_advanced(
     syscall_hooks: Path | None,
     unimon_hooks: Path | None,
     dll_hooks_dir: Path | None,
+    fileextractor_excludes: Path | None,
     custom_command: str | None,
     fake_name: str | None,
     unpack: bool,
@@ -389,25 +398,26 @@ async def scan_internal_advanced(
     tasks: list[Coroutine[Any, Any, None]] = []
     with progress:
         sandbox, sandbox_options, images = await _prepare_sandbox_new_scan(
-            progress,
-            scan_images,
-            rules_dir,
-            key,
-            is_local,
-            analysis_duration,
-            syscall_hooks,
-            unimon_hooks,
-            dll_hooks_dir,
-            custom_command,
-            no_procdumps_on_finish,
-            disable_lightweight_dumps,
-            bootkitmon,
-            bootkitmon_duration,
-            mitm_disabled,
-            disable_clicker,
-            skip_sample_run,
-            vnc_mode,
-            outbound_connections,
+            progress=progress,
+            scan_images=scan_images,
+            rules_dir=rules_dir,
+            sandbox_key=key,
+            is_local=is_local,
+            analysis_duration=analysis_duration,
+            syscall_hooks=syscall_hooks,
+            unimon_hooks=unimon_hooks,
+            dll_hooks_dir=dll_hooks_dir,
+            filextractor_excludes=fileextractor_excludes,
+            custom_command=custom_command,
+            no_procdumps_on_finish=no_procdumps_on_finish,
+            disable_lightweight_dumps=disable_lightweight_dumps,
+            bootkitmon=bootkitmon,
+            bootkitmon_duration=bootkitmon_duration,
+            mitm_disabled=mitm_disabled,
+            disable_clicker=disable_clicker,
+            skip_sample_run=skip_sample_run,
+            vnc_mode=vnc_mode,
+            outbound_connections=outbound_connections,
         )
         max_image_length = max(len(x) for x in images)
         for i, image_id in enumerate(images):

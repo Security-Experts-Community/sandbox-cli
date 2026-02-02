@@ -707,6 +707,14 @@ async def scan_new(
             negative="",
         ),
     ] = False,
+    preserve_filename: Annotated[
+        bool,
+        Parameter(
+            name=["--preserve-filename", "-pf"],
+            help="Do not change filename for analysis.  \nWhen set to false (default behaviour): local/path/to/malware.exe[_~] -> sandbox/guest/os/malware.exe  \nWhen set to true name will remain unchanged.",
+            negative="",
+        ),
+    ] = False,
 ) -> None:
     """
     Send files to scan with the sandbox (advanced scan).
@@ -780,5 +788,6 @@ async def scan_new(
         procdumps=procdumps,
         decompress=decompress,
         open_browser=open_browser,
+        preserve_filename=preserve_filename,
         outbound_connections=outbound_connections,
     )

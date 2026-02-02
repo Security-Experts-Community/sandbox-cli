@@ -39,6 +39,7 @@ from sandbox_cli.utils.merge_dll_hooks import merge_dll_hooks
 from sandbox_cli.utils.unpack import Unpack
 
 DELIMETER = "\n"
+SAFE_SUFFIXES = "_~"
 
 
 async def _get_compiled_rules(progress: Progress, rules_dir: Path | None, is_local: bool) -> bytes | None:
@@ -250,6 +251,7 @@ async def scan_internal_advanced(
     procdumps: bool,
     decompress: bool,
     open_browser: bool,
+    preserve_filename: bool,
     outbound_connections: list[str] | None,
 ) -> None:
     key = get_key_by_name(key_name)
@@ -291,9 +293,13 @@ async def scan_internal_advanced(
                 wait_time = wait_timeout
 
             try:
+                guest_filename = file_path.name
+                if not preserve_filename:
+                    guest_filename = guest_filename.rstrip(SAFE_SUFFIXES)
+
                 scan_result = await sandbox.create_advanced_scan(
                     file_path,
-                    file_name=fake_name or file_path.name,
+                    file_name=fake_name or guest_filename,
                     extra_files=extra_files,
                     async_result=True,
                     priority=priority,

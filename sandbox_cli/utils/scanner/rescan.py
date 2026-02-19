@@ -78,7 +78,7 @@ async def _prepare_rescan_options(
 
     # some enabled options by default
     # all debug options available in library
-    sandbox_options.debug_options["save_debug_files"] = True
+    sandbox_options.sandbox.debug_options["save_debug_files"] = True
 
     # process custom options
     compiled_rules = await _get_compiled_rules(rules_dir=rules_dir, is_local=is_local, progress=progress)

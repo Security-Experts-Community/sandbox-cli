@@ -1353,7 +1353,7 @@ wheels = [
 
 [[package]]
 name = "sandbox-cli"
-version = "0.2.43"
+version = "0.2.46"
 source = { editable = "." }
 dependencies = [
     { name = "aiofiles" },

@@ -1,5 +1,6 @@
 import sys
 from collections.abc import Sequence
+from collections import deque
 from pathlib import Path
 from typing import Annotated, Any
 
@@ -49,6 +50,40 @@ def rules_path_resolver(_: Any, tokens: Sequence[Token]) -> Path | None:
             path = Path(token.value)
 
     return path
+
+
+def files_path_resolver(files: list[Path]) -> list[Path] | None:
+    files_queue = deque(files)
+    files_for_analysis: set[Path] = set()
+
+    is_ok = True
+    while files_queue:
+        file = files_queue.popleft()
+
+        # process wildcards
+        if sys.platform == "win32" and "*" in str(file):
+            for f in Path.cwd().glob(str(file)):
+                if f.is_file():
+                    files_queue.append(f)
+            continue
+
+        file = file.expanduser().resolve()
+
+        if not file.exists():
+            console.error(f"{str(file)} doesn't exist")
+            is_ok = False
+
+        if file.is_dir():
+            files_for_analysis.update(file.glob("**/*"))
+            continue
+
+        files_for_analysis.add(file)
+
+    if len(files_for_analysis) == 0:
+        console.error("Nothing to scan")
+        is_ok = False
+
+    return list(files_for_analysis) if is_ok else None
 
 
 @scanner.command(name="re-scan")
@@ -356,27 +391,9 @@ async def scan(
     if images is None:
         images = {settings.default_image}
 
-    # parse files options
-    is_ok = True
-    files_for_analysis: list[Path] = []
-    for file in files:
-        file = file.expanduser().resolve()
+    files_for_analysis = files_path_resolver(files)
 
-        if not file.exists():
-            console.error(f"{str(file)} doesn't exists")
-            is_ok = False
-
-        if file.is_dir():
-            files_for_analysis.extend(file.glob("**/*"))
-            continue
-
-        files_for_analysis.append(file)
-
-    if not is_ok:
-        sys.exit(1)
-
-    if len(files_for_analysis) == 0:
-        console.error("Nothing to scan")
+    if not files_for_analysis:
         sys.exit(1)
 
     await scan_internal(
@@ -730,27 +747,9 @@ async def scan_new(
     if extra_files is None:
         extra_files = []
 
-    # parse files options
-    is_ok = True
-    files_for_analysis: list[Path] = []
-    for file in files:
-        file = file.expanduser().resolve()
+    files_for_analysis = files_path_resolver(files)
 
-        if not file.exists():
-            console.error(f"{str(file)} doesn't exists")
-            is_ok = False
-
-        if file.is_dir():
-            files_for_analysis.extend(file.glob("**/*"))
-            continue
-
-        files_for_analysis.append(file)
-
-    if not is_ok:
-        sys.exit(1)
-
-    if len(files_for_analysis) == 0:
-        console.error("Nothing to scan")
+    if not files_for_analysis:
         sys.exit(1)
 
     await scan_internal_advanced(

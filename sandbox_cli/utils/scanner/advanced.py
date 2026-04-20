@@ -250,6 +250,8 @@ async def scan_internal_advanced(
     crashdumps: bool,
     procdumps: bool,
     decompress: bool,
+    amsi: bool,
+    dex: bool,
     open_browser: bool,
     preserve_filename: bool,
     outbound_connections: list[str] | None,
@@ -365,6 +367,8 @@ async def scan_internal_advanced(
                 procdumps=procdumps,
                 progress=progress,
                 video=True,  # by default download video
+                amsi=amsi,
+                dex=dex,
                 idx=idx,
                 image=formatted_image,
                 link=formatted_link,

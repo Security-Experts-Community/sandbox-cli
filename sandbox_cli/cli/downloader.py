@@ -161,13 +161,31 @@ async def download_command(
             group="Download options",
         ),
     ] = False,
+    amsi: Annotated[
+        bool,
+        Parameter(
+            name=["--amsi", "-am"],
+            help="Download amsi-dumps",
+            negative="",
+            group="Download options",
+        ),
+    ] = False,
+    dex: Annotated[
+        bool,
+        Parameter(
+            name=["--dex", "-dx"],
+            help="Download dex-dumps",
+            negative="",
+            group="Download options",
+        ),
+    ] = False,
     query: Annotated[
         str | None,
         Parameter(
             name=["--query", "-q"],
             help="Query for searching tasks (leave empty for last tasks)",
             group="Search",
-        )
+        ),
     ] = None,
     count: Annotated[
         int,
@@ -175,7 +193,7 @@ async def download_command(
             name=["--count", "-c"],
             help="How many tasks find and download",
             group="Search",
-        )
+        ),
     ] = 20,
 ) -> None:
     """
@@ -206,6 +224,8 @@ async def download_command(
         logs: bool = False,
         procdumps: bool = False,
         video: bool = False,
+        amsi: bool = False,
+        dex: bool = False,
         progress: Progress | None = None,
     ) -> None:
         await download(
@@ -219,6 +239,8 @@ async def download_command(
             crashdumps=crashdumps,
             procdumps=procdumps,
             video=video,
+            amsi=amsi,
+            dex=dex,
             logs=logs,
             decompress=decompress,
             progress=progress,
@@ -266,6 +288,8 @@ async def download_command(
                 crashdumps=crashdumps,
                 procdumps=procdumps,
                 video=video,
+                amsi=amsi,
+                dex=dex,
                 logs=logs,
                 decompress=decompress,
                 progress=progress,
@@ -303,6 +327,7 @@ async def download_command(
 
     # clear last line
     sys.stdout.write("\033[F\033[K")
+
 
 def download_email(
     emails: Annotated[

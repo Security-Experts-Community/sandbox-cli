@@ -153,6 +153,8 @@ async def scan_internal(
     crashdumps: bool,
     procdumps: bool,
     decompress: bool,
+    amsi: bool,
+    dex: bool,
     open_browser: bool,
 ) -> None:
     key = get_key_by_name(key_name)
@@ -216,6 +218,8 @@ async def scan_internal(
             files=download_files,
             crashdumps=crashdumps,
             procdumps=procdumps,
+            amsi=amsi,
+            dex=dex,
             video=True,
             logs=True,
             decompress=decompress,

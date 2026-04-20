@@ -1,6 +1,6 @@
 import sys
-from collections.abc import Sequence
 from collections import deque
+from collections.abc import Sequence
 from pathlib import Path
 from typing import Annotated, Any
 
@@ -357,6 +357,24 @@ async def scan(
             group="Download options",
         ),
     ] = False,
+    amsi: Annotated[
+        bool,
+        Parameter(
+            name=["--amsi", "-am"],
+            help="Download amsi-dumps",
+            negative="",
+            group="Download options",
+        ),
+    ] = False,
+    dex: Annotated[
+        bool,
+        Parameter(
+            name=["--dex", "-dx"],
+            help="Download dex-dumps",
+            negative="",
+            group="Download options",
+        ),
+    ] = False,
     decompress: Annotated[
         bool,
         Parameter(
@@ -418,6 +436,8 @@ async def scan(
         procdumps=procdumps,
         decompress=decompress,
         open_browser=open_browser,
+        amsi=amsi,
+        dex=dex,
     )
 
 
@@ -708,6 +728,24 @@ async def scan_new(
             group="Download options",
         ),
     ] = False,
+    amsi: Annotated[
+        bool,
+        Parameter(
+            name=["--amsi", "-am"],
+            help="Download amsi-dumps",
+            negative="",
+            group="Download options",
+        ),
+    ] = False,
+    dex: Annotated[
+        bool,
+        Parameter(
+            name=["--dex", "-dx"],
+            help="Download dex-dumps",
+            negative="",
+            group="Download options",
+        ),
+    ] = False,
     decompress: Annotated[
         bool,
         Parameter(
@@ -789,4 +827,6 @@ async def scan_new(
         open_browser=open_browser,
         preserve_filename=preserve_filename,
         outbound_connections=outbound_connections,
+        amsi=amsi,
+        dex=dex,
     )

@@ -25,8 +25,10 @@ semaphore = asyncio.Semaphore(value=16)
 # At first glance, it's counter-intuitive, but ArtifactType can contain not only predefined fields in it, but also newly added.
 # This usually happens when a new feature is released in the sandbox.
 _KNOWN_ARTIFACT_TYPES = {
+    ArtifactType.AMSI,
     ArtifactType.ARCHIVE,
     ArtifactType.COMPRESSED,
+    ArtifactType.DEX_DUMP,
     ArtifactType.EMAIL,
     ArtifactType.FILE,
     ArtifactType.PROCESS_DUMP,
@@ -122,6 +124,8 @@ async def download(
     logs: bool = False,
     procdumps: bool = False,
     video: bool = False,
+    amsi: bool = False,
+    dex: bool = False,
     progress: Progress | None = None,
     idx: str | None = None,
     image: str | None = None,
@@ -211,6 +215,20 @@ async def download(
                             artifact.file_info.details.process_dump.process_name.removeprefix("/"),  # type: ignore
                             artifact.file_info.file_uri,
                             decompress=decompress,
+                        )
+
+                    if artifact.type == ArtifactType.AMSI and (amsi or all):
+                        add_task(
+                            output / "amsi",
+                            f"{artifact.file_info.sha256}.bin",
+                            artifact.file_info.file_uri,
+                        )
+
+                    if artifact.type == ArtifactType.DEX_DUMP and (dex or all):
+                        add_task(
+                            output / "dex",
+                            f"{artifact.file_info.sha256}.bin",
+                            artifact.file_info.file_uri,
                         )
 
                     if all and artifact.type not in _KNOWN_ARTIFACT_TYPES:

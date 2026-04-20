@@ -8,16 +8,16 @@ license = "MIT"
 license-files = ["LICENSE", "NOTICE"]
 authors = [{ name = "Alexey Kolesnikov" }]
 dependencies = [
-  "aiofiles>=24.1.0",
-  "asyncssh>=2.21.1",
+  "aiofiles>=25.1.0",
+  "asyncssh>=2.22.0",
   "colorama>=0.4.6",
-  "cryptography>=46.0.2",
-  "cyclopts>=4.2.5",
+  "cryptography>=46.0.5",
+  "cyclopts>=4.10.2",
   "docker>=7.1.0",
-  "ptsandbox>=5.0.8",
+  "ptsandbox>=5.0.10",
   "pyzipper>=0.3.6",
-  "rich>=14.1.0",
-  "zstandard>=0.23.0",
+  "rich>=14.3.3",
+  "zstandard>=0.25.0",
 ]
 
 [project.urls]

@@ -674,6 +674,15 @@ async def scan_new(
             negative="",
         ),
     ] = None,
+    file_type_as_ext: Annotated[
+        bool | None,
+        Parameter(
+            name=["--file-type-as-ext", "-fe"],
+            help="Use a file type as an extension for a file",
+            group="Sandbox Options",
+            negative="",
+        ),
+    ] = None,
     all: Annotated[
         bool,
         Parameter(
@@ -829,4 +838,5 @@ async def scan_new(
         outbound_connections=outbound_connections,
         amsi=amsi,
         dex=dex,
+        file_type_as_ext=file_type_as_ext,
     )

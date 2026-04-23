@@ -1330,7 +1330,7 @@ wheels = [
 
 [[package]]
 name = "ptsandbox"
-version = "5.0.10"
+version = "5.0.11"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "aiohttp" },
@@ -1339,9 +1339,9 @@ dependencies = [
     { name = "orjson" },
     { name = "pydantic" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/d6/bf/4c8f37b834825a50d4b2ec88b3b6a5917fca9633c26b70402f4b7e9f77e9/ptsandbox-5.0.10.tar.gz", hash = "sha256:825449188a6a8f3a471a96cfda2e8141dd4f6c40222daec69a53498cf7a62817", size = 51905, upload-time = "2026-04-20T20:35:16.387Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/30/3f/8396fb5272b7ee406b0b97d28c81e57a86f3e4afc76d9fbe527d28d0ef8d/ptsandbox-5.0.11.tar.gz", hash = "sha256:d1dfd581733409b251895e2b954174cdd43e44349f66dfdeba70f15f4252f426", size = 51919, upload-time = "2026-04-23T11:45:31.308Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/fa/c2/75e5b294e691af39e0f862eaec37ce45df1e8ab3a8a8e8ab05682158e53b/ptsandbox-5.0.10-py3-none-any.whl", hash = "sha256:3f4c1ffe2c885c9c93a2aaf292c27de394333aab522856deac0c8de89ce06cb2", size = 64728, upload-time = "2026-04-20T20:35:15.4Z" },
+    { url = "https://files.pythonhosted.org/packages/ef/67/c98aa93e1ec437a2db4f5f28b958d9ee1465b4cbd529767d4f980214679a/ptsandbox-5.0.11-py3-none-any.whl", hash = "sha256:fd748e1379e95312dc8ed8c6a13bbf16b12ebf827f2bd9587c88e9a027795039", size = 64750, upload-time = "2026-04-23T11:45:30.257Z" },
 ]
 
 [[package]]
@@ -1718,7 +1718,7 @@ wheels = [
 
 [[package]]
 name = "sandbox-cli"
-version = "0.2.48"
+version = "0.2.49"
 source = { editable = "." }
 dependencies = [
     { name = "aiofiles" },
@@ -1755,7 +1755,7 @@ requires-dist = [
     { name = "cryptography", specifier = ">=46.0.5" },
     { name = "cyclopts", specifier = ">=4.10.2" },
     { name = "docker", specifier = ">=7.1.0" },
-    { name = "ptsandbox", specifier = ">=5.0.10" },
+    { name = "ptsandbox", specifier = ">=5.0.11" },
     { name = "pyzipper", specifier = ">=0.3.6" },
     { name = "rich", specifier = ">=14.3.3" },
     { name = "zstandard", specifier = ">=0.25.0" },

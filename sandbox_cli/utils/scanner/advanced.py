@@ -105,6 +105,7 @@ async def _prepare_sandbox_new_scan(
     skip_sample_run: bool,
     vnc_mode: VNCMode,
     outbound_connections: list[str] | None,
+    file_type_as_ext: bool | None,
 ) -> tuple[Sandbox, SandboxOptionsAdvanced, set[VMImage | str]]:
     sandbox = Sandbox(key=sandbox_key)
 
@@ -200,6 +201,10 @@ async def _prepare_sandbox_new_scan(
         progress.console.print(f"{console.INFO} Commandline: {custom_command}")
         sandbox_options.custom_command = custom_command
 
+    if file_type_as_ext is not None:
+        progress.console.print(f"{console.INFO} Using magic types from the sandbox")
+        sandbox_options.debug_options["file_type_as_ext"] = file_type_as_ext
+
     # add extra options
     sandbox_options.debug_options["allowed_outbound_connections"] = outbound_connections or []
     sandbox_options.procdump_new_processes_on_finish = not no_procdumps_on_finish
@@ -255,6 +260,7 @@ async def scan_internal_advanced(
     open_browser: bool,
     preserve_filename: bool,
     outbound_connections: list[str] | None,
+    file_type_as_ext: bool | None,
 ) -> None:
     key = get_key_by_name(key_name)
     sandbox_sem = asyncio.Semaphore(value=key.max_workers)
@@ -428,6 +434,7 @@ async def scan_internal_advanced(
             skip_sample_run=skip_sample_run,
             vnc_mode=vnc_mode,
             outbound_connections=outbound_connections,
+            file_type_as_ext=file_type_as_ext,
         )
         max_image_length = max(len(x) for x in images)
         for i, image_id in enumerate(images):

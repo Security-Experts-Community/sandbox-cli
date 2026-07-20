@@ -61,11 +61,11 @@ async def download_command(
         str,
         Parameter(
             name=["--key", "-k"],
-            help=f"The key to access the sandbox **{'**,**'.join(x.name.get_secret_value() for x in settings.sandbox_keys)}**",
+            help=f"The key to access the sandbox **{'**,**'.join(x.name for x in settings.sandbox_keys)}**",
             validator=validate_key,
             group="Sandbox",
         ),
-    ] = settings.sandbox_keys[0].name.get_secret_value(),
+    ] = settings.sandbox_keys[0].name,
     out_dir: Annotated[
         Path,
         Parameter(
@@ -255,7 +255,7 @@ async def download_command(
             else:
                 Unpack(out_dir).run()
 
-    async def create_task(sandbox: Sandbox, task_id: str) -> None:
+    async def create_task(sandbox: Sandbox, task_id: str | UUID) -> None:
         progress_task_id = progress.add_task(description=rf"\[[green1]{task_id}[/]] fetching info", start=True)
 
         def finalize_progress() -> None:
@@ -299,7 +299,7 @@ async def download_command(
     tasks: list[Coroutine[Any, Any, Artifact.EngineResult | None]] = []
 
     if query is not None:
-        sandbox = Sandbox(get_key_by_name(key_name=key))
+        sandbox: Sandbox = Sandbox(get_key_by_name(key_name=key))
 
         limit = 40 if count > 40 else count
         viewed, next_cursor = 0, ""
@@ -316,11 +316,11 @@ async def download_command(
         sys.stdout.write("\033[F\033[K")
 
     for task in tasks_id:
-        sandbox, task_id = get_key_and_task(key, task)
-        if not sandbox or not task_id:
+        sandbox_key, task_id = get_key_and_task(key, task)
+        if not (sandbox_key and task_id):
             continue
 
-        await create_task(sandbox, task_id)
+        await create_task(sandbox_key, task_id)
 
     with progress:
         await asyncio.gather(*tasks)
@@ -349,11 +349,11 @@ def download_email(
         str,
         Parameter(
             name=["--key", "-k"],
-            help=f"The key to access the sandbox **{'**,**'.join(x.name.get_secret_value() for x in settings.sandbox_keys)}**",
+            help=f"The key to access the sandbox **{'**,**'.join(x.name for x in settings.sandbox_keys)}**",
             validator=validate_key,
             group="Sandbox",
         ),
-    ] = settings.sandbox_keys[0].name.get_secret_value(),
+    ] = settings.sandbox_keys[0].name,
 ) -> None:
     """
     Upload an email and get its headers.

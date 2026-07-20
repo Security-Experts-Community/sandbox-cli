@@ -239,7 +239,7 @@ async def scan_internal(
     ) -> None:
         sandbox_arguments = SandboxArguments(
             type=ScanType.SCAN,
-            sandbox_key_name=key.name.get_secret_value(),
+            sandbox_key_name=key.name,
             sandbox_options=sandbox_options.sandbox,
         )
         save_scan_arguments(out_dir, sandbox_arguments)
@@ -249,7 +249,7 @@ async def scan_internal(
         # except Exception as ex:
         #     console.log(f"[cyan]{idx}[/] {file_path} Error: {ex!r}")
 
-    console.info(f"Using key: name={key.name.get_secret_value()} max_workers={key.max_workers}")
+    console.info(f"Using key: name={key.name} max_workers={key.max_workers}")
 
     tasks: list[Coroutine[Any, Any, None]] = []
     sandbox, sandbox_options, images = await _prepare_scan_options(

@@ -40,7 +40,7 @@ async def _save_artifact(
     scan_id: UUID,
     sandbox: Sandbox,
     out_dir: Path,
-    path: Path,
+    name: str,
     file_uri: str,
     overwrite: bool = False,
     decompress: bool = False,
@@ -54,7 +54,7 @@ async def _save_artifact(
         return
 
     # sanitize path
-    path = out_dir / Path(str(path).replace(" ", "_"))
+    path = out_dir / name.replace(" ", "_")
     if not overwrite:
         n = 1
         while path.exists():
@@ -133,13 +133,13 @@ async def download(
 ) -> None:
     tasks: list[Coroutine[Any, Any, None]] = []
 
-    def add_task(out_dir: Path, path: Path, file_uri: str, decompress: bool = False, overwrite: bool = False) -> None:
+    def add_task(out_dir: Path, name: str, file_uri: str, decompress: bool = False, overwrite: bool = False) -> None:
         tasks.append(
             _save_artifact(
                 scan_id=report.scan_id,
                 sandbox=sandbox,
                 out_dir=out_dir,
-                path=path,
+                name=name,
                 file_uri=file_uri,
                 progress=progress,
                 idx=idx,
@@ -178,16 +178,34 @@ async def download(
                     LogType.EVENT_RAW,
                     LogType.NETWORK,
                 }:
-                    add_task(output, log.file_name, log.file_uri, overwrite=True)
+                    add_task(
+                        out_dir=output,
+                        name=log.file_name,
+                        file_uri=log.file_uri,
+                        overwrite=True,
+                    )
 
                 if (all or video) and log.type == LogType.SCREENSHOT:
-                    add_task(output, log.file_name, log.file_uri, overwrite=True)
+                    add_task(
+                        out_dir=output,
+                        name=log.file_name,
+                        file_uri=log.file_uri,
+                        overwrite=True,
+                    )
 
                 if (all or crashdumps) and log.file_name in {"crashdump.bin", "crashdump.metadata"}:
-                    add_task(output / "crashdumps", log.file_name, log.file_uri)
+                    add_task(
+                        out_dir=output / "crashdumps",
+                        name=log.file_name,
+                        file_uri=log.file_uri,
+                    )
 
                 if (all or debug) and log.type in {LogType.DEBUG, LogType.GRAPH}:
-                    add_task(output / "debug", log.file_name, log.file_uri)
+                    add_task(
+                        out_dir=output / "debug",
+                        name=log.file_name,
+                        file_uri=log.file_uri,
+                    )
 
             if artifacts or files or procdumps or all:
                 if not sandbox_result.details:
@@ -205,37 +223,37 @@ async def download(
 
                     if artifact.type == ArtifactType.FILE and (files or artifacts or all):
                         add_task(
-                            output / "artifacts",
-                            artifact.file_info.file_path.removeprefix("/"),
-                            artifact.file_info.file_uri,
+                            out_dir=output / "artifacts",
+                            name=artifact.file_info.file_path.removeprefix("/"),
+                            file_uri=artifact.file_info.file_uri,
                         )
                     if artifact.type == ArtifactType.PROCESS_DUMP and (procdumps or artifacts or all):
                         add_task(
-                            output / "process_dump",
-                            artifact.file_info.details.process_dump.process_name.removeprefix("/"),  # type: ignore
-                            artifact.file_info.file_uri,
+                            out_dir=output / "process_dump",
+                            name=artifact.file_info.details.process_dump.process_name.removeprefix("/"),  # type: ignore
+                            file_uri=artifact.file_info.file_uri,
                             decompress=decompress,
                         )
 
                     if artifact.type == ArtifactType.AMSI and (amsi or all):
                         add_task(
-                            output / "amsi",
-                            f"{artifact.file_info.sha256}.bin",
-                            artifact.file_info.file_uri,
+                            out_dir=output / "amsi",
+                            name=f"{artifact.file_info.sha256}.bin",
+                            file_uri=artifact.file_info.file_uri,
                         )
 
                     if artifact.type == ArtifactType.DEX_DUMP and (dex or all):
                         add_task(
-                            output / "dex",
-                            f"{artifact.file_info.sha256}.bin",
-                            artifact.file_info.file_uri,
+                            out_dir=output / "dex",
+                            name=f"{artifact.file_info.sha256}.bin",
+                            file_uri=artifact.file_info.file_uri,
                         )
 
                     if all and artifact.type not in _KNOWN_ARTIFACT_TYPES:
                         add_task(
-                            output / "other",
-                            artifact.file_info.sha256,
-                            artifact.file_info.file_uri,
+                            out_dir=output / "other",
+                            name=artifact.file_info.sha256,
+                            file_uri=artifact.file_info.file_uri,
                         )
 
     if not tasks:

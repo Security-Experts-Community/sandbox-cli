@@ -7,7 +7,7 @@ from typing import Any
 
 import pydantic
 from ptsandbox import SandboxKey
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, SecretStr
 
 from sandbox_cli.console import console
 
@@ -78,7 +78,7 @@ class Settings(BaseModel):
         def sandbox_key(self) -> SandboxKey:
             return SandboxKey(
                 name=self.name,
-                key=self.key,
+                key=SecretStr(self.key),
                 host=self.host,
                 max_workers=self.max_workers,
                 description=self.description,

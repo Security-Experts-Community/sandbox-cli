@@ -78,9 +78,9 @@ async def _get_compiled_rules(progress: Progress, rules_dir: Path | None, is_loc
 
 
 def get_elapsed_time(task: Task) -> str:
-    hours = int(task.elapsed) // 3600
-    minutes = (int(task.elapsed) % 3600) // 60
-    seconds = int(task.elapsed) % 60
+    hours = int(task.elapsed or 0) // 3600
+    minutes = (int(task.elapsed or 0) % 3600) // 60
+    seconds = int(task.elapsed or 0) % 60
     return f"[yellow]{hours}:{minutes:02d}:{seconds:02d}[/]"
 
 
@@ -399,7 +399,7 @@ async def scan_internal_advanced(
     ) -> None:
         sandbox_arguments = SandboxArguments(
             type=ScanType.SCAN_NEW,
-            sandbox_key_name=key.name.get_secret_value(),
+            sandbox_key_name=key.name,
             sandbox_options=sandbox_options,
         )
         save_scan_arguments(out_dir, sandbox_arguments)
@@ -409,7 +409,7 @@ async def scan_internal_advanced(
         # except Exception as ex:
         #     console.log(f"[cyan]{idx}[/] {file_path} Error: {ex!r}")
 
-    console.info(f"Using key: name={key.name.get_secret_value()} max_workers={key.max_workers}")
+    console.info(f"Using key: name={key.name} max_workers={key.max_workers}")
 
     tasks: list[Coroutine[Any, Any, None]] = []
     with progress:

@@ -9,14 +9,14 @@ license-files = ["LICENSE", "NOTICE"]
 authors = [{ name = "Alexey Kolesnikov" }]
 dependencies = [
   "aiofiles>=25.1.0",
-  "asyncssh>=2.22.0",
+  "asyncssh>=2.24.0",
   "colorama>=0.4.6",
-  "cryptography>=46.0.5",
-  "cyclopts>=4.10.2",
+  "cryptography>=49.0.0",
+  "cyclopts>=4.20.0",
   "docker>=7.1.0",
-  "ptsandbox>=5.0.11",
-  "pyzipper>=0.3.6",
-  "rich>=14.3.3",
+  "ptsandbox>=5.0.14",
+  "pyzipper>=0.4.0",
+  "rich>=15.0.0",
   "zstandard>=0.25.0",
 ]
 
@@ -28,11 +28,11 @@ Issues = "https://github.com/Security-Experts-Community/sandbox-cli/issues"
 
 [dependency-groups]
 dev = [
-  "black>=24.10.0",
-  "isort>=5.13.2",
-  "mypy>=1.14.1",
-  "types-aiofiles>=24.1.0.20241221",
-  "types-docker>=7.1.0.20241229",
+  "black>=26.5.1",
+  "isort>=7.0.0",
+  "mypy>=2.1.0",
+  "types-aiofiles>=25.1.0.20260518",
+  "types-docker>=7.1.0.20260712",
 ]
 docs = ["mkdocs>=1.6.1", "mkdocs-material>=9.6.7", "termynal>=0.13.0"]
 

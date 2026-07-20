@@ -312,9 +312,6 @@ async def download_command(
                 viewed += limit
                 next_cursor = response.next_cursor
 
-        # clear last line
-        sys.stdout.write("\033[F\033[K")
-
     for task in tasks_id:
         sandbox_key, task_id = get_key_and_task(key, task)
         if not (sandbox_key and task_id):
@@ -324,9 +321,6 @@ async def download_command(
 
     with progress:
         await asyncio.gather(*tasks)
-
-    # clear last line
-    sys.stdout.write("\033[F\033[K")
 
 
 def download_email(

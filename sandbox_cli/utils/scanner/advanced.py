@@ -403,11 +403,7 @@ async def scan_internal_advanced(
             sandbox_options=sandbox_options,
         )
         save_scan_arguments(out_dir, sandbox_arguments)
-
-        # try:
         await process_file(sandbox_options, file_path, out_dir, idx)
-        # except Exception as ex:
-        #     console.log(f"[cyan]{idx}[/] {file_path} Error: {ex!r}")
 
     console.info(f"Using key: name={key.name} max_workers={key.max_workers}")
 
@@ -454,6 +450,3 @@ async def scan_internal_advanced(
 
         await asyncio.gather(*tasks)
         await sandbox.api.session.close()
-
-    # clear last line
-    sys.stdout.write("\033[F\033[K")

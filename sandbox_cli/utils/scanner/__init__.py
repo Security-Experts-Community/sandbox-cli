@@ -243,11 +243,7 @@ async def scan_internal(
             sandbox_options=sandbox_options.sandbox,
         )
         save_scan_arguments(out_dir, sandbox_arguments)
-
-        # try:
         await process_file(sandbox_options, file_path, out_dir, idx)
-        # except Exception as ex:
-        #     console.log(f"[cyan]{idx}[/] {file_path} Error: {ex!r}")
 
     console.info(f"Using key: name={key.name} max_workers={key.max_workers}")
 

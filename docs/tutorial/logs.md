@@ -79,33 +79,12 @@ Now you can easily find a suspicious event and analyze it.
 ```sh
 $ sandbox-cli conv --help
 
-Usage: sandbox-cli conv [ARGS]
+Usage: sandbox-cli conv TRACES
 
 Convert sandbox logs into an analysis-friendly format.
 
-Output file structure:
-
- • drakvuf-trace
-    • drakvuf-trace.log
- • correlated
-    • events-correlated.log
-    • events-correlated.log.<DETECT_NAME>
- • normalized
-    • events-normalized.log
-    • events-normalized.log.<DETECT_NAME>
- • network
-    • tcpdump.pcap
- • raw
-    • drakvuf-trace.log.zst
-    • tcpdump.pcap
-
-Usage examples:
-
- • Checks for drakvuf-trace.log.gz or drakvuf-trace.log.zst in the current directory: sandbox-cli unpack .
- • Extracts and processes logs into the sandbox_logs directory: sandbox-cli unpack sandbox_logs.zip
- • Handles multiple archives simultaneously: sandbox-cli unpack sandbox_logs.zip sandbox_logs_1.zip
-
-╭─ Arguments ───────────────────────────────────────────────────────────────────────────────────────────────╮
-│ *  TRACES  The path to the folder with the raw traces or with the sandbox-logs.zip [required]             │
-╰───────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭─ Arguments ──────────────────────────────────────────────────────────────────╮
+│ *  TRACES  The path to the folder with the raw traces or with the            │
+│            sandbox-logs.zip [required]                                       │
+╰──────────────────────────────────────────────────────────────────────────────╯
 ```

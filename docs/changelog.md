@@ -5,6 +5,96 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.2.50
+
+### Fixed
+
+- Don't clean last line in scanner output (was overriding results)
+- Resolve mypy type issues
+
+## 0.2.49
+
+### Added
+
+- New parameter to fine-tune the scan (`--disable-lightweight-dumps`)
+
+## 0.2.48
+
+### Added
+
+- New artifact types for download from sandbox (AMSI dumps, DEX dumps)
+- Wildcard support for scan files on Windows
+
+## 0.2.47
+
+### Added
+
+- Internal improvements
+
+## 0.2.46
+
+### Added
+
+- Save debug files on rescan
+- Remove "safe" suffix from the analysis filename
+
+## 0.2.45
+
+### Added
+
+- Option to pass fileextractor excludes (`--fileextractor-excludes`)
+
+## 0.2.44
+
+### Added
+
+- New scanner options (`--unimon-hooks`, `--no-procdumps-on-finish`, `--file-type-as-ext`)
+
+## 0.2.43
+
+### Added
+
+- Shell completion command (`sandbox-cli completion`)
+
+### Changed
+
+- Refactor file names in unpack output
+
+## 0.2.42
+
+### Added
+
+- Download any unknown artifact types
+
+### Fixed
+
+- Missing sandbox link in `md` report output
+
+## 0.2.41
+
+### Added
+
+- Wait timeout option for scans (`--wait-timeout`)
+- Support for task links in download command
+
+## 0.2.40
+
+### Fixed
+
+- Incorrect task parsing in download command
+
+## 0.2.39
+
+### Added
+
+- Option to show suspicious detects in report (`--suspicious`)
+- Show elapsed time when scan is done
+- Show malware detects always on top
+
+### Fixed
+
+- Handle socket timeout error while downloading files
+
 ## 0.2.38
 
 ### Added

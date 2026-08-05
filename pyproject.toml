@@ -13,8 +13,8 @@ dependencies = [
   "colorama>=0.4.6",
   "cryptography>=49.0.0",
   "cyclopts>=4.20.0",
-  "docker>=7.1.0",
-  "ptsandbox>=5.0.14",
+  "docker>=7.2.0",
+  "ptsandbox>=5.1.0",
   "pyzipper>=0.4.0",
   "rich>=15.0.0",
   "zstandard>=0.25.0",
@@ -28,14 +28,14 @@ Issues = "https://github.com/Security-Experts-Community/sandbox-cli/issues"
 
 [dependency-groups]
 dev = [
-  "black>=26.5.1",
-  "isort>=7.0.0",
-  "mypy>=2.1.0",
-  "types-aiofiles>=25.1.0.20260518",
-  "types-docker>=7.1.0.20260712",
-  "types-colorama>=0.4.15.20260508",
+  "black==26.5.1",
+  "isort==8.0.1",
+  "mypy==2.3.0",
+  "types-aiofiles==25.1.0.20260518",
+  "types-docker==7.2.0.20260728",
+  "types-colorama==0.4.15.20260508",
 ]
-docs = ["mkdocs>=1.6.1", "mkdocs-material>=9.6.7", "termynal>=0.13.0"]
+docs = ["mkdocs==1.6.1", "mkdocs-material==9.7.7", "termynal==0.14.0"]
 
 [project.scripts]
 sandbox-cli = "sandbox_cli.__main__:main"

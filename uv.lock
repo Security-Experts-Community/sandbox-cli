@@ -1394,7 +1394,7 @@ wheels = [
 
 [[package]]
 name = "ptsandbox"
-version = "5.0.14"
+version = "5.1.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "aiohttp" },
@@ -1402,9 +1402,9 @@ dependencies = [
     { name = "orjson" },
     { name = "pydantic" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/48/ad/bd953d14b603ef73adc324c0d83589de95460cd02179e6a3963db1ba8d0f/ptsandbox-5.0.14.tar.gz", hash = "sha256:b654bc2389e0ae009ac2d3a5c2f13ebd17a693a0d14a7727d26e4498ac00acbd", size = 52488, upload-time = "2026-07-16T12:44:15.404Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/f9/86/1aab0931105604ac769f14eaf5d3a0812dff2dd4f26c31b24fdc1faf0dc7/ptsandbox-5.1.0.tar.gz", hash = "sha256:d23cfbb1e93f806907447692e656ff907012429a79bfdaa787029e7fdea53774", size = 56958, upload-time = "2026-08-01T01:08:53.687Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/35/2d/37d99e2c6655bb77f6735793b4825e0035a99e9005a7a7410a7fbb6de44a/ptsandbox-5.0.14-py3-none-any.whl", hash = "sha256:1883f2dc361387eae0b77de8c61d1fb85dcce3766e37c5ff7cce79007cc6ed57", size = 65496, upload-time = "2026-07-16T12:44:13.981Z" },
+    { url = "https://files.pythonhosted.org/packages/9d/da/48b9c3db2978605c1655fa00e82b979c7fa06cd0472c9ff81e35a1b51ea0/ptsandbox-5.1.0-py3-none-any.whl", hash = "sha256:633adfe444eea2b28cf46365ea2063d55eab249d2d39a702aa8d0f8542a2ae2e", size = 76904, upload-time = "2026-08-01T01:08:52.408Z" },
 ]
 
 [[package]]
@@ -1821,8 +1821,8 @@ requires-dist = [
     { name = "colorama", specifier = ">=0.4.6" },
     { name = "cryptography", specifier = ">=49.0.0" },
     { name = "cyclopts", specifier = ">=4.20.0" },
-    { name = "docker", specifier = ">=7.1.0" },
-    { name = "ptsandbox", specifier = ">=5.0.14" },
+    { name = "docker", specifier = ">=7.2.0" },
+    { name = "ptsandbox", specifier = ">=5.1.0" },
     { name = "pyzipper", specifier = ">=0.4.0" },
     { name = "rich", specifier = ">=15.0.0" },
     { name = "zstandard", specifier = ">=0.25.0" },
@@ -1830,17 +1830,17 @@ requires-dist = [
 
 [package.metadata.requires-dev]
 dev = [
-    { name = "black", specifier = ">=26.5.1" },
-    { name = "isort", specifier = ">=7.0.0" },
-    { name = "mypy", specifier = ">=2.1.0" },
-    { name = "types-aiofiles", specifier = ">=25.1.0.20260518" },
-    { name = "types-colorama", specifier = ">=0.4.15.20260508" },
-    { name = "types-docker", specifier = ">=7.1.0.20260712" },
+    { name = "black", specifier = "==26.5.1" },
+    { name = "isort", specifier = "==8.0.1" },
+    { name = "mypy", specifier = "==2.3.0" },
+    { name = "types-aiofiles", specifier = "==25.1.0.20260518" },
+    { name = "types-colorama", specifier = "==0.4.15.20260508" },
+    { name = "types-docker", specifier = "==7.2.0.20260728" },
 ]
 docs = [
-    { name = "mkdocs", specifier = ">=1.6.1" },
-    { name = "mkdocs-material", specifier = ">=9.6.7" },
-    { name = "termynal", specifier = ">=0.13.0" },
+    { name = "mkdocs", specifier = "==1.6.1" },
+    { name = "mkdocs-material", specifier = "==9.7.7" },
+    { name = "termynal", specifier = "==0.14.0" },
 ]
 
 [[package]]
@@ -1884,28 +1884,15 @@ wheels = [
 
 [[package]]
 name = "types-docker"
-version = "7.2.0.20260720"
+version = "7.2.0.20260728"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "types-paramiko" },
     { name = "types-requests" },
     { name = "urllib3" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/2a/7f/e23a7af06e83d4bf8ed597c96c1d4f5792820cf4e41a384066f1e2d3aec1/types_docker-7.2.0.20260720.tar.gz", hash = "sha256:10eed9eb83be40718f56e5571d07f743d9a113aaa6caf7638b58f425cb9176fb", size = 34574, upload-time = "2026-07-20T05:27:16.868Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/00/f9/7792217bb55b523f409e8699b41d849345fe673e7aae254e5402c8b6c391/types_docker-7.2.0.20260728.tar.gz", hash = "sha256:eeb780deddb000d3be7584cca16b02fc7f68b135b0039977be13c121861db197", size = 36538, upload-time = "2026-07-28T04:52:14.199Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/e7/84/14fdebb3492d172ad8e910c5872a2687cbc578df074c4c8c5cceaf5bfaa1/types_docker-7.2.0.20260720-py3-none-any.whl", hash = "sha256:c032d0cec89ac1ee9b962d190882fba07ca5fe0dbfd025c01e4cb78d9de0e278", size = 48628, upload-time = "2026-07-20T05:27:15.937Z" },
-]
-
-[[package]]
-name = "types-paramiko"
-version = "5.0.0.20260617"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "cryptography" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/de/89/902652d7b62bb7cd2b73c7f08c8fd03945c223c3814022f0ad305e1018b9/types_paramiko-5.0.0.20260617.tar.gz", hash = "sha256:50a5b0dc68b39d30097cb7d93b4915dbbc97ed740ea633bd492be25ca1f25df4", size = 28474, upload-time = "2026-06-17T06:56:52.955Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/50/4d/eab89decb4201dfff665a3b92088f384ff1e165bf6caa447509733bc1bc6/types_paramiko-5.0.0.20260617-py3-none-any.whl", hash = "sha256:83d87c396405666524441710ec59e693bca8b19021861456ac0a2401327812f8", size = 37123, upload-time = "2026-06-17T06:56:51.81Z" },
+    { url = "https://files.pythonhosted.org/packages/96/0b/733f7fb323bbf4394f69b7c6485b6b7d373c301261c26af08ad72bcfa456/types_docker-7.2.0.20260728-py3-none-any.whl", hash = "sha256:f8d7a80dbc12cb7d794bf22d42f7bb1545db6226ee204dc685812a4695ac9a23", size = 51168, upload-time = "2026-07-28T04:52:13.201Z" },
 ]
 
 [[package]]

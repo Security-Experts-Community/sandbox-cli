@@ -48,7 +48,7 @@ Default: `["infected", "311138", "password", "12345678", "P@ssw0rd!"]`
 
 | Option   | Description                       | Default |
 | -------- | --------------------------------- | ------- |
-| username | The user's login on the server    | `None`  |
+| login    | The user's login on the server    | `None`  |
 | password | The user's password on the server | `None`  |
 
 #### `browser`
@@ -101,7 +101,7 @@ key = ""
 host = ""
 max-workers = 8
 description = ""
-ssh = { username = "", password = "" }
+ssh = { login = "", password = "" }
 
 [[sandbox]]
 name = ""

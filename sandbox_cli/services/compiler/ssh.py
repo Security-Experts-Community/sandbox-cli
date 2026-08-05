@@ -45,7 +45,7 @@ class RemoteCompiler(AbstractCompiler):
     def __init__(self) -> None:
         sandbox = settings.sandbox[0]
         self._host: str = sandbox.host
-        self._username: str = sandbox.ssh.username
+        self._username: str = sandbox.ssh.login
         self._password: str = sandbox.ssh.password
         self._client: SSHClientConnection | None = None
         self._tmp_directory: PurePosixPath | None = None

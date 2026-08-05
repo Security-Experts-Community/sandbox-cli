@@ -92,7 +92,7 @@ class Platform(str, Enum):
 
 
 class SSHConfig(BaseModel):
-    username: str = ""
+    login: str = ""
     password: str = ""
 
 

@@ -81,55 +81,54 @@ app.command(
     help="Open sandbox link in the default browser.",
 )
 
-if len(settings.sandbox_keys) > 0:
-    scanner_app = App(name="scanner", help="Scan with the sandbox.", help_format="markdown", console=console)
-    scanner_app.command(
-        "sandbox_cli.cli.scanner.scan:scan",
-        name="scan",
-        help="Send files to scan with the sandbox.",
-    )
-    scanner_app.command(
-        "sandbox_cli.cli.scanner.scan_new:scan_new",
-        name="scan-new",
-        help="Send files to scan with the sandbox (advanced scan).",
-    )
-    scanner_app.command(
-        "sandbox_cli.cli.scanner.re_scan:re_scan",
-        name="re-scan",
-        help="Send traces to re-scan.",
-    )
-    app.command(scanner_app)
+scanner_app = App(name="scanner", help="Scan with the sandbox.", help_format="markdown", console=console)
+scanner_app.command(
+    "sandbox_cli.cli.scanner.scan:scan",
+    name="scan",
+    help="Send files to scan with the sandbox.",
+)
+scanner_app.command(
+    "sandbox_cli.cli.scanner.scan_new:scan_new",
+    name="scan-new",
+    help="Send files to scan with the sandbox (advanced scan).",
+)
+scanner_app.command(
+    "sandbox_cli.cli.scanner.re_scan:re_scan",
+    name="re-scan",
+    help="Send traces to re-scan.",
+)
+app.command(scanner_app)
 
-    rules_app = App(
-        name="rules",
-        help="Working with raw sandbox rules.",
-        help_format="markdown",
-        console=console,
-    )
-    rules_app.command(
-        "sandbox_cli.cli.rules.compile:compile_rules",
-        name="compile",
-        help="Get compiled rules for working with third-party services.",
-    )
-    rules_app.command(
-        "sandbox_cli.cli.rules.test:test_rules",
-        name="test",
-        help="Testing written rules.",
-    )
-    app.command(rules_app)
+rules_app = App(
+    name="rules",
+    help="Working with raw sandbox rules.",
+    help_format="markdown",
+    console=console,
+)
+rules_app.command(
+    "sandbox_cli.cli.rules.compile:compile_rules",
+    name="compile",
+    help="Get compiled rules for working with third-party services.",
+)
+rules_app.command(
+    "sandbox_cli.cli.rules.test:test_rules",
+    name="test",
+    help="Testing written rules.",
+)
+app.command(rules_app)
 
-    app.command(
-        "sandbox_cli.cli.images:get_images",
-        name="images",
-        help="Get available images in the sandbox.",
-    )
-    app.command(
-        "sandbox_cli.cli.download:download_command",
-        name="download",
-        help="Download any artifact from the sandbox.",
-    )
-    app.command(
-        "sandbox_cli.cli.download:download_email",
-        name="email",
-        help="Upload an email and get its headers.",
-    )
+app.command(
+    "sandbox_cli.cli.images:get_images",
+    name="images",
+    help="Get available images in the sandbox.",
+)
+app.command(
+    "sandbox_cli.cli.download:download_command",
+    name="download",
+    help="Download any artifact from the sandbox.",
+)
+app.command(
+    "sandbox_cli.cli.download:download_email",
+    name="email",
+    help="Upload an email and get its headers.",
+)

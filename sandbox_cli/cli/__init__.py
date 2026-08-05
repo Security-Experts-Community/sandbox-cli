@@ -58,7 +58,7 @@ def completion(
         path = app.install_completion(shell=shell)
         console.info(f"Completion installed to {path}")
     else:
-        console.print(app.generate_completion(shell=shell), end="")
+        print(app.generate_completion(shell=shell))
 
 
 app.command(name="completion")(completion)

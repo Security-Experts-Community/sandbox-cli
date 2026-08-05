@@ -1,6 +1,6 @@
 [project]
 name = "sandbox-cli"
-version = "0.3.0"
+version = "0.3.1"
 description = "Command line tool for interaction with sandboxes"
 readme = "README.md"
 requires-python = ">=3.11"

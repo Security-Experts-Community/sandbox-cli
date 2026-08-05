@@ -1,0 +1,33 @@
+name: Deploy Docs
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+    paths:
+      - 'docs/**'
+      - 'mkdocs.yml'
+      - '.github/workflows/docs.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  deploy:
+    name: Deploy to GitHub Pages
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: astral-sh/setup-uv@v7
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+
+      - name: Sync docs dependencies
+        run: uv sync --no-group dev --group docs --active
+
+      - name: Deploy mkdocs to GitHub Pages
+        run: mkdocs gh-deploy --config-file ./mkdocs.yml --force

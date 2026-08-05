@@ -27,7 +27,7 @@ jobs:
           python-version: '3.13'
 
       - name: Sync docs dependencies
-        run: uv sync --no-group dev --group docs --active
+        run: uv sync --no-group dev --group docs
 
       - name: Deploy mkdocs to GitHub Pages
-        run: mkdocs gh-deploy --config-file ./mkdocs.yml --force
+        run: uv run mkdocs gh-deploy --config-file ./mkdocs.yml --force

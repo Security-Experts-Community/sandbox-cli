@@ -45,7 +45,17 @@
         projectEnv = python.withPackages projectAttrsForEnv;
       in {
         packages = {
-          sandbox-cli = python.pkgs.buildPythonApplication (projectAttrsForApp // {});
+          sandbox-cli = python.pkgs.buildPythonApplication (projectAttrsForApp
+            // {
+              nativeBuildInputs = [pkgs.installShellFiles];
+
+              postInstall = ''
+                installShellCompletion --cmd sandbox-cli \
+                  --bash <($out/bin/sandbox-cli completion bash) \
+                  --fish <($out/bin/sandbox-cli completion fish) \
+                  --zsh <($out/bin/sandbox-cli completion zsh)
+              '';
+            });
           default = self.packages.${system}.sandbox-cli;
         };
 

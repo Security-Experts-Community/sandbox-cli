@@ -6,7 +6,7 @@ readme = "README.md"
 requires-python = ">=3.11"
 license = "MIT"
 license-files = ["LICENSE", "NOTICE"]
-authors = [{ name = "Alexey Kolesnikov" }]
+authors = [{ name = "Alexey Kolesnikov", email = "delvinru@gmail.com" }]
 dependencies = [
   "aiofiles>=25.1.0",
   "asyncssh>=2.24.0",
@@ -15,7 +15,6 @@ dependencies = [
   "cyclopts>=4.20.0",
   "docker>=7.2.0",
   "ptsandbox>=5.1.0",
-  "pyzipper>=0.4.0",
   "rich>=15.0.0",
   "zstandard>=0.25.0",
 ]
@@ -31,6 +30,7 @@ dev = [
   "black==26.5.1",
   "isort==8.0.1",
   "mypy==2.3.0",
+  "ruff==0.14.0",
   "types-aiofiles==25.1.0.20260518",
   "types-docker==7.2.0.20260728",
   "types-colorama==0.4.15.20260508",
@@ -83,8 +83,22 @@ exclude = '''
 
 [[tool.mypy.overrides]]
 strict = true
-module = ["ptsandbox.*", "docker.*", "pyzipper.*"]
+module = ["ptsandbox.*", "docker.*"]
 ignore_missing_imports = true
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
+check_untyped_defs = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+no_implicit_optional = true
+show_error_codes = true
+namespace_packages = true
+explicit_package_bases = true
+exclude = ["\\.venv/", "\\.mypy_cache/", "build/", "dist/"]
 
 [tool.ruff]
 lint.select = [
@@ -95,12 +109,14 @@ lint.select = [
   "B",    # flake8-bugbear
   "C4",   # flake8-comprehensions
   "UP",   # pyupgrade
-  "F401", # unused-imports
+  "SIM",  # flake8-simplify
+  "RUF",  # ruff-specific
 ]
 lint.ignore = [
-  "E501", # line too long, handled by black
-  "B008", # do not perform function calls in argument defaults
-  "W191", # indentation contains tabs
+  "E501",  # line too long, handled by black
+  "B008",  # do not perform function calls in argument defaults
+  "W191",  # indentation contains tabs
+  "SIM117", # nested with (readability)
 ]
 line-length = 120
 target-version = "py311"

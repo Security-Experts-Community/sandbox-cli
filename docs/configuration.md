@@ -101,7 +101,7 @@ key = ""
 host = ""
 max-workers = 8
 description = ""
-ssh = { login = "", password = "" }
+ssh = { username = "", password = "" }
 
 [[sandbox]]
 name = ""

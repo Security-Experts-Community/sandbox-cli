@@ -1,0 +1,37 @@
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.14.0
+    hooks:
+      - id: ruff-check
+        args: [--fix, --exit-non-zero-on-fix]
+      - id: ruff-format
+
+  - repo: https://github.com/pycqa/isort
+    rev: 8.0.1
+    hooks:
+      - id: isort
+        args: [--profile, black, --line-length, "120"]
+
+  - repo: https://github.com/psf/black
+    rev: 26.5.1
+    hooks:
+      - id: black
+        language_version: python3
+
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v2.3.0
+    hooks:
+      - id: mypy
+        additional_dependencies:
+          - types-aiofiles==25.1.0.20260518
+          - types-docker==7.2.0.20260728
+          - types-colorama==0.4.15.20260508
+          - ptsandbox>=5.1.0
+          - docker>=7.2.0
+          - cyclopts>=4.20.0
+          - rich>=15.0.0
+          - zstandard>=0.25.0
+          - asyncssh>=2.24.0
+          - pydantic
+        args: [--config-file=pyproject.toml, sandbox_cli]
+        pass_filenames: false

@@ -62,29 +62,39 @@ downloads/
 ```sh
 $ sandbox-cli download --help
 
-Usage: sandbox-cli download [ARGS] [OPTIONS]
+Usage: sandbox-cli download [OPTIONS] [ARGS]
 
 Download any artifact from the sandbox.
 
-╭─ Arguments ────────────────────────────────────────────────────────────────╮
-│ *  TASKS_ID  Links to tasks or task ids [required]                         │
-╰────────────────────────────────────────────────────────────────────────────╯
-╭─ Download options ─────────────────────────────────────────────────────────╮
-│ --all         -a  Download all artifacts [default: False]                  │
-│ --debug       -d  Download debug artifacts [default: False]                │
-│ --artifacts   -A  Download artifacts [default: False]                      │
-│ --files       -f  Download files [default: False]                          │
-│ --crashdumps  -c  Download crashdumps (maybe be more 1GB) [default: False] │
-│ --procdumps   -p  Download procdumps [default: False]                      │
-│ --video       -v  Download video [default: False]                          │
-│ --logs        -l  Download logs [default: False]                           │
-╰────────────────────────────────────────────────────────────────────────────╯
-╭─ Parameters ───────────────────────────────────────────────────────────────╮
-│ --out         -o  Output directory [default: downloads]                    │
-│ --decompress  -D  Decompress downloaded files [default: False]             │
-│ --unpack      -U  Unpack downloaded files [default: False]                 │
-╰────────────────────────────────────────────────────────────────────────────╯
-╭─ Sandbox ──────────────────────────────────────────────────────────────────╮
-│ --key  -k  The key to access the sandbox test-1,test-2 [default: test-1]   |
-╰────────────────────────────────────────────────────────────────────────────╯
+╭─ Arguments ──────────────────────────────────────────────────────────────────╮
+│ TASKS_ID  Links to tasks or task ids                                         │
+╰──────────────────────────────────────────────────────────────────────────────╯
+╭─ Parameters ─────────────────────────────────────────────────────────────────╮
+│ --out -o         Output directory [default: downloads]                       │
+│ --decompress -D  Decompress downloaded files [default: False]                │
+│ --unpack -U      Unpack downloaded files [default: False]                    │
+╰──────────────────────────────────────────────────────────────────────────────╯
+╭─ Download options ───────────────────────────────────────────────────────────╮
+│ --all -a         Download all artifacts [default: False]                     │
+│ --debug -d       Download debug artifacts [default: False]                   │
+│ --artifacts -A   Download artifacts [default: False]                         │
+│ --files -f       Download files [default: False]                             │
+│ --crashdumps -C  Download crashdumps (may be more than 1GB) [default: False] │
+│ --procdumps -p   Download procdumps [default: False]                         │
+│ --video -v       Download video [default: False]                             │
+│ --logs -l        Download logs [default: False]                              │
+│ --amsi -am       Download amsi-dumps [default: False]                        │
+│ --dex -dx        Download dex-dumps [default: False]                         │
+╰──────────────────────────────────────────────────────────────────────────────╯
+╭─ Performance ────────────────────────────────────────────────────────────────╮
+│ --concurrency -j  Maximum number of concurrent downloads [default: 16]       │
+│ --read-timeout    Read timeout in seconds for each download [default: 300]   │
+╰──────────────────────────────────────────────────────────────────────────────╯
+╭─ Sandbox ────────────────────────────────────────────────────────────────────╮
+│ --key -k  The key to access the sandbox test-1,test-2 [default: test-1]      │
+╰──────────────────────────────────────────────────────────────────────────────╯
+╭─ Search ─────────────────────────────────────────────────────────────────────╮
+│ --query -q  Query for searching tasks (leave empty for last tasks)           │
+│ --count -c  How many tasks find and download [default: 20]                   │
+╰──────────────────────────────────────────────────────────────────────────────╯
 ```

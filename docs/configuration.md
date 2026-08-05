@@ -28,7 +28,7 @@ There is often a need to scan various password-protected zip archives.
 
 Here you can specify a list of frequently used passwords that the `sandbox-cli` will send to the sandbox for automatic unpacking.
 
-Default: `["infected"]`
+Default: `["infected", "311138", "password", "12345678", "P@ssw0rd!"]`
 
 ### `sandbox`
 
@@ -38,6 +38,7 @@ Default: `["infected"]`
 | key <span style="color: red">\*</span>  | A token received through the sandbox interface. <br> See how to get it in [Getting started](./tutorial/getting-started.md). | `None`  |
 | host <span style="color: red">\*</span> | The IP address or domain where the sandbox is located. <br> Example: `10.10.10.10` or `sandbox.example.com`                 | `None`  |
 | max-workers                             | The number of simultaneously running jobs.                                                                                  | `8`     |
+| description                             | Optional description for the sandbox key.                                                                                    | `None`  |
 
 !!! note "Note"
 
@@ -63,11 +64,20 @@ Here you can specify custom browser to use for opening the analysis links.
 
     Every argument must be in separate string.
 
+### `rules-path`
+
+Base path to the rules directory. When set, `--rules` can be specified as a relative path.
+
+Default: `None`
+
 ## Full configuration
 
 ```toml title="Config example"
 # passwords that will be sent to the sandbox for unpacking archives
-passwords = ["infected"]
+passwords = ["infected", "311138", "password", "12345678", "P@ssw0rd!"]
+
+# Base path to the rules directory (optional)
+# rules-path = "/path/to/rules"
 
 # Use this section only if you don't want to use your default browser
 # or it works incorrectly
@@ -83,13 +93,15 @@ passwords = ["infected"]
 # key - token used for the sandbox
 # host - host of the sandbox
 # max-workers - simultaneously running scans
+# description - optional description
 # ssh username/password - optional params
 [[sandbox]]
 name = ""
 key = ""
 host = ""
 max-workers = 8
-ssh = { username = "", password = "" }
+description = ""
+ssh = { login = "", password = "" }
 
 [[sandbox]]
 name = ""

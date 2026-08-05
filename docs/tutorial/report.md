@@ -33,15 +33,20 @@ By default, the report will be printed to the terminal as a table.
 ```sh
 $ sandbox-cli report --help
 
-Usage: sandbox-cli report [ARGS] [OPTIONS]
+Usage: sandbox-cli report [OPTIONS] SRC
 
 Generate short report from sandbox scans.
 
-╭─ Arguments ───────────────────────────────────────────────────────────────────────╮
-│ *  SRC  Folder(s) with sandbox reports (recursive search will be used) [required] │
-╰───────────────────────────────────────────────────────────────────────────────────╯
-╭─ Parameters ──────────────────────────────────────────────────────────────────────╮
-│ --mode    -m  Report output format [choices: cli, md] [default: cli]              │
-│ --latest  -l  Reports created in the last 2 hours [default: False]                │
-╰───────────────────────────────────────────────────────────────────────────────────╯
+╭─ Arguments ──────────────────────────────────────────────────────────────────╮
+│ *  SRC  Folder(s) with sandbox reports (recursive search will be used)       │
+│         [required]                                                           │
+╰──────────────────────────────────────────────────────────────────────────────╯
+╭─ Parameters ─────────────────────────────────────────────────────────────────╮
+│ --mode -m        Report output format [choices: cli, md] [default: cli]      │
+│ --suspicious -s  Include suspicious detects [default: False]                 │
+╰──────────────────────────────────────────────────────────────────────────────╯
+╭─ Sandbox ────────────────────────────────────────────────────────────────────╮
+│ --key -k  The key to access the sandbox test-1,test-2,test-3. Used only for  │
+│           link generation when scan_config.json is missing                   │
+╰──────────────────────────────────────────────────────────────────────────────╯
 ```

@@ -28,18 +28,18 @@ downloads/
 ```sh
 $ sandbox-cli email --help
 
-Usage: sandbox-cli email [ARGS] [OPTIONS]
+Usage: sandbox-cli email [OPTIONS] EMAILS
 
-Send an email and get its headers
+Upload an email and get its headers
 
-╭─ Arguments ─────────────────────────────────────────────────╮
-│ *  EMAILS  The path to the email files [required]           │
-╰─────────────────────────────────────────────────────────────╯
-╭─ Parameters ────────────────────────────────────────────────╮
-│ --out  -o  Output directory [default: downloads]            │
-╰─────────────────────────────────────────────────────────────╯
-╭─ Sandbox ───────────────────────────────────────────────────╮
-│ --key  -k  The key to access the sandbox                    │
-│            test-1,test-2,test-3 [default: test-1]           │
-╰─────────────────────────────────────────────────────────────╯
+╭─ Arguments ──────────────────────────────────────────────────────────────────╮
+│ *  EMAILS  The path to the email files [required]                            │
+╰──────────────────────────────────────────────────────────────────────────────╯
+╭─ Parameters ─────────────────────────────────────────────────────────────────╮
+│ --out -o  Output directory [default: downloads]                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+╭─ Sandbox ────────────────────────────────────────────────────────────────────╮
+│ --key -k  The key to access the sandbox test-1,test-2,test-3 [default:       │
+│           test-1]                                                            │
+╰──────────────────────────────────────────────────────────────────────────────╯
 ```

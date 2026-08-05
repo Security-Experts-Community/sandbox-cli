@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'sandbox_cli/**'
+      - 'pyproject.toml'
+      - '.github/workflows/ci.yml'
+  pull_request:
+    paths:
+      - 'sandbox_cli/**'
+      - 'pyproject.toml'
+      - '.github/workflows/ci.yml'
+
+jobs:
+  lint:
+    name: Lint & Type Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: astral-sh/setup-uv@v7
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+
+      - name: Install dependencies
+        run: uv sync --active
+
+      - name: Ruff check
+        run: uv run ruff check sandbox_cli
+
+      - name: Ruff format
+        run: uv run ruff format --check sandbox_cli
+
+      - name: Mypy
+        run: uv run mypy --config-file=pyproject.toml sandbox_cli

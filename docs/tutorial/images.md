@@ -34,8 +34,11 @@ Usage: sandbox-cli images [OPTIONS]
 
 Get available images in the sandbox.
 
-╭─ Sandbox ─────────────────────────────────────────────────────────────────╮
-│ --key  -k  The key to access the sandbox                                  │
-│            test-1,test-2,test-3 [default: test-1]                         │
-╰───────────────────────────────────────────────────────────────────────────╯
+╭─ Parameters ─────────────────────────────────────────────────────────────────╮
+│ --all -a  Fetch images from all configured sandboxes [default: False]        │
+╰──────────────────────────────────────────────────────────────────────────────╯
+╭─ Sandbox ────────────────────────────────────────────────────────────────────╮
+│ --key -k  The key to access the sandbox test-1,test-2,test-3 [default:       │
+│           test-1]                                                            │
+╰──────────────────────────────────────────────────────────────────────────────╯
 ```

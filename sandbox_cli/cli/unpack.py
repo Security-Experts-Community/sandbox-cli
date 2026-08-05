@@ -4,7 +4,7 @@ from typing import Annotated
 from cyclopts import Parameter, validators
 
 from sandbox_cli.console import console
-from sandbox_cli.utils.unpack import Unpack
+from sandbox_cli.services.unpack import Unpack
 
 
 def unpack_logs(
@@ -47,4 +47,4 @@ def unpack_logs(
 
     for trace in traces:
         console.info(f"Unpacking {trace}")
-        Unpack(trace=trace).run()
+        Unpack.run_unpack(trace)

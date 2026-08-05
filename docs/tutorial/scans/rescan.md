@@ -23,12 +23,14 @@ $ sandbox-cli scanner re-scan sandbox_logs.zip
 
 ### Parameters
 
-| Option          | Description                                                                                           | Default     |
-| --------------- | ----------------------------------------------------------------------------------------------------- | ----------- |
-| `--rules / -r`  | The path to your own rules.                                                                           | `None`      |
-| `--out / -o`    | The path where the analysis results will be saved.                                                    | `./sandbox` |
-| `--local / -l`  | Compile rules locally or on the server. <br> I guess you can just ignore this option.                 | `False`     |
-| `--unpack / -U` | The downloaded logs will be automatically converted. <br> Learn more in [Analyzing logs](../logs.md). | `False`     |
+| Option                  | Description                                                                                           | Default     |
+| ----------------------- | ----------------------------------------------------------------------------------------------------- | ----------- |
+| `--rules / -r`          | The path to the folder with the rules or the default rules from the sandbox or platform alias.        | `None`      |
+| `--out / -o`            | The path where the analysis results will be saved.                                                    | `./sandbox` |
+| `--local / -l`          | Compile rules locally using Docker (unix only).                                                       | `False`     |
+| `--unpack / -U`         | The downloaded logs will be automatically converted. <br> Learn more in [Analyzing logs](../logs.md). | `False`     |
+| `--open-browser / -ob`  | Open the analysis link in the default browser.                                                        | `False`     |
+| `--timeout / -t`        | Response waiting time in seconds (increase for large traces).                                         | `300`       |
 
 ### Sandbox Options
 
@@ -71,23 +73,32 @@ $ sandbox-cli report sandbox/
 ```sh
 $ sandbox-cli scanner re-scan --help
 
-Usage: sandbox-cli scanner re-scan [ARGS] [OPTIONS]
+Usage: sandbox-cli scanner re-scan [OPTIONS] TRACES
 
 Send traces to re-scan.
 
-╭─ Arguments ──────────────────────────────────────────────────────────────────────────────────────────╮
-│ *  TRACES  Path to folder with drakvuf-trace.log.zst and tcpdump.pcap or sandbox_logs.zip [required] │
-╰──────────────────────────────────────────────────────────────────────────────────────────────────────╯
-╭─ Download options ───────────────────────────────────────────────────────────────────────────────────╮
-│ --debug  -d  Download debug artifacts [default: False]                                               │
-╰──────────────────────────────────────────────────────────────────────────────────────────────────────╯
-╭─ Parameters ─────────────────────────────────────────────────────────────────────────────────────────╮
-│ --rules   -r  The path to the folder with the rules or the default rules from the sandbox            │
-│ --out     -o  The path where to save the results [default: sandbox]                                  │
-│ --local   -l  The rules will be compiled locally using Docker (unix only) [default: False]           │
-│ --unpack  -U  Unpack downloaded files [default: False]                                               │
-╰──────────────────────────────────────────────────────────────────────────────────────────────────────╯
-╭─ Sandbox Options ────────────────────────────────────────────────────────────────────────────────────╮
-│ --key  -k  The key to access the sandbox test-1,test-2,test-3 [default: test-1]                      │
-╰──────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭─ Arguments ──────────────────────────────────────────────────────────────────╮
+│ *  TRACES  Path to folder with drakvuf-trace.log.zst and tcpdump.pcap or     │
+│            sandbox_logs.zip [required]                                       │
+╰──────────────────────────────────────────────────────────────────────────────╯
+╭─ Parameters ─────────────────────────────────────────────────────────────────╮
+│ --rules -r          The path to the folder with the rules or the default     │
+│                     rules from the sandbox or platform alias (windows,       │
+│                     linux)                                                   │
+│ --out -o            The path where to save the results [default: sandbox]    │
+│ --local -l          The rules will be compiled locally using Docker (unix    │
+│                     only) [default: False]                                   │
+│ --unpack -U         Unpack downloaded files [default: False]                 │
+│ --open-browser -ob  Open analysis link in the default browser [default:      │
+│                     False]                                                   │
+│ --timeout -t        Response waiting time (increase this value if large      │
+│                     traces are scanned) [default: 300]                       │
+╰──────────────────────────────────────────────────────────────────────────────╯
+╭─ Download options ───────────────────────────────────────────────────────────╮
+│ --debug -d  Download debug artifacts [default: False]                        │
+╰──────────────────────────────────────────────────────────────────────────────╯
+╭─ Sandbox Options ────────────────────────────────────────────────────────────╮
+│ --key -k  The key to access the sandbox test-1,test-2,test-3 [default:       │
+│           test-1]                                                            │
+╰──────────────────────────────────────────────────────────────────────────────╯
 ```

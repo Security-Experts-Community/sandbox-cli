@@ -31,17 +31,19 @@ Usage: sandbox-cli COMMAND
 
 Work with sandbox like a pro
 
-╭─ Commands ────────────────────────────────────────────────────────────────╮
-│ conv unpack  Convert sandbox logs into an analysis-friendly format.       │
-│ download     Download any artifact from the sandbox.                      │
-│ email        Send an email and get its headers                            │
-│ images       Get available images in the sandbox.                         │
-│ report       Generate short report from sandbox scans.                    │
-│ rules        Working with raw sandbox rules                               │
-│ scanner      Scan with the sandbox.                                       │
-│ --help -h    Display this message and exit.                               │
-│ --version    Display application version.                                 │
-╰───────────────────────────────────────────────────────────────────────────╯
+╭─ Commands ───────────────────────────────────────────────────────────────────╮
+│ browser        Open sandbox link in the default browser.                     │
+│ completion     Generate or install shell completion.                         │
+│ conv (unpack)  Convert sandbox logs into an analysis-friendly format.        │
+│ download       Download any artifact from the sandbox.                       │
+│ email          Upload an email and get its headers.                          │
+│ images         Get available images in the sandbox.                          │
+│ report         Generate short report from sandbox scans.                     │
+│ rules          Working with raw sandbox rules.                               │
+│ scanner        Scan with the sandbox.                                        │
+│ --help (-h)    Display this message and exit.                                │
+│ --version      Display application version.                                  │
+╰──────────────────────────────────────────────────────────────────────────────╯
 ```
 
 !!! tip "Tip"

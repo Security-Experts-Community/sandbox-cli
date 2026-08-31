@@ -24,11 +24,23 @@ from sandbox_cli.core.scan import (
     save_report,
     save_scan_arguments,
 )
-from sandbox_cli.services.downloader import DownloadOptions, download
+from sandbox_cli.services.downloader import DEFAULT_CONCURRENCY as DEFAULT_DOWNLOAD_CONCURRENCY
+from sandbox_cli.services.downloader import (
+    DownloadOptions,
+    download,
+)
 from sandbox_cli.services.scanner.compile import compile_rules
-from sandbox_cli.services.scanner.images import fetch_available_images, resolve_scan_images
+from sandbox_cli.services.scanner.images import (
+    fetch_available_images,
+    resolve_scan_images,
+)
 from sandbox_cli.services.scanner.tasks import build_scan_tasks
-from sandbox_cli.services.scanner.uploads import gather_uploads, upload_dll_hooks, upload_file, upload_rules
+from sandbox_cli.services.scanner.uploads import (
+    gather_uploads,
+    upload_dll_hooks,
+    upload_file,
+    upload_rules,
+)
 from sandbox_cli.services.scanner.utils import compute_wait_time, shorten_name
 from sandbox_cli.services.unpack import Unpack
 
@@ -107,6 +119,7 @@ async def scan_internal(
 ) -> None:
     key = get_key_by_name(key_name)
     sandbox_sem = asyncio.Semaphore(value=key.max_workers)
+    download_sem = asyncio.Semaphore(value=DEFAULT_DOWNLOAD_CONCURRENCY)
 
     async def process_file(
         sandbox_options: SandboxBaseScanTaskRequest.Options,
@@ -174,6 +187,7 @@ async def scan_internal(
             sandbox,
             out_dir,
             replace(download_options, video=True, logs=True),
+            semaphore=download_sem,
         )
         console.info(
             rf"\[[magenta]{sandbox_options.sandbox.image_id}[/magenta]] Scan [yellow]{shorten_name(file_path.name)}[/] completed. {link}"
@@ -194,7 +208,12 @@ async def scan_internal(
             sandbox_options=sandbox_options.sandbox,
         )
         save_scan_arguments(out_dir, sandbox_arguments)
-        await process_file(sandbox_options, file_path, out_dir, idx)
+
+        image_string = f"[{sandbox_options.sandbox.image_id}]"
+        try:
+            await process_file(sandbox_options, file_path, out_dir, idx)
+        except Exception as e:
+            console.error(f"{idx} [{image_string}] [yellow]{shorten_name(file_path.name)}[/] • unexpected error • {e}")
 
     console.info(f"Using key: name={key.name} max_workers={key.max_workers}")
 

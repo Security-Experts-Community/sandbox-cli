@@ -321,11 +321,12 @@ async def download(
     full_report: SandboxBaseTaskResponse | None = None,
     concurrency: int = DEFAULT_CONCURRENCY,
     read_timeout: int = DEFAULT_READ_TIMEOUT,
+    semaphore: asyncio.Semaphore | None = None,
 ) -> None:
     tasks: list[Coroutine[Any, Any, None]] = []
     saved_report_dirs: set[Path] = set()
     claimed: set[Path] = set()
-    semaphore = asyncio.Semaphore(value=concurrency)
+    semaphore = semaphore or asyncio.Semaphore(value=concurrency)
 
     def add_task(out_dir: Path, name: str, file_uri: str, decompress: bool = False, overwrite: bool = False) -> None:
         tasks.append(

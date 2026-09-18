@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `--query` and `--count` options for `download` command to search and download tasks
 - `--unimon-hooks`, `--fileextractor-excludes`, `--no-procdumps-on-finish`, `--disable-lightweight-dumps` and `--file-type-as-ext` options for `scan-new`
 - `--debug` download option for `re-scan`
+- `--sample` option for `download` command to download the original sample submitted for analysis (saved as `<sample_name>.bin`)
 - `description` field in sandbox config
 - `rules-path` config option for specifying a base path to the rules directory
 - Support for task links in `download` command

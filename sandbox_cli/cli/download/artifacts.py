@@ -229,6 +229,15 @@ async def download_command(
             group="Download options",
         ),
     ] = False,
+    sample: Annotated[
+        bool,
+        Parameter(
+            name=["--sample", "-s"],
+            help="Download the original sample submitted for analysis",
+            negative="",
+            group="Download options",
+        ),
+    ] = False,
     query: Annotated[
         str | None,
         Parameter(
@@ -281,6 +290,7 @@ async def download_command(
         video=video,
         amsi=amsi,
         dex=dex,
+        sample=sample,
         logs=logs,
         decompress=decompress,
     )

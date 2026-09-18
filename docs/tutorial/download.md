@@ -20,6 +20,9 @@ $ sandbox-cli download --all https://sandbox.example.com/tasks/b2ece7fa-b3db-4ed
 
 # You can also download multiple tasks in one request
 $ sandbox-cli download --all b2ece7fa-b3db-4ed5-86c7-2bba4b55f563 https://sandbox.example.com/tasks/c7d567f0-5805-4191-a0f1-e35158dc4e80
+
+# Download only the original sample submitted for analysis
+$ sandbox-cli download --sample b2ece7fa-b3db-4ed5-86c7-2bba4b55f563
 ```
 
 The structure of the 'downloads` directory.
@@ -85,6 +88,8 @@ Download any artifact from the sandbox.
 │ --logs -l        Download logs [default: False]                              │
 │ --amsi -am       Download amsi-dumps [default: False]                        │
 │ --dex -dx        Download dex-dumps [default: False]                         │
+│ --sample -s      Download the original sample submitted for analysis         │
+│                  [default: False]                                            │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ╭─ Performance ────────────────────────────────────────────────────────────────╮
 │ --concurrency -j  Maximum number of concurrent downloads [default: 16]       │

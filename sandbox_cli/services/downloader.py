@@ -52,6 +52,7 @@ class DownloadOptions:
     video: bool = False
     amsi: bool = False
     dex: bool = False
+    sample: bool = False
 
 
 # At first glance, it's counter-intuitive, but ArtifactType can contain not only predefined fields in it, but also newly added.
@@ -347,6 +348,15 @@ async def download(
                 overwrite=overwrite,
             )
         )
+
+    if options.sample:
+        for artifact in report.artifacts:
+            fi = artifact.file_info
+            if fi is None or not fi.file_uri:
+                continue
+
+            name = Path(fi.file_path).name or fi.sha256
+            add_task(out_dir, f"{name}.bin", fi.file_uri)
 
     for artifact in report.artifacts:
         for sandbox_result in artifact.get_sandbox_results():

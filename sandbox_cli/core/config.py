@@ -36,7 +36,7 @@ class VMImage(str, Enum):
     Please note that not all images are supported or available anymore (left as a legacy)
     """
 
-    ALTWORKSTATION_X64 = "altworkstation-10-x64"
+    ALTWORKSTATION_10_X64 = "altworkstation-10-x64"
     ASTRALINUX_SMOLENSK_X64 = "astralinux-smolensk-x64"
     REDOS_8_X64 = "redos-8-x64"
     REDOS_MUROM_X64 = "redos-murom-x64"
@@ -136,7 +136,7 @@ class BrowserConfig(BaseModel):
 class Settings(BaseModel):
     # default settings (not changeable)
     linux_images: set[VMImage] = {
-        VMImage.ALTWORKSTATION_X64,
+        VMImage.ALTWORKSTATION_10_X64,
         VMImage.ASTRALINUX_SMOLENSK_X64,
         VMImage.REDOS_8_X64,
         VMImage.REDOS_MUROM_X64,

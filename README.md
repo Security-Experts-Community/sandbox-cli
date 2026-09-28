@@ -87,7 +87,7 @@ sandbox-cli images
 │ ubuntu                │ ubuntu-jammy-x64        │ ...        │ ...             │
 │ Windows 10 Pro        │ win10-1803-x64          │ ...        │ ...             │
 │ Windows 10 Enterprise │ win10-22H2-x64          │ ...        │ ...             │
-│ Windows 10 Pro        │ win11-23H2-x64          │ ...        │ ...             │
+│ Windows 11 Pro        │ win11-23H2-x64          │ ...        │ ...             │
 │ Windows 7 Enterprise  │ win7-sp1-x64            │ ...        │ ...             │
 │ Windows 7 Enterprise  │ win7-sp1-x64-ics        │ ...        │ ...             │
 └───────────────────────┴─────────────────────────┴────────────┴─────────────────┘

@@ -249,7 +249,7 @@ async def scan_internal_advanced(
             try:
                 guest_filename = file_path.name
                 if not preserve_filename:
-                    guest_filename = guest_filename.removesuffix(SAFE_SUFFIXES)
+                    guest_filename = guest_filename.rstrip(SAFE_SUFFIXES)  # rstrip is used intentionally
 
                 scan_result = await sandbox.create_advanced_scan(
                     file_path,

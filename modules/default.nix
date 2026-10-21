@@ -48,7 +48,7 @@ in {
 
     package = mkOption {
       type = types.package;
-      default = flake.packages.${pkgs.system}.sandbox-cli;
+      default = flake.packages.${pkgs.stdenv.hostPlatform.system}.sandbox-cli;
       description = "The package to use for sandbox-cli";
     };
 

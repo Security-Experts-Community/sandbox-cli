@@ -26,50 +26,56 @@
     ptsandbox,
     ...
   }: let
-    outputs = flake-utils.lib.eachDefaultSystem (
-      system: let
-        pkgs = nixpkgs.legacyPackages.${system};
+    # nixpkgs 26.11 dropped x86_64-darwin, so it is no longer in the list
+    outputs =
+      flake-utils.lib.eachSystem [
+        "aarch64-darwin"
+        "aarch64-linux"
+        "x86_64-linux"
+      ] (
+        system: let
+          pkgs = nixpkgs.legacyPackages.${system};
 
-        python = pkgs.python3.override {
-          packageOverrides = self: super: {
-            ptsandbox = ptsandbox.packages.${system}.py-ptsandbox;
+          python = pkgs.python3.override {
+            packageOverrides = self: super: {
+              ptsandbox = ptsandbox.packages.${system}.py-ptsandbox;
+            };
           };
-        };
 
-        project = pyproject-nix.lib.project.loadUVPyproject {
-          projectRoot = ./.;
-        };
+          project = pyproject-nix.lib.project.loadUVPyproject {
+            projectRoot = ./.;
+          };
 
-        projectAttrsForApp = project.renderers.buildPythonPackage {inherit python;};
-        projectAttrsForEnv = project.renderers.withPackages {inherit python;};
-        projectEnv = python.withPackages projectAttrsForEnv;
-      in {
-        packages = {
-          sandbox-cli = python.pkgs.buildPythonApplication (projectAttrsForApp
-            // {
-              nativeBuildInputs = [pkgs.installShellFiles];
+          projectAttrsForApp = project.renderers.buildPythonPackage {inherit python;};
+          projectAttrsForEnv = project.renderers.withPackages {inherit python;};
+          projectEnv = python.withPackages projectAttrsForEnv;
+        in {
+          packages = {
+            sandbox-cli = python.pkgs.buildPythonApplication (projectAttrsForApp
+              // {
+                nativeBuildInputs = [pkgs.installShellFiles];
 
-              postInstall = ''
-                installShellCompletion --cmd sandbox-cli \
-                  --bash <($out/bin/sandbox-cli completion bash) \
-                  --fish <($out/bin/sandbox-cli completion fish) \
-                  --zsh <($out/bin/sandbox-cli completion zsh)
-              '';
-            });
-          default = self.packages.${system}.sandbox-cli;
-        };
+                postInstall = ''
+                  installShellCompletion --cmd sandbox-cli \
+                    --bash <($out/bin/sandbox-cli completion bash) \
+                    --fish <($out/bin/sandbox-cli completion fish) \
+                    --zsh <($out/bin/sandbox-cli completion zsh)
+                '';
+              });
+            default = self.packages.${system}.sandbox-cli;
+          };
 
-        devShells.default = pkgs.mkShell {
-          packages = [
-            projectEnv
-          ];
+          devShells.default = pkgs.mkShell {
+            packages = [
+              projectEnv
+            ];
 
-          shellHook = ''
-            unlink .nix-venv; ln -s ${projectEnv} ./.nix-venv
-          '';
-        };
-      }
-    );
+            shellHook = ''
+              unlink .nix-venv; ln -s ${projectEnv} ./.nix-venv
+            '';
+          };
+        }
+      );
   in
     outputs
     // {
@@ -79,7 +85,7 @@
       };
 
       overlays.default = final: prev: {
-        sandbox-cli = self.packages.${prev.system}.sandbox-cli;
+        sandbox-cli = self.packages.${prev.stdenv.hostPlatform.system}.sandbox-cli;
       };
     };
 }

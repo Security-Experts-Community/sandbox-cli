@@ -12,8 +12,9 @@ from docker.errors import APIError, DockerException, ImageNotFound
 from rich.markup import escape
 
 from sandbox_cli.console import console
-from sandbox_cli.core.config import settings
+from sandbox_cli.core.config import get_settings
 from sandbox_cli.core.exceptions import CompilerConnectionError
+from sandbox_cli.core.secrets import reveal
 from sandbox_cli.services.compiler.abc import AbstractCompiler
 
 if TYPE_CHECKING:
@@ -52,6 +53,8 @@ class DockerCompiler(AbstractCompiler):
     """
 
     def __init__(self) -> None:
+        self._docker = get_settings().docker
+        self._image = f"{self._docker.path}:{self._docker.image_tag}"
         try:
             self._client: DockerClient = from_env()
         except DockerException as e:
@@ -73,15 +76,15 @@ class DockerCompiler(AbstractCompiler):
         # docker SDK calls are synchronous — offload to a thread to avoid blocking the event loop.
         await asyncio.to_thread(
             self._client.api.login,
-            username=settings.docker.username,
-            password=settings.docker.token,
-            registry=settings.docker.registry,
+            username=self._docker.username,
+            password=reveal(self._docker.token),
+            registry=self._docker.registry,
         )
 
         image = await asyncio.to_thread(
             self._client.images.pull,
-            repository=settings.docker.path,
-            tag=settings.docker.image_tag,
+            repository=self._docker.path,
+            tag=self._docker.image_tag,
         )
 
         console.info(f"Docker image successfully pulled: {image}")
@@ -92,7 +95,7 @@ class DockerCompiler(AbstractCompiler):
         """
 
         try:
-            self._client.images.get(f"{settings.docker.path}:{settings.docker.image_tag}")
+            await asyncio.to_thread(self._client.images.get, self._image)
         except ImageNotFound:
             await self.pull_image()
 
@@ -102,7 +105,7 @@ class DockerCompiler(AbstractCompiler):
         """
 
         return self._client.containers.run(
-            image=f"{settings.docker.path}:{settings.docker.image_tag}",
+            image=self._image,
             command=command,
             name=name,
             detach=True,
@@ -158,7 +161,7 @@ class DockerCompiler(AbstractCompiler):
 
         # copy taxonomy into rules dir — required by the compiler
         local_taxonomy = rules_dir / "taxonomy"
-        shutil.copytree(rules_dir.parent / "taxonomy", local_taxonomy, dirs_exist_ok=True)
+        await asyncio.to_thread(shutil.copytree, rules_dir.parent / "taxonomy", local_taxonomy, dirs_exist_ok=True)
 
         container: Container | None = None
         exit_data: WaitContainerResponse = {"StatusCode": -1}
@@ -170,7 +173,7 @@ class DockerCompiler(AbstractCompiler):
             console.error(f"Exception while running docker: {e}")
         finally:
             if local_taxonomy.is_dir():
-                shutil.rmtree(local_taxonomy)
+                await asyncio.to_thread(shutil.rmtree, local_taxonomy)
             if container is not None:
                 exit_data = await self._wait_and_remove(container)
 

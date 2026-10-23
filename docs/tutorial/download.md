@@ -73,30 +73,33 @@ Download any artifact from the sandbox.
 │ TASKS_ID  Links to tasks or task ids                                         │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ╭─ Parameters ─────────────────────────────────────────────────────────────────╮
-│ --out -o         Output directory [default: downloads]                       │
-│ --decompress -D  Decompress downloaded files [default: False]                │
-│ --unpack -U      Unpack downloaded files [default: False]                    │
+│ --out -o     The path where to save the results [default: downloads]         │
+│ --unpack -U  Unpack downloaded logs (see the unpack command) [default:       │
+│              False]                                                          │
+│ --json -J    Print results as JSON lines to stdout; messages and progress go │
+│              to stderr [default: False]                                      │
 ╰──────────────────────────────────────────────────────────────────────────────╯
-╭─ Download options ───────────────────────────────────────────────────────────╮
+╭─ Download Options ───────────────────────────────────────────────────────────╮
 │ --all -a         Download all artifacts [default: False]                     │
 │ --debug -d       Download debug artifacts [default: False]                   │
-│ --artifacts -A   Download artifacts [default: False]                         │
+│ --artifacts -A   Download artifacts (files and procdumps) [default: False]   │
 │ --files -f       Download files [default: False]                             │
 │ --crashdumps -C  Download crashdumps (may be more than 1GB) [default: False] │
 │ --procdumps -p   Download procdumps [default: False]                         │
-│ --video -v       Download video [default: False]                             │
-│ --logs -l        Download logs [default: False]                              │
 │ --amsi -am       Download amsi-dumps [default: False]                        │
 │ --dex -dx        Download dex-dumps [default: False]                         │
-│ --sample -s      Download the original sample submitted for analysis         │
+│ --decompress -D  Decompress downloaded procdumps [default: False]            │
+│ --video -v       Download video [default: False]                             │
+│ --logs -L        Download logs [default: False]                              │
+│ --sample -sa     Download the original sample submitted for analysis         │
 │                  [default: False]                                            │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ╭─ Performance ────────────────────────────────────────────────────────────────╮
 │ --concurrency -j  Maximum number of concurrent downloads [default: 16]       │
 │ --read-timeout    Read timeout in seconds for each download [default: 300]   │
 ╰──────────────────────────────────────────────────────────────────────────────╯
-╭─ Sandbox ────────────────────────────────────────────────────────────────────╮
-│ --key -k  The key to access the sandbox test-1,test-2 [default: test-1]      │
+╭─ Sandbox Options ────────────────────────────────────────────────────────────╮
+│ --key -k  The key to access the sandbox main [default: main]                 │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ╭─ Search ─────────────────────────────────────────────────────────────────────╮
 │ --query -q  Query for searching tasks (leave empty for last tasks)           │

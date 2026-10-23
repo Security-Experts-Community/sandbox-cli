@@ -1,0 +1,7 @@
+Usage: sandbox-cli unpack TRACES
+
+Convert sandbox logs into an analysis-friendly format.
+
+╭─ Arguments ──────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ *  TRACES  The path to the folder with the raw traces or with the sandbox-logs.zip [required]                        │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯

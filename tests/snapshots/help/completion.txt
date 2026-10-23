@@ -1,0 +1,11 @@
+Usage: sandbox-cli completion [OPTIONS] SHELL
+
+Generate or install shell completion.
+
+╭─ Arguments ──────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ *  SHELL  Shell to generate completion for [choices: bash, zsh, fish] [required]                                     │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭─ Parameters ─────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ --install -I  Install the completion script to the default location for the current shell and add it to the RC file  │
+│               [default: False]                                                                                       │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯

@@ -1,58 +1,49 @@
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
-from collections.abc import Callable
 from pathlib import Path
-from typing import Any
+from types import TracebackType
+from typing import Self
 
-import orjson
+__all__ = ["GroupedWriter"]
+
+_FLUSH_THRESHOLD = 32 * 1024 * 1024
 
 
-class BasePlugin(ABC):
+class GroupedWriter:
     """
-    Base class for all plugins
+    Split lines into one file per key with bounded memory.
 
-    It is necessary to designate a single entry point
+    Lines are buffered per key and appended to ``<base>/<key>`` whenever the
+    buffer grows past a threshold.
     """
 
-    def __init__(self, trace: Path) -> None:
-        self.trace = trace
+    def __init__(self, base: Path, *, threshold: int = _FLUSH_THRESHOLD) -> None:
+        self._base = base
+        self._threshold = threshold
+        self._buffers: dict[str, list[bytes]] = {}
+        self._buffered = 0
+        self._created: set[str] = set()
 
-    @abstractmethod
-    def run(self) -> None:
-        """
-        Invoke plugin
-        """
-        ...
+    def add(self, name: str, line: bytes) -> None:
+        self._buffers.setdefault(name, []).append(line)
+        self._buffered += len(line)
+        if self._buffered >= self._threshold:
+            self.flush()
 
-    @staticmethod
-    def group_lines(
-        file: Path,
-        key_fn: Callable[[dict[str, Any]], str | None],
-    ) -> dict[str, list[bytes]]:
-        """
-        Read a JSON-lines file and group raw lines by ``key_fn``.
-
-        Lines where ``key_fn`` returns ``None`` are skipped.
-        """
-
-        groups: dict[str, list[bytes]] = {}
-        if not file.exists():
-            return groups
-
-        with open(file, "rb") as fd:
-            for line in fd:
-                key = key_fn(orjson.loads(line))
-                if key is not None:
-                    groups.setdefault(key, []).append(line)
-        return groups
-
-    @staticmethod
-    def write_groups(base_path: Path, groups: dict[str, list[bytes]], suffix: str = ".log") -> None:
-        """
-        Batch-write each group to ``base_path / f"{key}{suffix}"``.
-        """
-
-        for key, lines in groups.items():
-            with open(base_path / f"{key}{suffix}", "wb") as fd:
+    def flush(self) -> None:
+        for name, lines in self._buffers.items():
+            mode = "ab" if name in self._created else "wb"
+            with open(self._base / name, mode) as fd:
                 fd.writelines(lines)
+            self._created.add(name)
+        self._buffers.clear()
+        self._buffered = 0
+
+    def __enter__(self) -> Self:
+        return self
+
+    def __exit__(
+        self, exc_type: type[BaseException] | None, exc: BaseException | None, tb: TracebackType | None
+    ) -> None:
+        if exc_type is None:
+            self.flush()

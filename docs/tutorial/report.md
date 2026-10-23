@@ -42,11 +42,12 @@ Generate short report from sandbox scans.
 │         [required]                                                           │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ╭─ Parameters ─────────────────────────────────────────────────────────────────╮
-│ --mode -m        Report output format [choices: cli, md] [default: cli]      │
-│ --suspicious -s  Include suspicious detects [default: False]                 │
+│ --mode -m         Report output format [choices: cli, md] [default: cli]     │
+│ --suspicious -su  Include suspicious detects [default: False]                │
+│ --json -J         Print results as JSON lines to stdout; messages and        │
+│                   progress go to stderr [default: False]                     │
 ╰──────────────────────────────────────────────────────────────────────────────╯
-╭─ Sandbox ────────────────────────────────────────────────────────────────────╮
-│ --key -k  The key to access the sandbox test-1,test-2,test-3. Used only for  │
-│           link generation when scan_config.json is missing                   │
+╭─ Sandbox Options ────────────────────────────────────────────────────────────╮
+│ --key -k  The key to access the sandbox main                                 │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ```

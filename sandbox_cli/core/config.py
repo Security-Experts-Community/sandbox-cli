@@ -5,14 +5,23 @@ import tomllib
 from enum import Enum
 from functools import lru_cache
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pydantic
-from ptsandbox import SandboxKey
 from pydantic import BaseModel, Field, SecretStr
 
 from sandbox_cli.core.exceptions import ConfigError
+from sandbox_cli.core.secrets import Secret, reveal
+
+if TYPE_CHECKING:
+    from ptsandbox import SandboxKey
 
 __all__ = [
+    "DEFAULT_DURATION",
+    "DEFAULT_IMAGE",
+    "LINUX_IMAGES",
+    "REPORT_NAME",
+    "WINDOWS_IMAGES",
     "BrowserConfig",
     "DockerConfig",
     "Platform",
@@ -25,15 +34,14 @@ __all__ = [
     "images_help",
     "key_help",
     "parse_image",
-    "settings",
 ]
 
 
 class VMImage(str, Enum):
     """
-    A list of all known images
+    Known image ids.
 
-    Please note that not all images are supported or available anymore (left as a legacy)
+    Some of them are legacy and missing from current sandboxes.
     """
 
     ALTWORKSTATION_10_X64 = "altworkstation-10-x64"
@@ -83,7 +91,10 @@ def key_help() -> str:
     """
     Build the ``--key`` help text listing all configured sandbox key names.
     """
-    return f"The key to access the sandbox **{'**,**'.join(x.name for x in settings.sandbox_keys)}**"
+    names = [x.name for x in get_settings().sandbox]
+    if not names:
+        return f"The key to access the sandbox (no keys configured in **{configpath}**)"
+    return f"The key to access the sandbox **{'**, **'.join(names)}**"
 
 
 class Platform(str, Enum):
@@ -93,12 +104,12 @@ class Platform(str, Enum):
 
 class SSHConfig(BaseModel):
     username: str = ""
-    password: str = ""
+    password: Secret = SecretStr("")
 
 
 class DockerConfig(BaseModel):
     username: str = ""
-    token: str = ""
+    token: Secret = SecretStr("")
     registry: str = ""
     image_name: str = Field(default="", alias="image-name")
     image_tag: str = Field(default="", alias="image-tag")
@@ -110,7 +121,7 @@ class DockerConfig(BaseModel):
 
 class SandboxConfig(BaseModel):
     name: str = ""
-    key: str = ""
+    key: Secret = SecretStr("")
     host: str = ""
     max_workers: int = Field(default=8, alias="max-workers")
     description: str = ""
@@ -119,9 +130,11 @@ class SandboxConfig(BaseModel):
 
     @property
     def sandbox_key(self) -> SandboxKey:
+        from ptsandbox import SandboxKey
+
         return SandboxKey(
             name=self.name,
-            key=SecretStr(self.key),
+            key=SecretStr(reveal(self.key)),
             host=self.host,
             max_workers=self.max_workers,
             description=self.description,
@@ -133,17 +146,18 @@ class BrowserConfig(BaseModel):
     args: list[str]
 
 
-class Settings(BaseModel):
-    # default settings (not changeable)
-    linux_images: set[VMImage] = {
+LINUX_IMAGES: frozenset[VMImage] = frozenset(
+    {
         VMImage.ALTWORKSTATION_10_X64,
         VMImage.ASTRALINUX_SMOLENSK_X64,
         VMImage.REDOS_8_X64,
         VMImage.REDOS_MUROM_X64,
         VMImage.UBUNTU_JAMMY_X64,
     }
+)
 
-    windows_images: set[VMImage] = {
+WINDOWS_IMAGES: frozenset[VMImage] = frozenset(
+    {
         VMImage.WIN10_1803_X64,
         VMImage.WIN10_22H2_X64,
         VMImage.WIN11_23H2_X64,
@@ -153,12 +167,14 @@ class Settings(BaseModel):
         VMImage.WINSERV2016_1198_X64,
         VMImage.WINSERV2019_1879_X64,
     }
+)
 
-    report_name: str = "report.json"
-    default_image: VMImage = VMImage.WIN10_22H2_X64
-    default_duration: int = 300
+REPORT_NAME = "report.json"
+DEFAULT_IMAGE = VMImage.WIN10_22H2_X64
+DEFAULT_DURATION = 300
 
-    # configurable parameters
+
+class Settings(BaseModel):
     passwords: list[str] = ["infected", "311138", "password", "12345678", "P@ssw0rd!"]
     docker: DockerConfig = DockerConfig()
     sandbox: list[SandboxConfig] = []
@@ -166,18 +182,11 @@ class Settings(BaseModel):
     browser: BrowserConfig | None = Field(default=None)
 
     @property
-    def sandbox_keys(self) -> list[SandboxKey]:
-        """
-        Derived sandbox keys — not stored as a field.
-        """
-        return [x.sandbox_key for x in self.sandbox]
-
-    @property
     def default_key_name(self) -> str:
         """
         Name of the first configured sandbox key, or empty string if none.
         """
-        return self.sandbox_keys[0].name if self.sandbox_keys else ""
+        return self.sandbox[0].name if self.sandbox else ""
 
 
 def _default_config_path() -> Path:
@@ -196,27 +205,23 @@ def get_settings() -> Settings:
     """
     Load settings from the TOML config file, falling back to defaults.
 
-    Cached after the first call — use ``get_settings.cache_clear()`` to
-    reload after changing the config file (e.g. in tests).
+    Raises ``ConfigError`` for an unreadable or invalid file. The result is cached;
+    ``get_settings.cache_clear()`` reloads it.
     """
     if not configpath.exists():
         return Settings()
 
-    with open(configpath, "rb") as fd:
-        raw = tomllib.load(fd)
-
     try:
+        with open(configpath, "rb") as fd:
+            raw = tomllib.load(fd)
         settings_obj = Settings.model_validate(raw)
-    except pydantic.ValidationError as e:
+    except (OSError, tomllib.TOMLDecodeError, pydantic.ValidationError) as e:
         raise ConfigError(f"invalid config at {configpath}: {e}") from e
 
     # post-load normalisation (kept out of the model to avoid mutation side-effects)
     if settings_obj.rules_path:
-        settings_obj.rules_path = Path(settings_obj.rules_path)
+        settings_obj.rules_path = settings_obj.rules_path.expanduser()
     if settings_obj.browser:
         settings_obj.browser.args.append("%s")
 
     return settings_obj
-
-
-settings = get_settings()

@@ -48,7 +48,7 @@ Default: `["infected", "311138", "password", "12345678", "P@ssw0rd!"]`
 
 | Option   | Description                       | Default |
 | -------- | --------------------------------- | ------- |
-| login    | The user's login on the server    | `None`  |
+| username | The user's login on the server    | `None`  |
 | password | The user's password on the server | `None`  |
 
 #### `browser`
@@ -69,6 +69,31 @@ Here you can specify custom browser to use for opening the analysis links.
 Base path to the rules directory. When set, `--rules` can be specified as a relative path.
 
 Default: `None`
+
+## Secrets
+
+`key`, `ssh.password` and `docker.token` accept a plain string or a reference to a secret stored elsewhere:
+
+```toml
+[[sandbox]]
+name = "staging"
+host = "sandbox.example.com"
+key = { command = "pass show sandbox/staging" }   # stdout of a shell command
+# key = { env = "SANDBOX_STAGING_KEY" }           # an environment variable
+# key = "plain token"                              # a plain string
+```
+
+A reference is resolved only when a command needs that secret, so `--help` or commands for other sandboxes don't run the command. The trailing newline of the command output is stripped.
+
+## Environment variables
+
+| Variable                    | Description                                                                                       |
+| --------------------------- | ------------------------------------------------------------------------------------------------- |
+| `DEBUG`                     | Show the full traceback on unexpected errors                                                      |
+| `SANDBOX_CLI_TERM_PROGRESS` | `1`/`0` — force the native terminal progress indicator (`OSC 9;4`) on/off. Auto-detected by default |
+| `SANDBOX_CLI_SYNC_OUTPUT`   | `1`/`0` — force synchronized output (no flickering) on/off. Enabled for terminals by default      |
+
+The progress indicator is shown in the tab bar / taskbar of terminals that support it: Ghostty, WezTerm, Windows Terminal, iTerm2 ≥ 3.6.6, VTE-based terminals, mintty and ConEmu. Inside tmux it works with tmux 3.8 or newer when the outer terminal supports it (`progressbar` in `tmux display -p '#{client_termfeatures}'`); it is disabled inside screen and zellij.
 
 ## Full configuration
 

@@ -30,16 +30,17 @@ $ sandbox-cli email --help
 
 Usage: sandbox-cli email [OPTIONS] EMAILS
 
-Upload an email and get its headers
+Upload an email and get its headers.
 
 ╭─ Arguments ──────────────────────────────────────────────────────────────────╮
 │ *  EMAILS  The path to the email files [required]                            │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ╭─ Parameters ─────────────────────────────────────────────────────────────────╮
-│ --out -o  Output directory [default: downloads]                              │
+│ --out -o   The path where to save the results [default: downloads]           │
+│ --json -J  Print results as JSON lines to stdout; messages and progress go   │
+│            to stderr [default: False]                                        │
 ╰──────────────────────────────────────────────────────────────────────────────╯
-╭─ Sandbox ────────────────────────────────────────────────────────────────────╮
-│ --key -k  The key to access the sandbox test-1,test-2,test-3 [default:       │
-│           test-1]                                                            │
+╭─ Sandbox Options ────────────────────────────────────────────────────────────╮
+│ --key -k  The key to access the sandbox main [default: main]                 │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ```

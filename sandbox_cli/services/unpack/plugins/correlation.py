@@ -1,35 +1,32 @@
+from __future__ import annotations
+
+from pathlib import Path
+
 import orjson
-from ptsandbox.utils import DetectionType
 
-from sandbox_cli.services.unpack.plugins.abc import BasePlugin
+from sandbox_cli.services.unpack.plugins.abc import GroupedWriter
+
+__all__ = ["split_correlated"]
+
+_MALWARE = "malware"
+_PER_DETECT = {"suspicious": ".suspicious.log", "silent": ".silent.log"}
 
 
-class CorrelatedRules(BasePlugin):
-    def run(self) -> None:
-        base_path = self.trace / "correlated"
-        file = base_path / "events-correlated.log"
+def split_correlated(base: Path) -> None:
+    """
+    ``malware.log`` with all malicious detections and one file per suspicious/silent detection.
+    """
+    source = base / "events-correlated.log"
+    if not source.exists():
+        return
 
-        malware: list[bytes] = []
-        suspicious: dict[str, list[bytes]] = {}
-        silent: dict[str, list[bytes]] = {}
-
-        if file.exists():
-            with open(file, "rb") as fd:
-                for line in fd:
-                    data = orjson.loads(line)
-                    if not data.get("detect.type"):
-                        continue
-                    match data["detect.type"]:
-                        case DetectionType.MALWARE:
-                            malware.append(line)
-                        case DetectionType.SUSPICIOUS:
-                            suspicious.setdefault(data["detect.name"], []).append(line)
-                        case DetectionType.SILENT:
-                            silent.setdefault(data["detect.name"], []).append(line)
-
-        if malware:
-            with open(base_path / "malware.log", "wb") as fd:
-                fd.writelines(malware)
-
-        self.write_groups(base_path, silent, suffix=".silent.log")
-        self.write_groups(base_path, suspicious, suffix=".suspicious.log")
+    with open(source, "rb") as fd, GroupedWriter(base) as writer:
+        for line in fd:
+            event = orjson.loads(line)
+            detect_type = event.get("detect.type")
+            if not detect_type:
+                continue
+            if detect_type == _MALWARE:
+                writer.add("malware.log", line)
+            elif suffix := _PER_DETECT.get(detect_type):
+                writer.add(f"{event['detect.name']}{suffix}", line)

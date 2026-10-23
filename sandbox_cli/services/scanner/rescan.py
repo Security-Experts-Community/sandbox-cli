@@ -1,259 +1,161 @@
 from __future__ import annotations
 
 import asyncio
-from collections.abc import Coroutine
+import tempfile
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 from dataclasses import replace
-from io import BytesIO
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 from zipfile import BadZipFile, ZipFile
 
-import aiohttp
-import aiohttp.client_exceptions
 from ptsandbox import Sandbox
-from ptsandbox.exceptions import (
-    SandboxException,
-    SandboxUploadException,
-    SandboxWaitTimeoutException,
-)
 from ptsandbox.models import SandboxBaseScanTaskRequest
 
 from sandbox_cli.console import console
-from sandbox_cli.core.browser import open_link
-from sandbox_cli.core.config import settings
+from sandbox_cli.core.config import get_settings
 from sandbox_cli.core.exceptions import ScanError
-from sandbox_cli.core.progress import make_scan_progress
-from sandbox_cli.core.sandbox import format_link, get_key_by_name
-from sandbox_cli.core.scan import (
-    SandboxArguments,
-    ScanType,
-    save_report,
-    save_scan_arguments,
-)
-from sandbox_cli.services.downloader import DEFAULT_CONCURRENCY as DEFAULT_DOWNLOAD_CONCURRENCY
-from sandbox_cli.services.downloader import (
-    DownloadOptions,
-    download,
-)
-from sandbox_cli.services.scanner.compile import compile_rules
-from sandbox_cli.services.scanner.utils import shorten_name
-from sandbox_cli.services.unpack import Unpack
+from sandbox_cli.core.sandbox import get_key_by_name
+from sandbox_cli.core.scan import SandboxArguments, ScanType
+from sandbox_cli.services.scanner.prepare import prepare_scan
+from sandbox_cli.services.scanner.runner import ScanJob, ScanReporter, run_scan_jobs, unique_names
+from sandbox_cli.services.scanner.uploads import apply_uploads
+from sandbox_cli.services.unpack import RAW_DIR
 
 if TYPE_CHECKING:
-    from rich.progress import Progress
+    from ptsandbox.models import SandboxBaseTaskResponse
 
-_TRACE_LOG_NAMES = {
-    "drakvuf-trace.log.gz",
-    "drakvuf-trace.log.zst",
-}
+    from sandbox_cli.services.scanner.requests import RescanRequest
+
+__all__ = ["check_traces", "open_trace", "rescan_internal"]
+
+_TRACE_LOG_NAMES = ("drakvuf-trace.log.zst", "drakvuf-trace.log.gz")
+_PCAP_NAME = "tcpdump.pcap"
+DEFAULT_WAIT_TIMEOUT = 300
 
 
-def load_trace(trace: Path) -> tuple[Path | BytesIO, Path | BytesIO]:
+def _find_trace_files(trace_dir: Path) -> tuple[Path, Path]:
     """
-    Extract drakvuf trace and tcpdump pcap from a trace archive/dir.
-
-    :param trace:
-        file — zip file with drakvuf-trace.log.gz/drakvuf-trace.log.zst and tcpdump.pcap inside
-        dir  — directory with drakvuf-trace.log.gz/drakvuf-trace.log.zst and tcpdump.pcap files
+    Trace and pcap of a result folder: in the folder itself, or in ``raw/`` after unpacking.
     """
+    for base in (trace_dir, trace_dir / RAW_DIR):
+        drakvuf_trace = next((base / n for n in _TRACE_LOG_NAMES if (base / n).is_file()), None)
+        if drakvuf_trace is not None:
+            pcap = base / _PCAP_NAME
+            if not pcap.is_file():
+                raise ScanError(f"{_PCAP_NAME} doesn't exist in {base}")
+            return drakvuf_trace, pcap
+    raise ScanError(f"{' or '.join(_TRACE_LOG_NAMES)} doesn't exist in {trace_dir.resolve()}")
 
-    if trace.is_dir():
-        drakvuf_trace: Path = trace / "drakvuf-trace.log.gz"
-        if not drakvuf_trace.exists():
-            # handle case with modern zst format
-            drakvuf_trace = trace / "drakvuf-trace.log.zst"
-            if not drakvuf_trace.exists():
-                raise ScanError(
-                    f"drakvuf-trace.log.gz or drakvuf-trace.log.zst doesn't exist in {trace.expanduser().resolve()}"
-                )
 
-        tcpdump_pcap: Path = trace / "tcpdump.pcap"
-        if not tcpdump_pcap.exists():
-            raise ScanError(f"tcpdump.pcap doesn't exist in {trace}")
-        return drakvuf_trace, tcpdump_pcap
+def _trace_members(archive: Path, zf: ZipFile) -> str:
+    members = {info.filename: info for info in zf.infolist()}
+    log_name = next((n for n in _TRACE_LOG_NAMES if n in members), None)
+    if log_name is None:
+        raise ScanError(f"No {' or '.join(_TRACE_LOG_NAMES)} in {archive}")
+    if members[log_name].file_size == 0:
+        raise ScanError(f"Empty {log_name} in {archive}")
+    if _PCAP_NAME not in members:
+        raise ScanError(f"No {_PCAP_NAME} in {archive}")
+    return log_name
 
+
+def _extract_trace(archive: Path, target: Path) -> tuple[Path, Path]:
     try:
-        with ZipFile(trace) as zf:
-            log_file = next((f.filename for f in zf.filelist if f.filename in _TRACE_LOG_NAMES), "")
-            if not log_file:
-                raise ScanError(f"No drakvuf-trace.log.gz or drakvuf-trace.log.zst in {trace}")
-
-            raw_trace = zf.read(log_file)
-            if raw_trace == b"":
-                raise ScanError(f"Empty {log_file} in {trace}")
-
-            drakvuf_trace_buf: BytesIO = BytesIO(raw_trace)
-            tcpdump_pcap_buf: BytesIO = BytesIO(zf.read("tcpdump.pcap"))
-            return drakvuf_trace_buf, tcpdump_pcap_buf
+        with ZipFile(archive) as zf:
+            log_name = _trace_members(archive, zf)
+            return Path(zf.extract(log_name, target)), Path(zf.extract(_PCAP_NAME, target))
     except BadZipFile as e:
-        raise ScanError(f"{trace} not a zip file") from e
+        raise ScanError(f"{archive} not a zip file") from e
 
 
-async def _prepare_rescan_options(
-    sandbox: Sandbox,
-    progress: Progress,
-    rules_dir: Path | None,
-    is_local: bool,
-) -> SandboxBaseScanTaskRequest.Options:
-    sandbox_options = SandboxBaseScanTaskRequest.Options(analysis_depth=2, passwords_for_unpack=settings.passwords)
-
-    # enable default debug options
-    # all debug options available in library
-    sandbox_options.sandbox.debug_options["save_debug_files"] = True
-
-    # process custom options
-    compiled_rules = await compile_rules(rules_dir, is_local, progress=progress)
-
-    if compiled_rules:
+def check_traces(traces: list[Path]) -> None:
+    """
+    Raise ``ScanError`` listing every trace folder or archive that can't be re-scanned.
+    """
+    problems: list[str] = []
+    for trace in traces:
         try:
-            rules_uri = (await sandbox.api.upload_file(compiled_rules)).data.file_uri
-            sandbox_options.sandbox.debug_options["rules_url"] = rules_uri
-        except aiohttp.client_exceptions.ClientResponseError:
-            console.error(f"Can't upload compiled rules {rules_dir} to sandbox")
-
-    return sandbox_options
-
-
-async def rescan_internal(
-    *,  # keyword-only args
-    traces: list[Path],
-    rules_dir: Path | None,
-    out_dir: Path,
-    key_name: str,
-    is_local: bool,
-    unpack: bool,
-    download_options: DownloadOptions,
-    open_browser: bool,
-    timeout: int,
-) -> None:
-    key = get_key_by_name(key_name)
-    sandbox_sem = asyncio.Semaphore(value=key.max_workers)
-    download_sem = asyncio.Semaphore(value=DEFAULT_DOWNLOAD_CONCURRENCY)
-
-    progress = make_scan_progress(with_image=False, disable=True)
-
-    async def process_trace(
-        drakvuf_trace: Path | BytesIO,
-        tcpdump_pcap: Path | BytesIO,
-        trace: Path,
-        out_dir: Path,
-        idx: str,
-    ) -> None:
-        idx = f"[turquoise2 bold]{idx}[/]"
-
-        async with sandbox_sem:
-            task_id = progress.add_task(description="Creating task", idx=idx, url="...")
-
-            try:
-                rescan_result = await sandbox.create_rescan(
-                    drakvuf_trace,
-                    tcpdump_pcap,
-                    options=sandbox_options,
-                    rules=None,
-                    read_timeout=timeout,
-                )
-            except SandboxUploadException as e:
-                console.error(f"[yellow]{trace}[/] • an error occurred when uploading a file to the server • {e}")
-                progress.remove_task(task_id)
-                return
-            except aiohttp.client_exceptions.ClientResponseError as e:
-                console.error(f"[yellow]{trace}[/] • {e}")
-                progress.remove_task(task_id)
-                return
-            except aiohttp.ClientError as e:
-                console.error(f"[yellow]{trace}[/] • connection error • {e}")
-                progress.remove_task(task_id)
-                return
-
-            link = format_link(rescan_result, key=key)
-            formatted_link = f"[medium_purple]{link}[/]"
-            final_output = f"[yellow]{shorten_name(trace.name)}[/] • {formatted_link}"
-
-            if open_browser:
-                open_link(link)
-
-            progress.update(
-                task_id=task_id,
-                description=f"Waiting for full report for [yellow]{shorten_name(trace.name)}[/]",
-                url=formatted_link,
-            )
-            try:
-                if not (awaited_report := await sandbox.wait_for_report(rescan_result, timeout)):
-                    console.error(f"Rescan failed for [yellow]{trace.name}[/] • {formatted_link} • {rescan_result}")
-                    progress.remove_task(task_id)
-                    return
-            except SandboxWaitTimeoutException:
-                console.error(f"{final_output} • got timeout while waiting")
-                progress.remove_task(task_id)
-                return
-            except SandboxException as e:
-                console.error(f"{final_output} • {e}")
-                progress.remove_task(task_id)
-                return
-
-            rescan_result = awaited_report
-
-        # write report.json
-        save_report(out_dir, rescan_result)
-
-        # get full report?
-        if not (long_report := rescan_result.get_long_report()):
-            console.error(f"{final_output} • full report not available")
-            progress.remove_task(task_id)
-            return
-
-        progress.update(task_id=task_id, description="Downloading results...")
-
-        await download(
-            long_report,
-            sandbox,
-            out_dir,
-            replace(download_options, logs=True),
-            semaphore=download_sem,
-        )
-
-        console.done(final_output)
-        progress.remove_task(task_id)
-
-        if unpack:
-            await asyncio.to_thread(Unpack.run_unpack, out_dir)
-
-    async def wrapper(trace: Path, out_dir: Path, idx: str) -> None:
-        try:
-            drakvuf_trace, tcpdump_pcap = load_trace(trace)
+            if trace.is_dir():
+                _find_trace_files(trace)
+                continue
+            with ZipFile(trace) as zf:
+                _trace_members(trace, zf)
+        except BadZipFile:
+            problems.append(f"{trace} not a zip file")
         except ScanError as e:
-            console.error(str(e))
-            return
+            problems.append(str(e))
+    if problems:
+        raise ScanError("; ".join(problems))
 
-        try:
-            await process_trace(drakvuf_trace, tcpdump_pcap, trace, out_dir, idx)
-        except Exception as e:
-            console.error(f"[yellow]{shorten_name(trace.name)}[/] • unexpected error • {e}")
 
+@asynccontextmanager
+async def open_trace(trace: Path) -> AsyncIterator[tuple[Path, Path]]:
+    """
+    Yield ``(drakvuf_trace, tcpdump_pcap)`` paths for a trace folder or ``sandbox_logs.zip``.
+
+    An archive is extracted to a temporary directory that lives as long as the block.
+    """
+    if trace.is_dir():
+        yield _find_trace_files(trace)
+        return
+
+    with tempfile.TemporaryDirectory(prefix="sandbox-cli-trace-") as tmp:
+        yield await asyncio.to_thread(_extract_trace, trace, Path(tmp))
+
+
+def _out_dir_names(traces: list[Path]) -> list[str]:
+    """
+    ``<zip name>`` for archives, ``rescan`` / ``rescan_<N>`` for folders, made distinct.
+    """
+    names = [
+        trace.stem if trace.suffix == ".zip" else ("rescan" if len(traces) == 1 else f"rescan_{i + 1}")
+        for i, trace in enumerate(traces)
+    ]
+    by_trace = dict(zip(traces, names, strict=True))
+    return unique_names(traces, lambda trace: by_trace[trace], fallback=lambda trace: by_trace[trace])
+
+
+async def rescan_internal(request: RescanRequest, reporter: ScanReporter) -> None:
+    check_traces(request.traces)
+    key = get_key_by_name(request.key_name)
     console.info(f"Using key: name={key.name} max_workers={key.max_workers}")
 
-    tasks: list[Coroutine[Any, Any, None]] = []
     async with Sandbox(key=key) as sandbox:
-        with progress:
-            sandbox_options = await _prepare_rescan_options(
-                sandbox=sandbox,
-                progress=progress,
-                rules_dir=rules_dir,
-                is_local=is_local,
-            )
-            sandbox_arguments = SandboxArguments(
-                type=ScanType.RE_SCAN,
-                sandbox_key_name=key.name,
-                sandbox_options=sandbox_options.sandbox,
+        prepared = await prepare_scan(sandbox, rules_dir=request.rules_dir, is_local=request.is_local)
+
+        options = SandboxBaseScanTaskRequest.Options(analysis_depth=2, passwords_for_unpack=get_settings().passwords)
+        options.sandbox.debug_options["save_debug_files"] = True
+        apply_uploads(options.sandbox.debug_options, prepared.uploads)
+
+        arguments = SandboxArguments(type=ScanType.RE_SCAN, sandbox_key_name=key.name, sandbox_options=options.sandbox)
+        download_options = replace(request.download_options, logs=True)
+        wait_timeout = request.wait_timeout or DEFAULT_WAIT_TIMEOUT
+
+        dir_names = _out_dir_names(request.traces)
+
+        def make_job(trace: Path, index: int) -> ScanJob:
+            async def submit(sandbox: Sandbox) -> SandboxBaseTaskResponse:
+                async with open_trace(trace) as (drakvuf_trace, tcpdump_pcap):
+                    return await sandbox.create_rescan(
+                        drakvuf_trace,
+                        tcpdump_pcap,
+                        options=options,
+                        rules=None,
+                        read_timeout=wait_timeout,
+                    )
+
+            out_dir = request.out_dir / dir_names[index]
+            out_dir.mkdir(parents=True, exist_ok=True)
+            return ScanJob(
+                name=trace.name if trace.is_file() else "/".join(trace.parts[-2:]),
+                out_dir=out_dir,
+                idx=f"{index + 1}/{len(request.traces)}",
+                submit=submit,
+                wait_timeout=wait_timeout,
+                download_options=download_options,
+                arguments=arguments,
             )
 
-            total = len(traces)
-            for i, trace in enumerate(traces):
-                # use zip filename for nicer output dirs, fall back to "rescan" / "rescan_N"
-                name = trace.stem if trace.suffix == ".zip" else ("rescan" if total == 1 else f"rescan_{i + 1}")
-                local_out_dir = out_dir / name
-                local_out_dir.mkdir(parents=True, exist_ok=True)
-                save_scan_arguments(local_out_dir, sandbox_arguments)
-                tasks.append(wrapper(trace, local_out_dir, f"{i + 1}/{total}"))
-
-            await asyncio.gather(*tasks)
+        jobs = [make_job(trace, i) for i, trace in enumerate(request.traces)]
+        await run_scan_jobs(sandbox, key, jobs, reporter, unpack=request.unpack, open_browser=request.open_browser)

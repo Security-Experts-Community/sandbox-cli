@@ -68,6 +68,7 @@
           devShells.default = pkgs.mkShell {
             packages = [
               projectEnv
+              pkgs.prek
             ];
 
             shellHook = ''

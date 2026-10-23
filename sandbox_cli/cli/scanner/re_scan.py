@@ -3,18 +3,23 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Annotated
 
-from cyclopts import Parameter, validators
+from cyclopts import Parameter
 
-from sandbox_cli.cli._converters import (
-    out_dir_converter,
-    out_dir_validator,
-    rules_path_resolver,
-    trace_converter,
-    trace_validator,
+from sandbox_cli.cli._converters import trace_converter, trace_validator
+from sandbox_cli.cli._params import (
+    ArtifactFlags,
+    IsLocal,
+    JsonOutput,
+    Key,
+    OpenBrowser,
+    OutDir,
+    RulesDir,
+    UnpackFlag,
+    WaitTimeout,
+    default_key,
 )
-from sandbox_cli.core.config import key_help, settings
-from sandbox_cli.core.sandbox import validate_key
-from sandbox_cli.services.downloader import DownloadOptions
+from sandbox_cli.core.reporting import make_scan_reporter
+from sandbox_cli.services.scanner.requests import RescanRequest
 from sandbox_cli.services.scanner.rescan import rescan_internal
 
 __all__ = ["re_scan"]
@@ -31,86 +36,29 @@ async def re_scan(
     ],
     /,
     *,
-    rules_dir: Annotated[
-        Path | None,
-        Parameter(
-            name=["--rules", "-r"],
-            help="The path to the folder with the rules or the default rules from the sandbox or platform alias (windows, linux)",
-            converter=rules_path_resolver,
-        ),
-    ] = None,
-    out_dir: Annotated[
-        Path,
-        Parameter(
-            name=["--out", "-o"],
-            help="The path where to save the results",
-            converter=out_dir_converter,
-            validator=out_dir_validator,
-        ),
-    ] = Path("./sandbox"),
-    key: Annotated[
-        str,
-        Parameter(
-            name=["--key", "-k"],
-            help=key_help(),
-            validator=validate_key,
-            group="Sandbox Options",
-        ),
-    ] = settings.default_key_name,
-    is_local: Annotated[
-        bool,
-        Parameter(
-            name=["--local", "-l"],
-            negative="",
-            help="The rules will be compiled locally using Docker (unix only)",
-        ),
-    ] = False,
-    unpack: Annotated[
-        bool,
-        Parameter(
-            name=["--unpack", "-U"],
-            help="Unpack downloaded files",
-            negative="",
-        ),
-    ] = False,
-    debug: Annotated[
-        bool,
-        Parameter(
-            name=["--debug", "-d"],
-            help="Download debug artifacts",
-            negative="",
-            group="Download options",
-        ),
-    ] = False,
-    open_browser: Annotated[
-        bool,
-        Parameter(
-            name=["--open-browser", "-ob"],
-            help="Open analysis link in the default browser",
-            negative="",
-        ),
-    ] = False,
-    timeout: Annotated[
-        int,
-        Parameter(
-            name=["--timeout", "-t"],
-            help="Response waiting time (increase this value if large traces are scanned)",
-            validator=validators.Number(gt=0, lt=3600),
-        ),
-    ] = 300,
+    rules_dir: RulesDir = None,
+    out_dir: OutDir = Path("./sandbox"),
+    key: Key = default_key(),
+    is_local: IsLocal = False,
+    unpack: UnpackFlag = False,
+    wait_timeout: WaitTimeout = None,
+    artifacts: ArtifactFlags = ArtifactFlags(),
+    open_browser: OpenBrowser = False,
+    json_output: JsonOutput = False,
 ) -> None:
     """
     Send traces to re-scan.
     """
 
-    await rescan_internal(
-        traces=traces,
-        rules_dir=rules_dir,
-        out_dir=out_dir,
+    request = RescanRequest(
         key_name=key,
+        out_dir=out_dir,
+        rules_dir=rules_dir,
         is_local=is_local,
         unpack=unpack,
-        download_options=DownloadOptions(debug=debug),
         open_browser=open_browser,
-        timeout=timeout,
+        download_options=artifacts.to_options(),
+        traces=traces,
+        wait_timeout=wait_timeout,
     )
+    await rescan_internal(request, make_scan_reporter(with_image=False, json_output=json_output))

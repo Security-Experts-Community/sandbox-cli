@@ -1,4 +1,22 @@
+"""
+Convert downloaded sandbox logs into an analysis-friendly layout.
+
+::
+
+    <dir>/drakvuf-trace/drakvuf-trace.log
+    <dir>/correlated/events-correlated.log (+ per-detection files)
+    <dir>/normalized/events-normalized.log (+ per-plugin files)
+    <dir>/network/tcpdump.pcap
+    <dir>/raw/<original compressed files>
+
+The originals move to ``raw/``, so a second run on an unpacked directory
+rebuilds the same result.
+"""
+
+from __future__ import annotations
+
 import shutil
+from collections.abc import Callable
 from gzip import GzipFile
 from pathlib import Path
 from zipfile import ZipFile
@@ -6,116 +24,107 @@ from zipfile import ZipFile
 import zstandard
 
 from sandbox_cli.core.exceptions import UnpackError
-from sandbox_cli.services.unpack.plugins.abc import BasePlugin
-from sandbox_cli.services.unpack.plugins.correlation import CorrelatedRules
-from sandbox_cli.services.unpack.plugins.sort_by_plugins import SortByPlugins
+from sandbox_cli.services.unpack.plugins.correlation import split_correlated
+from sandbox_cli.services.unpack.plugins.sort_by_plugins import split_normalized
 
-# Chunk size for streaming gzip decompression (64 KiB).
-_GZ_CHUNK_SIZE = 64 * 1024
+__all__ = ["has_logs", "unpack_results", "unpack_trace"]
+
+RAW_DIR = "raw"
+
+_SOURCES: dict[str, tuple[str, ...]] = {
+    "drakvuf-trace": ("drakvuf-trace.log.gz", "drakvuf-trace.log.zst"),
+    "correlated": ("events-correlated.log.gz",),
+    "normalized": ("events-normalized.log.gz",),
+    "network": ("tcpdump.pcap",),
+}
+
+_PLUGINS: tuple[tuple[str, Callable[[Path], None]], ...] = (
+    ("correlated", split_correlated),
+    ("normalized", split_normalized),
+)
+
+_CHUNK_SIZE = 1024 * 1024
 
 
-class Unpack:
-    def __init__(self, trace: Path) -> None:
-        if not trace.exists():
-            raise UnpackError(f"{trace} does not exist")
-
-        # unpack zip file
-        if trace.is_file() and trace.suffix.endswith("zip"):
-            self.trace = Path(trace.with_suffix(""))
-            self.trace.mkdir(exist_ok=True)
-
-            with ZipFile(trace, mode="r") as zf:
-                zf.extractall(path=self.trace)
-        elif trace.is_dir():
-            self.trace = trace
+def _decompress(src: Path, dst: Path) -> None:
+    with open(src, "rb") as fin, open(dst, "wb") as fout:
+        if src.suffix == ".zst":
+            zstandard.ZstdDecompressor().copy_stream(fin, fout, read_size=_CHUNK_SIZE, write_size=_CHUNK_SIZE)
         else:
-            raise UnpackError(f"Unsupported file: {trace}")
+            with GzipFile(fileobj=fin, mode="rb") as gz:
+                shutil.copyfileobj(gz, fout, _CHUNK_SIZE)
 
-        self.plugins: list[BasePlugin] = [CorrelatedRules(self.trace), SortByPlugins(self.trace)]
-        self.logs: dict[str, Path | None] = {
-            "drakvuf-trace": None,  # dynamic detect what extension is using
-            "correlated": Path(self.trace / "events-correlated.log.gz"),
-            "normalized": Path(self.trace / "events-normalized.log.gz"),
-            "network": Path(self.trace / "tcpdump.pcap"),
-        }
-        self.raw = Path(self.trace / "raw")
 
-    def _extract_log(self, file: Path) -> None:
-        if file.exists() and file.suffix.endswith("zst"):
-            dctx = zstandard.ZstdDecompressor()
-            with open(file, mode="rb") as zst, open(file.with_suffix(""), "wb") as out:
-                dctx.copy_stream(zst, out)
+def _find_source(root: Path, names: tuple[str, ...]) -> Path | None:
+    for base in (root, root / RAW_DIR):
+        for name in names:
+            if (path := base / name).is_file():
+                return path
+    return None
 
-        if file.exists() and file.suffix.endswith("gz"):
-            with GzipFile(file, mode="rb") as gzip, open(file.with_suffix(""), "wb") as out:
-                # Chunked copy to avoid loading the entire decompressed
-                # content into memory at once.
-                while chunk := gzip.read(_GZ_CHUNK_SIZE):
-                    out.write(chunk)
 
-    def _extract_logs(self) -> None:
-        for log in self.logs.values():
-            if log is not None:
-                self._extract_log(log)
+def _resolve_root(trace: Path) -> Path:
+    if not trace.exists():
+        raise UnpackError(f"{trace} does not exist")
+    if trace.is_dir():
+        return trace
+    if trace.suffix == ".zip":
+        root = trace.with_suffix("")
+        root.mkdir(exist_ok=True)
+        with ZipFile(trace) as zf:
+            zf.extractall(root)
+        return root
+    raise UnpackError(f"Unsupported file: {trace}")
 
-    def _create_dirs(self) -> None:
-        def _create(dir: Path) -> None:
-            if dir.exists() and dir.is_dir():
-                shutil.rmtree(dir)
-            dir.mkdir(exist_ok=True)
 
-        for dir in self.logs:
-            _create(Path(self.trace / dir))
+def has_logs(directory: Path) -> bool:
+    """
+    Whether ``directory`` holds sandbox logs (fresh or already unpacked).
+    """
+    return any(_find_source(directory, names) for names in _SOURCES.values())
 
-    def _move_files(self) -> None:
-        self.raw.mkdir(exist_ok=True)
-        for log in self.logs.values():
-            if log is not None and log.exists() and log.is_file():
-                shutil.copy(log, self.raw)
 
-        for dir, file in self.logs.items():
-            if file is None or not file.exists() or file.is_dir():
-                continue
+def unpack_trace(trace: Path) -> Path:
+    """
+    Unpack a result directory or ``sandbox_logs.zip``; return the directory.
 
-            if file.suffix.endswith("gz") or file.suffix.endswith("zst"):
-                shutil.move(file.with_suffix(""), self.trace / dir)
-            else:
-                shutil.move(file, self.trace / dir)
+    CPU-bound: call it in a worker thread or process from async code.
+    """
+    root = _resolve_root(trace)
+    sources = {directory: _find_source(root, names) for directory, names in _SOURCES.items()}
+    raw = root / RAW_DIR
+    raw.mkdir(exist_ok=True)
 
-    def run(self) -> None:
-        if Path(self.trace / "drakvuf-trace.log.gz").exists():
-            self.logs["drakvuf-trace"] = Path(self.trace / "drakvuf-trace.log.gz")
-        elif Path(self.trace / "drakvuf-trace.log.zst").exists():
-            self.logs["drakvuf-trace"] = Path(self.trace / "drakvuf-trace.log.zst")
+    for directory, src in sources.items():
+        out_dir = root / directory
+        shutil.rmtree(out_dir, ignore_errors=True)
+        out_dir.mkdir()
+        if src is None:
+            continue
 
-        self._extract_logs()
-        self._create_dirs()
-        self._move_files()
+        if src.suffix in {".gz", ".zst"}:
+            _decompress(src, out_dir / src.stem)
+            if src.parent != raw:
+                src.replace(raw / src.name)
+        else:
+            shutil.copy2(src, out_dir / src.name)
+            if src.parent != raw:
+                src.replace(raw / src.name)
 
-        # Run plugins sequentially — they are CPU-bound (JSON parsing) and
-        # the GIL prevents real parallelism with threads.  Each plugin
-        # operates on an independent file so there is no contention.
-        for plugin in self.plugins:
-            plugin.run()
+    for directory, plugin in _PLUGINS:
+        plugin(root / directory)
 
-        # remove files
-        for log in self.logs.values():
-            # drakvuf trace not found
-            if log is None:
-                continue
+    return root
 
-            if not log.exists():
-                continue
 
-            log.unlink(missing_ok=True)
+def unpack_results(directory: Path) -> list[Path]:
+    """
+    Unpack every result folder under ``directory`` (``<image>/``, ``<image>/<file>/``, ...).
 
-    @staticmethod
-    def run_unpack(trace: Path) -> None:
-        """
-        Construct and run in one call — suitable for ``asyncio.to_thread``.
-
-        Example::
-
-            await asyncio.to_thread(Unpack.run_unpack, out_dir)
-        """
-        Unpack(trace).run()
+    Returns the unpacked folders.
+    """
+    if not directory.is_dir():
+        return []
+    if has_logs(directory):
+        return [unpack_trace(directory)]
+    return [unpacked for entry in sorted(directory.iterdir()) if entry.is_dir() for unpacked in unpack_results(entry)]

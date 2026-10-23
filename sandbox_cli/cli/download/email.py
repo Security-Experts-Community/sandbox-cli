@@ -8,10 +8,12 @@ import aiofiles
 from cyclopts import Parameter, validators
 from ptsandbox import Sandbox
 
-from sandbox_cli.cli._converters import out_dir_converter, out_dir_validator
-from sandbox_cli.core.config import key_help, settings
+from sandbox_cli.cli._params import JsonOutput, Key, OutDir, default_key
+from sandbox_cli.console import console
+from sandbox_cli.core.exceptions import SandboxCliError
 from sandbox_cli.core.progress import make_progress
-from sandbox_cli.core.sandbox import get_key_by_name, validate_key
+from sandbox_cli.core.sandbox import get_key_by_name
+from sandbox_cli.services.scanner.runner import describe_error
 
 __all__ = ["download_email"]
 
@@ -26,24 +28,9 @@ async def download_email(
     ],
     /,
     *,
-    out_dir: Annotated[
-        Path,
-        Parameter(
-            name=["--out", "-o"],
-            help="Output directory",
-            converter=out_dir_converter,
-            validator=out_dir_validator,
-        ),
-    ] = Path("./downloads"),
-    key: Annotated[
-        str,
-        Parameter(
-            name=["--key", "-k"],
-            help=key_help(),
-            validator=validate_key,
-            group="Sandbox",
-        ),
-    ] = settings.default_key_name,
+    out_dir: OutDir = Path("./downloads"),
+    key: Key = default_key(),
+    json_output: JsonOutput = False,
 ) -> None:
     """
     Upload an email and get its headers.
@@ -54,13 +41,28 @@ async def download_email(
     async with Sandbox(get_key_by_name(key)) as sandbox:
         with progress:
 
-            async def _internal(email: Path, out_dir: Path) -> None:
+            async def _internal(email: Path, out_dir: Path) -> bool:
                 task_id = progress.add_task(description=f"Fetching headers [green]{email.name}[/]")
+                target = out_dir / f"{email.name}.headers"
                 try:
-                    async with aiofiles.open(out_dir / f"{email}.headers", "wb") as fd:
+                    async with aiofiles.open(target, "wb") as fd:
                         async for chunk in sandbox.get_email_headers(email):
                             await fd.write(chunk)
+                except Exception as e:
+                    target.unlink(missing_ok=True)
+                    reason = describe_error(e)
+                    console.error(f"[yellow]{email.name}[/] • {reason}")
+                    console.emit_json({"status": "failed", "email": str(email), "reason": reason})
+                    return False
                 finally:
                     progress.remove_task(task_id)
+                    console.terminal_progress.advance()
+                console.done(f"[yellow]{email.name}[/] • {target}")
+                console.emit_json({"status": "done", "email": str(email), "headers": str(target)})
+                return True
 
-            await asyncio.gather(*(_internal(email, out_dir) for email in emails))
+            console.terminal_progress.set_total(len(emails))
+            results = await asyncio.gather(*(_internal(email, out_dir) for email in emails))
+
+    if failed := results.count(False):
+        raise SandboxCliError(f"Failed to fetch headers for {failed} of {len(emails)} emails")

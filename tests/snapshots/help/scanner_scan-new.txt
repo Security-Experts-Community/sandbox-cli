@@ -1,0 +1,65 @@
+Usage: sandbox-cli scanner scan-new [OPTIONS] FILES
+
+Send files to scan with the sandbox (advanced scan).
+
+╭─ Arguments ──────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ *  FILES  Path to the files or folders to scan [required]                                                            │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭─ Parameters ─────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ --rules -r               The path to the folder with the rules or a platform alias (windows, linux) resolved against │
+│                          rules-path                                                                                  │
+│ --out -o                 The path where to save the results [default: sandbox]                                       │
+│ --local -l               Compile the rules locally using Docker (unix only) [default: False]                         │
+│ --upload-timeout -T      Upload timeout in seconds (increase if upload big files) [default: 300]                     │
+│ --wait-timeout -W        How long to wait for the task result in seconds (increase for heavy samples or large        │
+│                          traces)                                                                                     │
+│ --unpack -U              Unpack downloaded logs (see the unpack command) [default: False]                            │
+│ --open-browser -ob       Open analysis link in the default browser [default: False]                                  │
+│ --json -J                Print results as JSON lines to stdout; messages and progress go to stderr [default: False]  │
+│ --preserve-filename -pf  Do not change filename for analysis.                                                        │
+│                          When set to false (default behaviour): local/path/to/malware.exe[_~] ->                     │
+│                          sandbox/guest/os/malware.exe                                                                │
+│                          When set to true name will remain unchanged. [default: False]                               │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭─ Download Options ───────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ --all -a         Download all artifacts [default: False]                                                             │
+│ --debug -d       Download debug artifacts [default: False]                                                           │
+│ --artifacts -A   Download artifacts (files and procdumps) [default: False]                                           │
+│ --files -f       Download files [default: False]                                                                     │
+│ --crashdumps -C  Download crashdumps (may be more than 1GB) [default: False]                                         │
+│ --procdumps -p   Download procdumps [default: False]                                                                 │
+│ --amsi -am       Download amsi-dumps [default: False]                                                                │
+│ --dex -dx        Download dex-dumps [default: False]                                                                 │
+│ --decompress -D  Decompress downloaded procdumps [default: False]                                                    │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭─ Sandbox Options ────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ --image -i                       The name of the image to scan (don't mix different platforms) Available images:     │
+│                                  altworkstation-10-x64, astralinux-smolensk-x64, redos-8-x64, redos-murom-x64,       │
+│                                  ubuntu-jammy-x64, win10-1803-x64, win10-22H2-x64, win11-23H2-x64, win7-sp1-x64,     │
+│                                  win7-sp1-x64-ics, win8.1-update1-x64, winserv2016-1198-x64, winserv2019-1879-x64    │
+│ --key -k                         The key to access the sandbox main, second [default: main]                          │
+│ --name -n                        Fake name for the sandbox (if specified more than one file will be applied to all   │
+│                                  files)                                                                              │
+│ --timeout -t                     Analysis duration in seconds [default: 300]                                         │
+│ --syscall-hooks -s               Path to file with syscall hooks (file with syscall names split by newline)          │
+│ --dll-hooks-dir -dll             Path to directory with dll hooks                                                    │
+│ --unimon-hooks -u                Path to file with unimon hooks                                                      │
+│ --fileextractor-excludes -fe     Path to file with fileextractor excludes                                            │
+│ --procdump-excludes -pe          Path to file with procdump excludes (regular expressions of process paths, one per  │
+│                                  line)                                                                               │
+│ --cmd                            Command line for file execution rundll32.exe {file},#1                              │
+│ --priority -pr                   Priority of the scan (1-4) [default: 3]                                             │
+│ --no-procdumps-on-finish -P      Disable dumps for all created and not finished processes [default: False]           │
+│ --disable-lightweight-dumps -dl  Disable lightweight memory dumps (mostly for testing purposes) [default: False]     │
+│ --bootkitmon -b                  Enable bootkitmon [default: False]                                                  │
+│ --bootkitmon-duration -bd        Bootkitmon duration in seconds [default: 60]                                        │
+│ --mitm-disabled -M               Disable MITM [default: False]                                                       │
+│ --disable-clicker -dc            Disable clicker [default: False]                                                    │
+│ --skip-sample-run -S             Skip sample run [default: False]                                                    │
+│ --vnc-mode -V                    VNC mode [choices: disabled, full, read-only] [default: disabled]                   │
+│ --extra-files -e                 Extra files to upload                                                               │
+│ --outbound-connections -oc       Whitelist of IP addresses to which connections from a VM are allowed (backconnect)  │
+│ --file-type-as-ext -fte          Use a file type as an extension for a file                                          │
+│ --unpack-archives -ua            Unpack archives in the sandbox with the passwords from the config and analyze every │
+│                                  extracted file [default: False]                                                     │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯

@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 import asyncio
-from collections.abc import AsyncIterator, Coroutine
+from collections import Counter
+from collections.abc import AsyncIterator, Coroutine, Iterable, Iterator
 from dataclasses import dataclass
 from http import HTTPStatus
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, NamedTuple, Protocol
 from uuid import UUID, uuid4
 
 import aiofiles
@@ -13,9 +14,9 @@ import aiohttp
 import zstandard
 from ptsandbox.models import (
     ArtifactType,
+    EngineSubsystem,
     LogType,
 )
-from rich.markup import escape
 
 from sandbox_cli.console import console
 from sandbox_cli.core.scan import save_report
@@ -23,9 +24,15 @@ from sandbox_cli.core.scan import save_report
 if TYPE_CHECKING:
     from ptsandbox import Sandbox
     from ptsandbox.models import SandboxBaseTaskResponse
-    from rich.progress import Progress, TaskID
 
-__all__ = ["DEFAULT_CONCURRENCY", "DEFAULT_READ_TIMEOUT", "DownloadOptions", "download"]
+__all__ = [
+    "DEFAULT_CONCURRENCY",
+    "DEFAULT_READ_TIMEOUT",
+    "DownloadItem",
+    "DownloadOptions",
+    "DownloadTracker",
+    "download",
+]
 
 # Default limits — can be overridden per-call via CLI flags.
 DEFAULT_CONCURRENCY = 16
@@ -35,10 +42,7 @@ DEFAULT_READ_TIMEOUT = 300
 @dataclass(frozen=True, slots=True)
 class DownloadOptions:
     """
-    What artifact categories to fetch from a completed scan.
-
-    Grouped into a single value object so callers don't have to thread
-    a dozen booleans through every function signature.
+    Artifact categories to fetch from a completed scan.
     """
 
     all: bool = False
@@ -53,6 +57,32 @@ class DownloadOptions:
     amsi: bool = False
     dex: bool = False
     sample: bool = False
+
+
+class DownloadItem(NamedTuple):
+    """
+    A single file to fetch from the sandbox storage.
+    """
+
+    out_dir: Path
+    name: str
+    file_uri: str
+    decompress: bool = False
+    overwrite: bool = False
+
+
+class DownloadTracker(Protocol):
+    """
+    Receives per-file download events (e.g. to show a progress row per file).
+    """
+
+    def file_started(self, scan_id: UUID, name: str) -> object:
+        """
+        Called when a file starts downloading; the return value is passed to ``file_finished``.
+        """
+        ...
+
+    def file_finished(self, token: object) -> None: ...
 
 
 # At first glance, it's counter-intuitive, but ArtifactType can contain not only predefined fields in it, but also newly added.
@@ -103,11 +133,9 @@ async def _stream_to_file(
     read_timeout: int,
 ) -> None:
     """
-    Stream ``file_uri`` from the sandbox directly to ``path``.
+    Stream ``file_uri`` from the sandbox to ``path`` without buffering the payload.
 
-    Uses ``download_artifact_stream`` so the payload is never fully held in
-    memory. When ``decompress`` is set, zstd chunks are decompressed on the
-    fly through ``decompressobj`` and written asynchronously.
+    With ``decompress``, zstd chunks are decompressed as they arrive.
     """
     # Guard against ``path`` being a directory — can happen when the
     # artifact name was empty or resolved to an existing directory.
@@ -149,74 +177,45 @@ async def _stream_to_file(
 async def _save_artifact(
     scan_id: UUID,
     sandbox: Sandbox,
-    out_dir: Path,
-    name: str,
-    file_uri: str,
+    item: DownloadItem,
+    *,
     semaphore: asyncio.Semaphore,
     claimed: set[Path],
     read_timeout: int,
-    overwrite: bool = False,
-    decompress: bool = False,
-    progress: Progress | None = None,
-    idx: str | None = None,
-    image: str | None = None,
-    link: str | None = None,
+    tracker: DownloadTracker | None,
 ) -> None:
-    if not file_uri:
+    if not item.file_uri:
         return
 
     # sanitize name — an empty name would make ``out_dir / ""`` resolve to
     # ``out_dir`` itself (a directory), causing IsADirectoryError on open.
-    name = name.strip().replace(" ", "_")
+    name = item.name.strip().replace(" ", "_")
     if not name:
         return
 
-    path = out_dir / name
-    if not overwrite:
+    path = item.out_dir / name
+    if not item.overwrite:
         path = _unique_path(path, claimed)
     claimed.add(path)
 
-    task_id: TaskID | None = None
-
     async with semaphore:
-        if progress:
-            if idx and image and link:
-                task_id = progress.add_task(
-                    description=f"Download [green]{escape(path.name)}[/]",
-                    idx=idx,
-                    image=image,
-                    url=link,
-                )
-            else:
-                task_id = progress.add_task(rf"\[[green1]{scan_id}[/]] {escape(path.name)}")
-
-        def _drop_task() -> None:
-            if task_id is not None and progress is not None:
-                progress.stop_task(task_id)
-                progress.update(task_id=task_id, visible=False)
-
+        token = tracker.file_started(scan_id, path.name) if tracker else None
         try:
-            await _stream_to_file(sandbox, file_uri, path, decompress, read_timeout)
+            await _stream_to_file(sandbox, item.file_uri, path, item.decompress, read_timeout)
         except aiohttp.ClientResponseError as e:
-            if e.status == HTTPStatus.NOT_FOUND:
-                console.warning(f"File {path.name} not found in storage: {file_uri=} {scan_id=}")
-                _drop_task()
-                return
-            _drop_task()
-            raise
-        except aiohttp.SocketTimeoutError:
-            _drop_task()
-            raise
-
-        _drop_task()
+            if e.status != HTTPStatus.NOT_FOUND:
+                raise
+            console.warning(f"File {path.name} not found in storage: file_uri={item.file_uri!r} {scan_id=}")
+        finally:
+            if tracker:
+                tracker.file_finished(token)
 
 
 def _resolve_output_dir(out_dir: Path, sandbox_result: Any) -> Path:
     """
-    Determine the output directory for a sandbox result.
+    Output directory for a sandbox result.
 
-    If the result has an image_id that differs from the last path component
-    of ``out_dir``, a subdirectory is created for that image.
+    A result whose image id differs from the last component of ``out_dir`` gets its own subdirectory.
     """
     details = sandbox_result.details
     if details and details.sandbox and details.sandbox.image:
@@ -224,6 +223,44 @@ def _resolve_output_dir(out_dir: Path, sandbox_result: Any) -> Path:
         if image_id and out_dir.parts[-1] != image_id:
             return Path(out_dir / image_id)
     return out_dir
+
+
+def _sandbox_runs(artifacts: Iterable[Any] | None) -> Iterator[tuple[Any, Any]]:
+    """
+    ``(artifact, sandbox result)`` for every behavioral run, nested artifacts included.
+    """
+    for artifact in artifacts or ():
+        for result in artifact.engine_results or ():
+            if result.engine_subsystem == EngineSubsystem.SANDBOX and result.details and result.details.sandbox:
+                yield artifact, result
+        yield from _sandbox_runs(artifact.artifacts)
+
+
+def _image_of(sandbox_result: Any) -> str | None:
+    image = sandbox_result.details.sandbox.image
+    return image.image_id if image else None
+
+
+def _plan_run_dirs(out_dir: Path, runs: list[tuple[Any, Any]]) -> Iterator[tuple[Path, Any]]:
+    """
+    Output directory for each run.
+
+    A run gets ``<image>/``; when an image has several runs (files extracted from an
+    archive), each one gets ``<image>/<file name>/``.
+    """
+    runs_per_image = Counter(_image_of(result) for _, result in runs)
+    used: set[Path] = set()
+    for artifact, result in runs:
+        output = _resolve_output_dir(out_dir, result)
+        if runs_per_image[_image_of(result)] > 1:
+            fi = artifact.file_info
+            name = (Path(fi.file_path).name if fi and fi.file_path else "") or (fi.sha256 if fi else "") or "file"
+            base = output / name.replace(" ", "_")
+            output, n = base, 1
+            while output in used:
+                output, n = base.with_name(f"{base.name}_{n}"), n + 1
+            used.add(output)
+        yield output, result
 
 
 def _save_report_json(
@@ -241,40 +278,40 @@ def _save_report_json(
 
 
 def _collect_log_downloads(
-    log_entries: list[Any],
+    log_entries: Iterable[Any],
     output: Path,
     options: DownloadOptions,
-) -> list[tuple[Path, str, str, bool, bool]]:
+) -> list[DownloadItem]:
     """
-    Build the list of (out_dir, name, file_uri, decompress, overwrite) for log artifacts.
+    Select the log files of a sandbox result that ``options`` asks for.
     """
-    result: list[tuple[Path, str, str, bool, bool]] = []
+    result: list[DownloadItem] = []
 
     for log in log_entries:
         if (options.all or options.logs) and log.type in _DEFAULT_LOG_TYPES:
-            result.append((output, log.file_name, log.file_uri, False, True))
+            result.append(DownloadItem(output, log.file_name, log.file_uri, overwrite=True))
 
         if (options.all or options.video) and log.type == LogType.SCREENSHOT:
-            result.append((output, log.file_name, log.file_uri, False, True))
+            result.append(DownloadItem(output, log.file_name, log.file_uri, overwrite=True))
 
         if (options.all or options.crashdumps) and log.file_name in _CRASHDUMP_FILES:
-            result.append((output / "crashdumps", log.file_name, log.file_uri, False, False))
+            result.append(DownloadItem(output / "crashdumps", log.file_name, log.file_uri))
 
         if (options.all or options.debug) and log.type in _DEBUG_LOG_TYPES:
-            result.append((output / "debug", log.file_name, log.file_uri, False, False))
+            result.append(DownloadItem(output / "debug", log.file_name, log.file_uri))
 
     return result
 
 
 def _collect_artifact_downloads(
-    sandbox_artifacts: list[Any],
+    sandbox_artifacts: Iterable[Any],
     output: Path,
     options: DownloadOptions,
-) -> list[tuple[Path, str, str, bool, bool]]:
+) -> list[DownloadItem]:
     """
-    Build the list of (out_dir, name, file_uri, decompress, overwrite) for sandbox artifacts.
+    Select the artifacts (dropped files, dumps, ...) that ``options`` asks for.
     """
-    result: list[tuple[Path, str, str, bool, bool]] = []
+    result: list[DownloadItem] = []
 
     for artifact in sandbox_artifacts:
         if not artifact.file_info:
@@ -284,27 +321,26 @@ def _collect_artifact_downloads(
         atype = artifact.type
 
         if atype == ArtifactType.FILE and (options.files or options.artifacts or options.all):
-            result.append((output / "artifacts", fi.file_path.removeprefix("/"), fi.file_uri, False, False))
+            result.append(DownloadItem(output / "artifacts", fi.file_path.removeprefix("/"), fi.file_uri))
 
         if atype == ArtifactType.PROCESS_DUMP and (options.procdumps or options.artifacts or options.all):
             result.append(
-                (
+                DownloadItem(
                     output / "process_dump",
                     fi.details.process_dump.process_name.removeprefix("/"),
                     fi.file_uri,
-                    options.decompress,
-                    False,
+                    decompress=options.decompress,
                 )
             )
 
         if atype == ArtifactType.AMSI and (options.amsi or options.all):
-            result.append((output / "amsi", f"{fi.sha256}.bin", fi.file_uri, False, False))
+            result.append(DownloadItem(output / "amsi", f"{fi.sha256}.bin", fi.file_uri))
 
         if atype == ArtifactType.DEX_DUMP and (options.dex or options.all):
-            result.append((output / "dex", f"{fi.sha256}.bin", fi.file_uri, False, False))
+            result.append(DownloadItem(output / "dex", f"{fi.sha256}.bin", fi.file_uri))
 
         if options.all and atype not in _KNOWN_ARTIFACT_TYPES:
-            result.append((output / "other", fi.sha256, fi.file_uri, False, False))
+            result.append(DownloadItem(output / "other", fi.sha256, fi.file_uri))
 
     return result
 
@@ -315,71 +351,53 @@ async def download(
     out_dir: Path,
     options: DownloadOptions,
     *,
-    progress: Progress | None = None,
-    idx: str | None = None,
-    image: str | None = None,
-    link: str | None = None,
+    tracker: DownloadTracker | None = None,
     full_report: SandboxBaseTaskResponse | None = None,
     concurrency: int = DEFAULT_CONCURRENCY,
     read_timeout: int = DEFAULT_READ_TIMEOUT,
     semaphore: asyncio.Semaphore | None = None,
 ) -> None:
-    tasks: list[Coroutine[Any, Any, None]] = []
-    saved_report_dirs: set[Path] = set()
-    claimed: set[Path] = set()
-    semaphore = semaphore or asyncio.Semaphore(value=concurrency)
+    """
+    Download everything ``options`` selects from a finished task into ``out_dir``.
 
-    def add_task(out_dir: Path, name: str, file_uri: str, decompress: bool = False, overwrite: bool = False) -> None:
-        tasks.append(
-            _save_artifact(
-                scan_id=report.scan_id,
-                sandbox=sandbox,
-                out_dir=out_dir,
-                name=name,
-                file_uri=file_uri,
-                semaphore=semaphore,
-                claimed=claimed,
-                read_timeout=read_timeout,
-                progress=progress,
-                idx=idx,
-                image=image,
-                link=link,
-                decompress=decompress,
-                overwrite=overwrite,
-            )
-        )
+    ``semaphore`` limits concurrent downloads; pass a shared one to bound
+    downloads across several tasks running in parallel.
+    """
+    items: list[DownloadItem] = []
+    saved_report_dirs: set[Path] = set()
 
     if options.sample:
         for artifact in report.artifacts:
             fi = artifact.file_info
             if fi is None or not fi.file_uri:
                 continue
-
             name = Path(fi.file_path).name or fi.sha256
-            add_task(out_dir, f"{name}.bin", fi.file_uri)
+            items.append(DownloadItem(out_dir, f"{name}.bin", fi.file_uri))
 
-    for artifact in report.artifacts:
-        for sandbox_result in artifact.get_sandbox_results():
-            if sandbox_result is None or sandbox_result.details is None or sandbox_result.details.sandbox is None:
-                continue
+    for output, sandbox_result in _plan_run_dirs(out_dir, list(_sandbox_runs(report.artifacts))):
+        _save_report_json(output, full_report, saved_report_dirs)
 
-            output = _resolve_output_dir(out_dir, sandbox_result)
-            _save_report_json(output, full_report, saved_report_dirs)
+        sb = sandbox_result.details.sandbox
+        items.extend(_collect_log_downloads(sb.logs, output, options))
+        if sb.artifacts:
+            items.extend(_collect_artifact_downloads(sb.artifacts, output, options))
 
-            sb = sandbox_result.details.sandbox
-
-            # Logs
-            for out, name, uri, decomp, ow in _collect_log_downloads(sb.logs, output, options):
-                add_task(out, name, uri, decompress=decomp, overwrite=ow)
-
-            # Artifacts
-            if options.artifacts or options.files or options.procdumps or options.all:
-                if not sb.artifacts:
-                    continue
-                for out, name, uri, decomp, ow in _collect_artifact_downloads(sb.artifacts, output, options):
-                    add_task(out, name, uri, decompress=decomp, overwrite=ow)
-
-    if not tasks:
+    if not items:
         console.info(f"Nothing to download from {report.scan_id}")
+        return
 
+    semaphore = semaphore or asyncio.Semaphore(value=concurrency)
+    claimed: set[Path] = set()
+    tasks: list[Coroutine[Any, Any, None]] = [
+        _save_artifact(
+            report.scan_id,
+            sandbox,
+            item,
+            semaphore=semaphore,
+            claimed=claimed,
+            read_timeout=read_timeout,
+            tracker=tracker,
+        )
+        for item in items
+    ]
     await asyncio.gather(*tasks)

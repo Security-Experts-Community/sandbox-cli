@@ -1,11 +1,23 @@
-from sandbox_cli.services.unpack.plugins.abc import BasePlugin
+from __future__ import annotations
+
+from pathlib import Path
+
+import orjson
+
+from sandbox_cli.services.unpack.plugins.abc import GroupedWriter
+
+__all__ = ["split_normalized"]
 
 
-class SortByPlugins(BasePlugin):
-    def run(self) -> None:
-        base_path = self.trace / "normalized"
-        groups = self.group_lines(
-            base_path / "events-normalized.log",
-            key_fn=lambda data: data.get("plugin"),
-        )
-        self.write_groups(base_path, groups)
+def split_normalized(base: Path) -> None:
+    """
+    One ``<plugin>.log`` per drakvuf plugin that produced normalized events.
+    """
+    source = base / "events-normalized.log"
+    if not source.exists():
+        return
+
+    with open(source, "rb") as fd, GroupedWriter(base) as writer:
+        for line in fd:
+            if plugin := orjson.loads(line).get("plugin"):
+                writer.add(f"{plugin}.log", line)

@@ -5,6 +5,80 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.4.0
+
+### Breaking changes
+
+Every flag now has one meaning across all commands:
+
+| Command | Before | Now |
+| --- | --- | --- |
+| `scan`, `scan-new` | `--crashdumps -c` | `--crashdumps -C` |
+| `re-scan` | `--timeout -t` (response waiting time) | `--wait-timeout -W` |
+| `download` | `--logs -l` | `--logs -L` |
+| `download` | `--sample -s` | `--sample -sa` |
+| `report` | `--suspicious -s` | `--suspicious -su` |
+| `images` | `--all -a` | `--all-keys -ak` |
+| `completion` | `--install -i` | `--install -I` |
+| `rules compile` | `OUT` positional or `--out` | `--out -o` only |
+| `rules test` | `RULES` positional or `--rules -r` | positional `RULES_DIR` only |
+
+- `re-scan` accepts all download options of `scan-new` (`-a`, `-A`, `-f`, `-C`, `-p`, `-am`, `-dx`, `-D`), not only `--debug`
+- `rules compile` accepts the `windows`/`linux` aliases like the scan commands
+- `download`, `email`, `images` and `report` show `--key` under "Sandbox Options"; `report --key` is validated
+- `--timeout` (analysis duration) and `--bootkitmon-duration` require at least 10 seconds, as the sandbox does
+- `scan` uses the same progress display as `scan-new`
+
+### Added
+
+- Native terminal progress indicator (`OSC 9;4`) for scans, re-scans, downloads and other long operations in Ghostty, WezTerm, Windows Terminal, iTerm2 ≥ 3.6.6, VTE-based terminals, mintty and ConEmu, also inside tmux 3.8+; it turns red when an error occurs
+- Synchronized output (DEC mode 2026) for progress displays, which removes flickering in fast terminals (e.g. Ghostty with an unfocused window)
+- `SANDBOX_CLI_TERM_PROGRESS` and `SANDBOX_CLI_SYNC_OUTPUT` environment variables to force these features on/off
+- `--unpack-archives / -ua` for `scan-new`: archives go through the full scan, which unpacks them with the `passwords` from the config and analyzes every extracted file; each extracted file gets its own result folder (`<image>/<file>/`)
+- `--procdump-excludes / -pe` option for `scan-new`: a file with regular expressions of process paths excluded from process dumps (like `--fileextractor-excludes`)
+- `key`, `ssh.password` and `docker.token` in the config accept `{ env = "..." }` and `{ command = "..." }` besides plain strings
+- `--json / -J` for `scan-new`, `scan`, `re-scan`, `download`, `email`, `images` and `report`: results as JSON lines on stdout, messages and progress on stderr
+- `[DONE]`/`[ERROR]` line per task for `download` and `email`
+- With `--json` a command-level error is printed as `{"status": "error", "reason": "…"}` on stdout as well
+
+### Changed
+
+- Faster startup: `--help`, `--version` and shell completion no longer import the sandbox API client
+- Errors exit with a non-zero status code; a failed task, sandbox or email no longer aborts the others, and the command exits with 1 after the rest finished
+- Mistakes are reported before anything is uploaded: missing hook, exclude and extra files, invalid DLL hooks (with `file:line`), `--outbound-connections` values that aren't IP addresses, a missing `--rules` folder, `-l` without the `[docker]` section, re-scan traces without `drakvuf-trace`/`tcpdump.pcap`, invalid task ids and links in `download`, a missing `report` folder
+- `report` skips unreadable `report.json` files with an error instead of aborting
+- Logs are unpacked in parallel processes when several images are scanned with `--unpack`
+- Unpacking uses constant memory instead of loading whole logs, and moves the original files to `raw/` instead of copying them
+- `download` opens one connection per sandbox and `--concurrency` limits all downloads together
+- `download` accepts task links without `https://`, with a port or query string, and matches the link host to the config `host` ignoring case and port
+- `re-scan` extracts `sandbox_logs.zip` to a temporary directory instead of reading the trace into memory
+- Output is not wrapped when stdout is not a terminal, so task links stay on one line
+- Bumped `cyclopts` to 4.25.3 (the version in nixos-unstable)
+- Dropped the `colorama` dependency (rich handles the Windows console itself)
+- Migrated git hooks from pre-commit to [prek](https://prek.j178.dev) (`prek.toml`); mypy runs from the locked environment
+- ruff is the only formatter and import sorter (black and isort removed)
+
+### Fixed
+
+- `scan-new` ran archives as a single file and ignored the `passwords` from the config; it now warns and suggests `--unpack-archives`
+- Results of tasks with several files on one image (archives) overwrote each other in `download` and scans
+- An invalid config file crashed with a traceback instead of an error message
+- Files with the same stem (`a.exe`, `a.dll`) or the same name in different folders overwrote each other's results; re-scans of zips with the same name did too
+- `re-scan` didn't find the trace in a result folder unpacked with `--unpack`
+- `report` and `browser` resolved the key secret (env or command) only to build task links
+- A failed unpack reported the task as both done and failed
+- Running `unpack` on an already unpacked directory deleted the unpacked logs
+- `--amsi` and `--dex` downloaded nothing unless combined with `-A`, `-f`, `-p` or `-a`
+- A progress row stayed on screen forever after an unexpected error in a scan
+- `download --query --count N` downloaded more than `N` tasks and could loop over the first page
+- `email` wrote headers next to the source file instead of the output directory when given a path
+- Scanning a folder sent its subdirectories to the sandbox as files
+- HTTP errors other than 401 were silently swallowed
+- A DLL hook with `no-retval` and no strategy crashed with `IndexError`
+- Shortened file names lost the dot before the extension
+- `report` started a process pool even for a single report
+- The `ssh` config option was documented as `login` instead of `username`
+
 ## 0.3.0
 
 ### Added

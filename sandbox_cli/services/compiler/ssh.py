@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import secrets
 import shlex
 import shutil
@@ -15,8 +16,9 @@ from asyncssh import (
 )
 
 from sandbox_cli.console import console
-from sandbox_cli.core.config import settings
+from sandbox_cli.core.config import get_settings
 from sandbox_cli.core.exceptions import CompilationError, CompilerConnectionError
+from sandbox_cli.core.secrets import reveal
 from sandbox_cli.services.compiler.abc import COMPILED_FILES, AbstractCompiler
 
 if TYPE_CHECKING:
@@ -36,17 +38,20 @@ class RemoteCompiler(AbstractCompiler):
     """
     Compile and test rules on a remote sandbox host over SSH.
 
-    Use as an async context manager so the SSH connection is always closed::
+    Use it as an async context manager to close the SSH connection::
 
         async with RemoteCompiler() as compiler:
             data = await compiler.compile_rules(rules_dir, None)
     """
 
     def __init__(self) -> None:
+        settings = get_settings()
         sandbox = settings.sandbox[0]
+        self._docker = settings.docker
+        self._image = shlex.quote(f"{self._docker.path}:{self._docker.image_tag}")
         self._host: str = sandbox.host
         self._username: str = sandbox.ssh.username
-        self._password: str = sandbox.ssh.password
+        self._password: str = reveal(sandbox.ssh.password)
         self._client: SSHClientConnection | None = None
         self._tmp_directory: PurePosixPath | None = None
 
@@ -109,7 +114,7 @@ class RemoteCompiler(AbstractCompiler):
 
         tmp_dir = Path(tempfile.mkdtemp(prefix="sandbox-cli-rules-"))
         try:
-            arcname = shutil.make_archive(str(tmp_dir / "rules"), "zip", rules_dir)
+            arcname = await asyncio.to_thread(shutil.make_archive, str(tmp_dir / "rules"), "zip", rules_dir)
             async with client.start_sftp_client() as ftp:
                 await ftp.put(arcname, f"{self._tmp_directory}")
         finally:
@@ -127,7 +132,7 @@ class RemoteCompiler(AbstractCompiler):
     async def _cleanup(self, rules_dir: Path) -> None:
         if self._tmp_directory is not None:
             await self._run(f"rm -rf {shlex.quote(str(self._tmp_directory))}")
-        shutil.rmtree(rules_dir / "taxonomy", ignore_errors=True)
+        await asyncio.to_thread(shutil.rmtree, rules_dir / "taxonomy", ignore_errors=True)
 
     async def _compile_on_server(self) -> None:
         if self._tmp_directory is None:
@@ -136,14 +141,13 @@ class RemoteCompiler(AbstractCompiler):
         container_name = self._random_suffix()
         compiled_remote = shlex.quote(str(self._tmp_directory / "compiled-rules"))
         rules_remote = shlex.quote(str(self._tmp_directory / "rules"))
-        image = shlex.quote(f"{settings.docker.path}:{settings.docker.image_tag}")
 
         result = await self._run(
             command=(
                 f"ctr run --rm --memory-limit={_CONTAINER_MEMORY_LIMIT} "
                 f"--mount type=bind,src={compiled_remote},dst=/compiled-rules,options=rbind:rw "
                 f"--mount type=bind,src={rules_remote},dst=/rules,options=rbind:rw "
-                f"{image} {shlex.quote(container_name)} package-builder correlation:compile "
+                f"{self._image} {shlex.quote(container_name)} package-builder correlation:compile "
                 f"-r /rules -c /compiled-rules"
             ),
             sudo=True,
@@ -173,10 +177,9 @@ class RemoteCompiler(AbstractCompiler):
         """
         Update the builder image on the remote server.
         """
-        image = shlex.quote(f"{settings.docker.path}:{settings.docker.image_tag}")
-        credentials = shlex.quote(f"{settings.docker.username}:{settings.docker.token}")
+        credentials = shlex.quote(f"{self._docker.username}:{reveal(self._docker.token)}")
 
-        process = await self._run(f"ctr image pull --user {credentials} {image}", sudo=True)
+        process = await self._run(f"ctr image pull --user {credentials} {self._image}", sudo=True)
 
         if process.exit_status != 0:
             console.error("Failed to update docker image on server")
@@ -193,7 +196,9 @@ class RemoteCompiler(AbstractCompiler):
             raise CompilationError(f"Invalid rules directory: {rules_dir}")
 
         # always use the latest version of taxonomy
-        shutil.copytree(rules_dir.parent / "taxonomy", rules_dir / "taxonomy", dirs_exist_ok=True)
+        await asyncio.to_thread(
+            shutil.copytree, rules_dir.parent / "taxonomy", rules_dir / "taxonomy", dirs_exist_ok=True
+        )
 
         try:
             await self._create_tmp_directory()
@@ -205,7 +210,9 @@ class RemoteCompiler(AbstractCompiler):
 
     async def test_rules(self, root_rules_dir: Path, container_rules_dir: Path) -> bool:
         # always use the latest version of taxonomy
-        shutil.copytree(root_rules_dir.parent / "taxonomy", root_rules_dir / "taxonomy", dirs_exist_ok=True)
+        await asyncio.to_thread(
+            shutil.copytree, root_rules_dir.parent / "taxonomy", root_rules_dir / "taxonomy", dirs_exist_ok=True
+        )
 
         process: SSHClientProcess[Any] | None = None
         try:
@@ -219,14 +226,13 @@ class RemoteCompiler(AbstractCompiler):
             container_name = self._random_suffix()
             compiled_remote = shlex.quote(str(self._tmp_directory / "compiled-rules"))
             rules_remote = shlex.quote(str(self._tmp_directory / "rules" / container_rules_dir))
-            image = shlex.quote(f"{settings.docker.path}:{settings.docker.image_tag}")
 
             process = await self._run_stream(
                 (
                     f"ctr run --rm --memory-limit={_CONTAINER_MEMORY_LIMIT} "
                     f"--mount type=bind,src={compiled_remote},dst=/compiled-rules,options=rbind:rw "
                     f"--mount type=bind,src={rules_remote},dst=/rules,options=rbind:rw "
-                    f"{image} {shlex.quote(container_name)} package-builder correlation:test "
+                    f"{self._image} {shlex.quote(container_name)} package-builder correlation:test "
                     f"-r /rules -c /compiled-rules"
                 ),
                 sudo=True,

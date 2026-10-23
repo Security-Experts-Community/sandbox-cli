@@ -1,0 +1,15 @@
+Usage: sandbox-cli report [OPTIONS] SRC
+
+Generate short report from sandbox scans.
+
+╭─ Arguments ──────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ *  SRC  Folder(s) with sandbox reports (recursive search will be used) [required]                                    │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭─ Parameters ─────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ --mode -m         Report output format [choices: cli, md] [default: cli]                                             │
+│ --suspicious -su  Include suspicious detects [default: False]                                                        │
+│ --json -J         Print results as JSON lines to stdout; messages and progress go to stderr [default: False]         │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭─ Sandbox Options ────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ --key -k  The key to access the sandbox main, second                                                                 │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯

@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from sandbox_cli.console import console
-from sandbox_cli.core.config import VMImage, parse_image, settings
+from sandbox_cli.core.config import DEFAULT_IMAGE, LINUX_IMAGES, WINDOWS_IMAGES, VMImage, parse_image
 from sandbox_cli.core.exceptions import ScanError
 
 if TYPE_CHECKING:
@@ -20,28 +20,24 @@ def resolve_scan_images(
     scan_images: set[VMImage | str],
 ) -> tuple[set[VMImage | str], VMImage | str]:
     """
-    Resolve the concrete image set and the default image to use.
+    Pick the images to scan on from the images the sandbox has.
 
-    Given the set of available images (already fetched from the sandbox),
-    pick the concrete image set the user asked for. Raises ``ScanError``
-    when the requested platform/image is not available.
-
-    Returns ``(images, default_image)`` where ``images`` is the set of
-    concrete image ids to scan on and ``default_image`` is the fallback
-    image id for the sandbox options.
+    Returns ``(images, default_image)``: the concrete image ids to scan on and the
+    image id for the base sandbox options. Raises ``ScanError`` when the sandbox
+    lacks a requested image or platform.
     """
     images: set[VMImage | str] = set()
-    sandbox_image: VMImage | str = settings.default_image
+    sandbox_image: VMImage | str = DEFAULT_IMAGE
     for image in scan_images:
         match image:
             case VMImage.LINUX:
                 sandbox_image = VMImage.UBUNTU_JAMMY_X64
-                images = available_images & settings.linux_images
+                images = available_images & LINUX_IMAGES
                 if not images:
                     raise ScanError("Sandbox doesn't support linux images")
             case VMImage.WINDOWS:
                 sandbox_image = VMImage.WIN10_1803_X64
-                images = available_images & settings.windows_images
+                images = available_images & WINDOWS_IMAGES
                 if not images:
                     raise ScanError("Sandbox doesn't support windows images")
             case _:

@@ -3,17 +3,17 @@ from __future__ import annotations
 import webbrowser
 
 from sandbox_cli.console import console
-from sandbox_cli.core.config import settings
+from sandbox_cli.core.config import get_settings
 
 __all__ = ["open_link"]
 
 
 def open_link(link: str) -> None:
-    if settings.browser is not None:
+    if (browser := get_settings().browser) is not None:
         webbrowser.register(
             "new_default_browser",
             None,
-            webbrowser.GenericBrowser([str(settings.browser.path), *settings.browser.args]),
+            webbrowser.GenericBrowser([str(browser.path), *browser.args]),
             preferred=True,
         )
         if not webbrowser.open(link):

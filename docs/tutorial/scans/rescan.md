@@ -17,9 +17,7 @@ $ sandbox-cli scanner re-scan sandbox_logs.zip
 
 ### Download options
 
-| Option         | Description                         | Default |
-| -------------- | ----------------------------------- | ------- |
-| `--debug / -d` | All debug files will be downloaded. | `False` |
+The same download options as in [scan-new](scan-new.md#download-options) (`-a`, `-d`, `-A`, `-f`, `-C`, `-p`, `-am`, `-dx`, `-D`). Logs are always downloaded.
 
 ### Parameters
 
@@ -30,13 +28,13 @@ $ sandbox-cli scanner re-scan sandbox_logs.zip
 | `--local / -l`          | Compile rules locally using Docker (unix only).                                                       | `False`     |
 | `--unpack / -U`         | The downloaded logs will be automatically converted. <br> Learn more in [Analyzing logs](../logs.md). | `False`     |
 | `--open-browser / -ob`  | Open the analysis link in the default browser.                                                        | `False`     |
-| `--timeout / -t`        | Response waiting time in seconds (increase for large traces).                                         | `300`       |
+| `--wait-timeout / -W`   | How long to wait for the task result in seconds (increase for large traces).                          | `300`       |
 
 ### Sandbox Options
 
 | Option       | Description                                           | Default |
 | ------------ | ----------------------------------------------------- | ------- |
-| `--key / -k` | The name of the key for accessing a specific sandbox. | `None`  |
+| `--key / -k` | The name of the key for accessing a specific sandbox. | first sandbox in the config |
 
 ## Cookbook
 
@@ -82,23 +80,32 @@ Send traces to re-scan.
 │            sandbox_logs.zip [required]                                       │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ╭─ Parameters ─────────────────────────────────────────────────────────────────╮
-│ --rules -r          The path to the folder with the rules or the default     │
-│                     rules from the sandbox or platform alias (windows,       │
-│                     linux)                                                   │
+│ --rules -r          The path to the folder with the rules or a platform      │
+│                     alias (windows, linux) resolved against rules-path       │
 │ --out -o            The path where to save the results [default: sandbox]    │
-│ --local -l          The rules will be compiled locally using Docker (unix    │
-│                     only) [default: False]                                   │
-│ --unpack -U         Unpack downloaded files [default: False]                 │
+│ --local -l          Compile the rules locally using Docker (unix only)       │
+│                     [default: False]                                         │
+│ --unpack -U         Unpack downloaded logs (see the unpack command)          │
+│                     [default: False]                                         │
+│ --wait-timeout -W   How long to wait for the task result in seconds          │
+│                     (increase for heavy samples or large traces)             │
 │ --open-browser -ob  Open analysis link in the default browser [default:      │
 │                     False]                                                   │
-│ --timeout -t        Response waiting time (increase this value if large      │
-│                     traces are scanned) [default: 300]                       │
+│ --json -J           Print results as JSON lines to stdout; messages and      │
+│                     progress go to stderr [default: False]                   │
 ╰──────────────────────────────────────────────────────────────────────────────╯
-╭─ Download options ───────────────────────────────────────────────────────────╮
-│ --debug -d  Download debug artifacts [default: False]                        │
+╭─ Download Options ───────────────────────────────────────────────────────────╮
+│ --all -a         Download all artifacts [default: False]                     │
+│ --debug -d       Download debug artifacts [default: False]                   │
+│ --artifacts -A   Download artifacts (files and procdumps) [default: False]   │
+│ --files -f       Download files [default: False]                             │
+│ --crashdumps -C  Download crashdumps (may be more than 1GB) [default: False] │
+│ --procdumps -p   Download procdumps [default: False]                         │
+│ --amsi -am       Download amsi-dumps [default: False]                        │
+│ --dex -dx        Download dex-dumps [default: False]                         │
+│ --decompress -D  Decompress downloaded procdumps [default: False]            │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ╭─ Sandbox Options ────────────────────────────────────────────────────────────╮
-│ --key -k  The key to access the sandbox test-1,test-2,test-3 [default:       │
-│           test-1]                                                            │
+│ --key -k  The key to access the sandbox main [default: main]                 │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ```

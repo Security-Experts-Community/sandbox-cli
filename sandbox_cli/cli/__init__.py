@@ -1,22 +1,19 @@
 from __future__ import annotations
 
-import importlib.metadata
 from typing import Annotated, Literal
 
-from colorama import init
 from cyclopts import App, Parameter
 
 from sandbox_cli.console import console
-from sandbox_cli.core.config import configpath, settings
-
-init()  # enable ANSI colors on Windows
+from sandbox_cli.core.config import configpath, get_settings
 
 __all__ = ["app"]
 
 
 def get_version() -> str:
-    version = importlib.metadata.version("sandbox-cli")
-    return f"sandbox-cli {version}"
+    import importlib.metadata
+
+    return f"sandbox-cli {importlib.metadata.version('sandbox-cli')}"
 
 
 app = App(
@@ -24,7 +21,7 @@ app = App(
     help="Work with sandbox like a pro"
     + (
         f"\n\nTo access other commands, specify at least one sandbox in the config at **{configpath}**"
-        if len(settings.sandbox_keys) == 0
+        if not get_settings().sandbox
         else ""
     ),
     help_format="markdown",
@@ -45,7 +42,7 @@ def completion(
     install: Annotated[
         bool,
         Parameter(
-            name=["--install", "-i"],
+            name=["--install", "-I"],
             help="Install the completion script to the default location for the current shell and add it to the RC file",
             negative="",
         ),
@@ -108,12 +105,12 @@ rules_app = App(
 rules_app.command(
     "sandbox_cli.cli.rules.compile:compile_rules",
     name="compile",
-    help="Get compiled rules for working with third-party services.",
+    help="Compile rules into an archive for third-party services.",
 )
 rules_app.command(
     "sandbox_cli.cli.rules.test:test_rules",
     name="test",
-    help="Testing written rules.",
+    help="Run the tests of the rules.",
 )
 app.command(rules_app)
 
@@ -123,12 +120,12 @@ app.command(
     help="Get available images in the sandbox.",
 )
 app.command(
-    "sandbox_cli.cli.download:download_command",
+    "sandbox_cli.cli.download.artifacts:download_command",
     name="download",
     help="Download any artifact from the sandbox.",
 )
 app.command(
-    "sandbox_cli.cli.download:download_email",
+    "sandbox_cli.cli.download.email:download_email",
     name="email",
     help="Upload an email and get its headers.",
 )

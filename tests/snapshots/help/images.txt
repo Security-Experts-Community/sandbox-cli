@@ -1,0 +1,11 @@
+Usage: sandbox-cli images [OPTIONS]
+
+Get available images in the sandbox.
+
+╭─ Parameters ─────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ --all-keys -ak  Fetch images from all configured sandboxes [default: False]                                          │
+│ --json -J       Print results as JSON lines to stdout; messages and progress go to stderr [default: False]           │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭─ Sandbox Options ────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ --key -k  The key to access the sandbox main, second [default: main]                                                 │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯

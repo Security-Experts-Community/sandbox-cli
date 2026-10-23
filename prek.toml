@@ -1,0 +1,23 @@
+#:schema https://www.schemastore.org/prek.json
+
+[[repos]]
+repo = "https://github.com/astral-sh/ruff-pre-commit"
+rev = "v0.14.0"
+
+[[repos.hooks]]
+id = "ruff-check"
+args = ["--fix", "--exit-non-zero-on-fix"]
+
+[[repos.hooks]]
+id = "ruff-format"
+
+[[repos]]
+repo = "local"
+
+[[repos.hooks]]
+id = "mypy"
+name = "mypy"
+language = "system"
+entry = "uv run --frozen mypy --config-file=pyproject.toml sandbox_cli"
+types = ["python"]
+pass_filenames = false

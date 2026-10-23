@@ -20,12 +20,10 @@ class AbstractCompiler(ABC):
     """
     Compile and test sandbox correlation rules.
 
-    Two implementations exist: ``DockerCompiler`` (local docker) and
-    ``RemoteCompiler`` (ssh into a sandbox host). Both share the path
-    normalisation and rule-compression logic defined below.
+    ``DockerCompiler`` uses local docker, ``RemoteCompiler`` connects to a sandbox
+    host over ssh. Both share the path normalisation and rule compression below.
 
-    Use as an async context manager so resources (docker client, ssh
-    connection) are always released::
+    Use it as an async context manager to release the docker client or ssh connection::
 
         async with get_compiler(is_local=True) as compiler:
             data = await compiler.compile_rules(rules_dir, None)

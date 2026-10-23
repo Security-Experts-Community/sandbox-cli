@@ -3,82 +3,70 @@ from __future__ import annotations
 import asyncio
 from collections.abc import Coroutine
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Literal
 
 import aiofiles
-from rich.progress import Progress
 
 from sandbox_cli.console import console
 from sandbox_cli.services.scanner.hooks import merge_dll_hooks
 
 if TYPE_CHECKING:
     from ptsandbox import Sandbox
+    from ptsandbox.models.api import DebugOptions
 
 __all__ = [
+    "UploadKey",
+    "apply_uploads",
     "gather_uploads",
+    "upload_bytes",
     "upload_dll_hooks",
     "upload_file",
-    "upload_rules",
+]
+
+UploadKey = Literal[
+    "rules_url",
+    "custom_syscall_hooks",
+    "custom_unimon_hooks",
+    "custom_dll_hooks",
+    "custom_fileextractor_exclude",
+    "custom_procdump_exclude",
 ]
 
 
-def _log(message: str, progress: Progress | None = None) -> None:
+async def upload_bytes(sandbox: Sandbox, data: bytes) -> str:
     """
-    Print ``message`` via progress console (if active) or plain console.
+    Upload ``data`` and return the sandbox ``file_uri``.
     """
-    if progress is not None:
-        progress.console.print(f"{console.INFO} {message}")
-    else:
-        console.info(message)
+    return (await sandbox.api.upload_file(data)).data.file_uri
 
 
-async def upload_file(
-    sandbox: Sandbox,
-    path: Path,
-    *,
-    label: str | None = None,
-    progress: Progress | None = None,
-) -> str:
+async def upload_file(sandbox: Sandbox, path: Path, *, label: str) -> str:
     """
     Read ``path`` and upload it, returning the sandbox ``file_uri``.
     """
-    if label:
-        _log(f"{label}: {path}", progress)
+    console.info(f"{label}: {path}")
     async with aiofiles.open(path, mode="rb") as fd:
         data = await fd.read()
-    return (await sandbox.api.upload_file(data)).data.file_uri
+    return await upload_bytes(sandbox, data)
 
 
-async def upload_dll_hooks(
-    sandbox: Sandbox,
-    dll_hooks_dir: Path,
-    *,
-    progress: Progress | None = None,
-) -> str:
+async def upload_dll_hooks(sandbox: Sandbox, dll_hooks_dir: Path) -> str:
     """
     Merge DLL hooks from ``dll_hooks_dir`` and upload them.
     """
-    _log(f"Upload dll hooks: {dll_hooks_dir}", progress)
-    data = await asyncio.to_thread(merge_dll_hooks, Path(dll_hooks_dir))
-    return (await sandbox.api.upload_file(data)).data.file_uri
+    console.info(f"Upload dll hooks: {dll_hooks_dir}")
+    data = await asyncio.to_thread(merge_dll_hooks, dll_hooks_dir)
+    return await upload_bytes(sandbox, data)
 
 
-async def upload_rules(sandbox: Sandbox, compiled_rules: bytes) -> str:
+async def gather_uploads(uploads: dict[UploadKey, Coroutine[Any, Any, str]]) -> dict[UploadKey, str]:
     """
-    Upload compiled rules and return the sandbox ``file_uri``.
+    Run upload coroutines concurrently; return the URI for each key.
     """
-    return (await sandbox.api.upload_file(compiled_rules)).data.file_uri
+    results = await asyncio.gather(*uploads.values())
+    return dict(zip(uploads, results, strict=True))
 
 
-async def gather_uploads(
-    uploads: list[tuple[str, Coroutine[Any, Any, str]]],
-    debug_options: Any,
-) -> None:
-    """
-    Run upload coroutines concurrently and assign URIs to ``debug_options``.
-    """
-    if not uploads:
-        return
-    results = await asyncio.gather(*(coro for _, coro in uploads))
-    for (key, _), uri in zip(uploads, results, strict=True):
+def apply_uploads(debug_options: DebugOptions, uris: dict[UploadKey, str]) -> None:
+    for key, uri in uris.items():
         debug_options[key] = uri

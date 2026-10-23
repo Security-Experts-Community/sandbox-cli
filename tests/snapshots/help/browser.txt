@@ -1,0 +1,7 @@
+Usage: sandbox-cli browser [ARGS]
+
+Open sandbox link in the default browser.
+
+╭─ Parameters ─────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ PATH --path  Folder with sandbox report (report.json and scan_config.json) [default: .]                              │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯

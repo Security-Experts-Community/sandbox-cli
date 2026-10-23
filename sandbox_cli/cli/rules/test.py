@@ -5,6 +5,7 @@ from typing import Annotated
 
 from cyclopts import Parameter, validators
 
+from sandbox_cli.cli._params import IsLocal
 from sandbox_cli.console import console
 from sandbox_cli.core.exceptions import CompilationError
 from sandbox_cli.services.compiler import get_compiler
@@ -16,23 +17,16 @@ async def test_rules(
     rules_dir: Annotated[
         Path,
         Parameter(
-            name=["--rules", "-r"],
-            help="The path to the folder with the rules",
+            help="A rule or a folder with rules inside correlation/ or normalization/",
             validator=validators.Path(exists=True),
         ),
     ],
     /,
-    is_local: Annotated[
-        bool,
-        Parameter(
-            name=["--local", "-l"],
-            negative="",
-            help="The rules will be compiled locally using Docker (unix only)",
-        ),
-    ] = False,
+    *,
+    is_local: IsLocal = False,
 ) -> None:
     """
-    Testing written rules.
+    Run the tests of the rules.
     """
 
     # Don't scan folder ~/rules/<platform>/correlation to avoid stupidly long
@@ -53,7 +47,7 @@ async def test_rules(
     with console.status_info("Testing rules"):
         async with get_compiler(is_local=is_local) as compiler:
             success = await compiler.test_rules(root_rules_dir, container_rules_dir)
-            if success:
-                console.info("Rules fine")
-            else:
-                console.error("Bad rules")
+
+    if not success:
+        raise CompilationError("Rule tests failed")
+    console.info("Rules fine")

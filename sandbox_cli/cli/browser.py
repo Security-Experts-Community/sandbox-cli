@@ -5,13 +5,14 @@ from typing import Annotated
 
 from cyclopts import Parameter
 
-from sandbox_cli.console import console
 from sandbox_cli.core.browser import open_link
+from sandbox_cli.core.config import REPORT_NAME
+from sandbox_cli.core.exceptions import SandboxCliError
 from sandbox_cli.core.sandbox import (
     format_link,
-    get_key_by_name,
+    get_sandbox_config,
 )
-from sandbox_cli.core.scan import load_report, load_scan_arguments
+from sandbox_cli.core.scan import SCAN_CONFIG_NAME, load_report, load_scan_arguments
 
 __all__ = ["open_browser"]
 
@@ -28,20 +29,17 @@ def open_browser(
     Open sandbox link in the default browser.
     """
 
-    report_file = path / "report.json"
+    report_file = path / REPORT_NAME
     if not report_file.exists():
-        console.error(f"Can't find report.json: {path}")
-        return
+        raise SandboxCliError(f"Can't find {REPORT_NAME}: {path}")
 
-    scan_config_file = path / "scan_config.json"
-    if not scan_config_file.exists():
-        console.error(f"Can't find scan_config.json: {path}")
-        return
+    scan_config_file = next((p for p in (path / SCAN_CONFIG_NAME, path.parent / SCAN_CONFIG_NAME) if p.exists()), None)
+    if scan_config_file is None:
+        raise SandboxCliError(f"Can't find {SCAN_CONFIG_NAME}: {path}")
 
     report = load_report(report_file)
     scan_config = load_scan_arguments(scan_config_file)
 
-    key = get_key_by_name(scan_config.sandbox_key_name)
-    link = format_link(report, key=key)
+    link = format_link(report, get_sandbox_config(scan_config.sandbox_key_name).host)
 
     open_link(link)

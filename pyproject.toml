@@ -1,6 +1,6 @@
 [project]
 name = "sandbox-cli"
-version = "0.3.4"
+version = "0.4.0"
 description = "Command line tool for interaction with sandboxes"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -10,9 +10,8 @@ authors = [{ name = "Alexey Kolesnikov", email = "delvinru@gmail.com" }]
 dependencies = [
   "aiofiles>=25.1.0",
   "asyncssh>=2.24.0",
-  "colorama>=0.4.6",
   "cryptography>=50.0.0",
-  "cyclopts>=4.25.0",
+  "cyclopts>=4.25.3",
   "docker>=7.2.0",
   "ptsandbox>=5.1.6",
   "rich>=15.0.0",
@@ -27,13 +26,11 @@ Issues = "https://github.com/Security-Experts-Community/sandbox-cli/issues"
 
 [dependency-groups]
 dev = [
-  "black==26.5.1",
-  "isort==8.0.1",
   "mypy==2.3.0",
+  "pytest==9.1.1",
   "ruff==0.14.0",
   "types-aiofiles==25.1.0.20260518",
   "types-docker==7.2.0.20260728",
-  "types-colorama==0.4.15.20260508",
 ]
 docs = ["mkdocs==1.6.1", "mkdocs-material==9.7.7", "termynal==0.14.0"]
 
@@ -60,27 +57,6 @@ max-line-length = 120
 reportUnknownArgumentType = false
 reportArgumentType = false
 
-[tool.black]
-line-length = 120
-target-version = ['py311']
-include = '\.pyi?$'
-exclude = '''
-(
-  /(
-      \.eggs         # exclude a few common directories in the
-    | \.git          # root of the project
-    | \.hg
-    | \.mypy_cache
-    | \.tox
-    | \.venv
-    | _build
-    | buck-out
-    | build
-    | dist
-  )/
-)
-'''
-
 [[tool.mypy.overrides]]
 strict = true
 module = ["ptsandbox.*", "docker.*"]
@@ -100,6 +76,10 @@ namespace_packages = true
 explicit_package_bases = true
 exclude = ["\\.venv/", "\\.mypy_cache/", "build/", "dist/"]
 
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = ["-ra", "--strict-markers"]
+
 [tool.ruff]
 lint.select = [
   "E",   # pycodestyle errors
@@ -113,7 +93,7 @@ lint.select = [
   "RUF", # ruff-specific
 ]
 lint.ignore = [
-  "E501",   # line too long, handled by black
+  "E501",   # line too long, handled by ruff format
   "B008",   # do not perform function calls in argument defaults
   "W191",   # indentation contains tabs
   "SIM117", # nested with (readability)

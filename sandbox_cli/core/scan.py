@@ -7,12 +7,13 @@ from typing import TYPE_CHECKING
 from ptsandbox.models.api import SandboxOptions, SandboxOptionsAdvanced
 from pydantic import BaseModel
 
-from sandbox_cli.core.config import settings
+from sandbox_cli.core.config import REPORT_NAME
 
 if TYPE_CHECKING:
     from ptsandbox.models import SandboxBaseTaskResponse
 
 __all__ = [
+    "SCAN_CONFIG_NAME",
     "SandboxArguments",
     "ScanType",
     "load_report",
@@ -40,8 +41,11 @@ class SandboxArguments(BaseModel):
     sandbox_options: SandboxOptions | SandboxOptionsAdvanced
 
 
+SCAN_CONFIG_NAME = "scan_config.json"
+
+
 def save_scan_arguments(out_dir: Path, scan_args: SandboxArguments) -> None:
-    scan_config_path = out_dir / "scan_config.json"
+    scan_config_path = out_dir / SCAN_CONFIG_NAME
     scan_config_path.write_text(
         scan_args.model_dump_json(exclude={"debug_options"}, indent=4),
         encoding="utf-8",
@@ -52,7 +56,7 @@ def save_report(out_dir: Path, report: SandboxBaseTaskResponse) -> None:
     """
     Write ``report.json`` into ``out_dir``.
     """
-    (out_dir / settings.report_name).write_text(report.model_dump_json(indent=4), encoding="utf-8")
+    (out_dir / REPORT_NAME).write_text(report.model_dump_json(indent=4), encoding="utf-8")
 
 
 def load_report(path: Path) -> SandboxBaseTaskResponse:

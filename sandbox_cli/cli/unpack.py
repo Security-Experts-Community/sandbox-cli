@@ -4,7 +4,7 @@ from typing import Annotated
 from cyclopts import Parameter, validators
 
 from sandbox_cli.console import console
-from sandbox_cli.services.unpack import Unpack
+from sandbox_cli.services.unpack import unpack_trace
 
 
 def unpack_logs(
@@ -26,25 +26,26 @@ def unpack_logs(
         * drakvuf-trace.log
     * correlated
         * events-correlated.log
-        * events-correlated.log.<DETECT_NAME>
+        * malware.log
+        * <DETECT_NAME>.suspicious.log
+        * <DETECT_NAME>.silent.log
     * normalized
         * events-normalized.log
-        * events-normalized.log.<DETECT_NAME>
+        * <PLUGIN>.log
     * network
         * tcpdump.pcap
     * raw
-        * drakvuf-trace.log.zst
-        * tcpdump.pcap
+        * the original compressed logs (input for re-scan)
 
     Usage examples:
-    * Checks for drakvuf-trace.log.gz or drakvuf-trace.log.zst in the current directory:
+    * Unpack the logs in the current directory:
     _sandbox-cli unpack ._
-    * Extracts and processes logs into the sandbox_logs directory:
+    * Extract sandbox_logs.zip into the sandbox_logs directory and unpack it:
     _sandbox-cli unpack sandbox_logs.zip_
-    * Handles multiple archives simultaneously:
+    * Unpack several archives:
     _sandbox-cli unpack sandbox_logs.zip sandbox_logs_1.zip_
     """
 
     for trace in traces:
         console.info(f"Unpacking {trace}")
-        Unpack.run_unpack(trace)
+        unpack_trace(trace)

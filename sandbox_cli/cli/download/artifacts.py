@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import asyncio
-import os
 from contextlib import AsyncExitStack
 from http import HTTPStatus
 from pathlib import Path
@@ -10,49 +9,49 @@ from urllib.parse import urlparse
 from uuid import UUID
 
 import aiohttp
-import aiohttp.client_exceptions
 from cyclopts import Parameter, validators
 from ptsandbox import Sandbox
 
+from sandbox_cli.cli._params import (
+    DOWNLOAD_OPTIONS,
+    ArtifactFlags,
+    JsonOutput,
+    Key,
+    OutDir,
+    UnpackFlag,
+    default_key,
+    switch,
+)
 from sandbox_cli.console import console
-from sandbox_cli.core.config import key_help, settings
-from sandbox_cli.core.progress import make_progress
+from sandbox_cli.core.exceptions import DownloadError, SandboxCliError
+from sandbox_cli.core.progress import SandboxProgress, make_progress
+from sandbox_cli.core.reporting import ProgressDownloadTracker
 from sandbox_cli.core.sandbox import (
+    format_link,
     get_key_by_name,
     get_sandbox_key_by_host,
-    validate_key,
 )
-from sandbox_cli.services.downloader import DownloadOptions, download
-from sandbox_cli.services.unpack import Unpack
+from sandbox_cli.services.downloader import DEFAULT_CONCURRENCY, DEFAULT_READ_TIMEOUT, download
+from sandbox_cli.services.scanner.runner import describe_error
+from sandbox_cli.services.unpack import unpack_results
 
 if TYPE_CHECKING:
+    from ptsandbox import SandboxKey
     from ptsandbox.models import SandboxBaseTaskResponse
 
 __all__ = ["download_command"]
 
-
-def _unpack_dir(out_dir: Path) -> None:
-    """
-    Unpack downloaded logs, handling multi-image task directories.
-    """
-    if not out_dir.exists():
-        return
-    if (out_dir / "events-correlated.log.gz").exists():
-        Unpack.run_unpack(out_dir)
-        return
-    for entry in os.scandir(out_dir):
-        if entry.is_dir():
-            Unpack.run_unpack(Path(entry.path))
+_TASKS_PAGE_SIZE = 40
 
 
 def _parse_task_url(task: str) -> tuple[str, UUID] | None:
     """
     Extract ``(host, uuid)`` from a sandbox task URL.
 
-    Accepts ``/tasks/<uuid>`` and ``/<uuid>`` path shapes.
+    Accepts ``/tasks/<uuid>`` and ``/<uuid>`` path shapes, with or without ``https://``.
     Returns ``None`` when ``task`` is not a parseable task URL.
     """
-    url = urlparse(task)
+    url = urlparse(task if "://" in task else f"https://{task}")
     if not (url.scheme and url.hostname and url.path):
         return None
 
@@ -67,183 +66,97 @@ def _parse_task_url(task: str) -> tuple[str, UUID] | None:
         return None
 
 
-def get_key_and_task(key: str, task: str) -> tuple[Sandbox, UUID] | None:
+def resolve_task(key: str, task: str) -> tuple[SandboxKey, UUID]:
     """
-    Resolve a task ID or URL into a ``(Sandbox, UUID)`` pair.
+    Resolve a task ID or URL into the sandbox key it belongs to and its UUID.
 
-    The returned ``Sandbox`` is not yet entered as a context manager —
-    the caller is responsible for managing its lifecycle (e.g. via
-    ``async with`` or ``AsyncExitStack``).
+    A bare UUID uses ``key``; a URL selects the sandbox by host.
     """
-
-    # Bare UUID — use the provided key.
     try:
         uuid = UUID(task)
     except ValueError:
         pass
     else:
-        return Sandbox(get_key_by_name(key)), uuid
+        return get_key_by_name(key), uuid
 
-    # URL — resolve sandbox by host.
-    if (parsed := _parse_task_url(task)) is not None:
-        host, uuid = parsed
+    if (parsed := _parse_task_url(task)) is None:
+        raise DownloadError(f"Invalid task id: {task}")
+
+    host, uuid = parsed
+    return get_sandbox_key_by_host(host), uuid
+
+
+def _resolve_tasks(key: str, tasks: list[str]) -> list[tuple[SandboxKey, UUID]]:
+    """
+    Resolve every task id or link; raise ``DownloadError`` listing all invalid ones.
+    """
+    resolved: list[tuple[SandboxKey, UUID]] = []
+    problems: list[str] = []
+    for task in tasks:
         try:
-            return Sandbox(get_sandbox_key_by_host(host)), uuid
-        except KeyError:
-            console.error(f"Unknown sandbox host: {host}")
-            return None
+            resolved.append(resolve_task(key, task))
+        except SandboxCliError as e:
+            problems.append(str(e))
+    if problems:
+        raise DownloadError("; ".join(problems))
+    return resolved
 
-    console.error(f"Invalid task id: {task}")
-    return None
+
+async def _search_tasks(sandbox: Sandbox, query: str, count: int) -> list[str]:
+    """
+    Ids of up to ``count`` tasks matching ``query``, newest first.
+    """
+    task_ids: list[str] = []
+    next_cursor = ""
+    while len(task_ids) < count:
+        limit = min(_TASKS_PAGE_SIZE, count - len(task_ids))
+        response = await sandbox.get_tasks(query=query, limit=limit, next_cursor=next_cursor)
+        page = response.tasks[:limit]
+        task_ids.extend(str(task.id) for task in page)
+        next_cursor = response.next_cursor
+        if not page or not next_cursor:
+            break
+    return task_ids
+
+
+async def _fetch_report(
+    sandbox: Sandbox, task_id: str | UUID, progress: SandboxProgress
+) -> tuple[SandboxBaseTaskResponse, SandboxBaseTaskResponse.LongReport] | None:
+    progress_task = progress.add_task(rf"\[[green1]{task_id}[/]] fetching info")
+    try:
+        result = await sandbox.get_report(task_id=task_id)
+    except aiohttp.ClientResponseError as e:
+        if e.status != HTTPStatus.NOT_FOUND:
+            raise
+        console.warning(f"Task {task_id} not found")
+        return None
+    finally:
+        progress.remove_task(progress_task)
+
+    if (report := result.get_long_report()) is None:
+        console.warning(f"Not found information for {task_id}")
+        return None
+    return result, report
 
 
 async def download_command(
-    tasks_id: Annotated[
-        list[str] | None,
-        Parameter(
-            help="Links to tasks or task ids",
-            negative="",
-        ),
-    ] = None,
+    tasks_id: Annotated[list[str] | None, Parameter(help="Links to tasks or task ids", negative="")] = None,
     /,
     *,
-    key: Annotated[
-        str,
-        Parameter(
-            name=["--key", "-k"],
-            help=key_help(),
-            validator=validate_key,
-            group="Sandbox",
-        ),
-    ] = settings.default_key_name,
-    out_dir: Annotated[
-        Path,
-        Parameter(
-            name=["--out", "-o"],
-            help="Output directory",
-        ),
-    ] = Path("./downloads"),
-    decompress: Annotated[
-        bool,
-        Parameter(
-            name=["--decompress", "-D"],
-            help="Decompress downloaded files",
-            negative="",
-        ),
-    ] = False,
-    unpack: Annotated[
-        bool,
-        Parameter(
-            name=["--unpack", "-U"],
-            help="Unpack downloaded files",
-            negative="",
-        ),
-    ] = False,
-    all: Annotated[
-        bool,
-        Parameter(
-            name=["--all", "-a"],
-            help="Download all artifacts",
-            negative="",
-            group="Download options",
-        ),
-    ] = False,
-    debug: Annotated[
-        bool,
-        Parameter(
-            name=["--debug", "-d"],
-            help="Download debug artifacts",
-            negative="",
-            group="Download options",
-        ),
-    ] = False,
-    artifacts: Annotated[
-        bool,
-        Parameter(
-            name=["--artifacts", "-A"],
-            help="Download artifacts",
-            negative="",
-            group="Download options",
-        ),
-    ] = False,
-    files: Annotated[
-        bool,
-        Parameter(
-            name=["--files", "-f"],
-            help="Download files",
-            negative="",
-            group="Download options",
-        ),
-    ] = False,
-    crashdumps: Annotated[
-        bool,
-        Parameter(
-            name=["--crashdumps", "-C"],
-            help="Download crashdumps (may be more than 1GB)",
-            negative="",
-            group="Download options",
-        ),
-    ] = False,
-    procdumps: Annotated[
-        bool,
-        Parameter(
-            name=["--procdumps", "-p"],
-            help="Download procdumps",
-            negative="",
-            group="Download options",
-        ),
-    ] = False,
-    video: Annotated[
-        bool,
-        Parameter(
-            name=["--video", "-v"],
-            help="Download video",
-            negative="",
-            group="Download options",
-        ),
-    ] = False,
-    logs: Annotated[
-        bool,
-        Parameter(
-            name=["--logs", "-l"],
-            help="Download logs",
-            negative="",
-            group="Download options",
-        ),
-    ] = False,
-    amsi: Annotated[
-        bool,
-        Parameter(
-            name=["--amsi", "-am"],
-            help="Download amsi-dumps",
-            negative="",
-            group="Download options",
-        ),
-    ] = False,
-    dex: Annotated[
-        bool,
-        Parameter(
-            name=["--dex", "-dx"],
-            help="Download dex-dumps",
-            negative="",
-            group="Download options",
-        ),
-    ] = False,
+    key: Key = default_key(),
+    out_dir: OutDir = Path("./downloads"),
+    unpack: UnpackFlag = False,
+    json_output: JsonOutput = False,
+    artifacts: ArtifactFlags = ArtifactFlags(),
+    video: Annotated[bool, switch(["--video", "-v"], "Download video", DOWNLOAD_OPTIONS)] = False,
+    logs: Annotated[bool, switch(["--logs", "-L"], "Download logs", DOWNLOAD_OPTIONS)] = False,
     sample: Annotated[
-        bool,
-        Parameter(
-            name=["--sample", "-s"],
-            help="Download the original sample submitted for analysis",
-            negative="",
-            group="Download options",
-        ),
+        bool, switch(["--sample", "-sa"], "Download the original sample submitted for analysis", DOWNLOAD_OPTIONS)
     ] = False,
     query: Annotated[
         str | None,
         Parameter(
-            name=["--query", "-q"],
-            help="Query for searching tasks (leave empty for last tasks)",
-            group="Search",
+            name=["--query", "-q"], help="Query for searching tasks (leave empty for last tasks)", group="Search"
         ),
     ] = None,
     count: Annotated[
@@ -251,6 +164,7 @@ async def download_command(
         Parameter(
             name=["--count", "-c"],
             help="How many tasks find and download",
+            validator=validators.Number(gt=0),
             group="Search",
         ),
     ] = 20,
@@ -262,125 +176,88 @@ async def download_command(
             validator=validators.Number(gt=0),
             group="Performance",
         ),
-    ] = 16,
+    ] = DEFAULT_CONCURRENCY,
     read_timeout: Annotated[
         int,
         Parameter(
-            name=["--read-timeout"],
+            name="--read-timeout",
             help="Read timeout in seconds for each download",
             validator=validators.Number(gt=0),
             group="Performance",
         ),
-    ] = 300,
+    ] = DEFAULT_READ_TIMEOUT,
 ) -> None:
     """
     Download any artifact from the sandbox.
     """
 
-    if tasks_id is None:
-        tasks_id = []
-
-    download_options = DownloadOptions(
-        all=all,
-        debug=debug,
-        artifacts=artifacts,
-        files=files,
-        crashdumps=crashdumps,
-        procdumps=procdumps,
-        video=video,
-        amsi=amsi,
-        dex=dex,
-        sample=sample,
-        logs=logs,
-        decompress=decompress,
-    )
-
+    resolved = _resolve_tasks(key, tasks_id or [])
+    options = artifacts.to_options(video=video, logs=logs, sample=sample)
     progress = make_progress()
+    tracker = ProgressDownloadTracker(progress)
+    semaphore = asyncio.Semaphore(concurrency)
 
-    async def worker(
-        report: SandboxBaseTaskResponse.LongReport,
-        sandbox: Sandbox,
-        out_dir: Path,
-        full_report: SandboxBaseTaskResponse,
-    ) -> None:
-        await download(
-            report=report,
-            sandbox=sandbox,
-            out_dir=out_dir,
-            options=download_options,
-            progress=progress,
-            full_report=full_report,
-            concurrency=concurrency,
-            read_timeout=read_timeout,
-        )
-
-        if unpack:
-            await asyncio.to_thread(_unpack_dir, out_dir)
-
-    download_tasks: list[asyncio.Task[None]] = []
-
-    async def fetch_report(sandbox: Sandbox, task_id: str | UUID) -> None:
-        """
-        Fetch report for ``task_id`` and schedule download immediately.
-        """
-
-        progress_task_id = progress.add_task(description=rf"\[[green1]{task_id}[/]] fetching info", start=True)
-
+    async def process(sandbox: Sandbox, task_id: str | UUID) -> bool:
         try:
-            result = await sandbox.get_report(task_id=task_id)
-        except aiohttp.client_exceptions.ClientResponseError as e:
-            if e.status == HTTPStatus.NOT_FOUND:
-                console.warning(f"Got 404 error for {task_id}")
-            progress.remove_task(task_id=progress_task_id)
-            return
-
-        if (report := result.get_long_report()) is None:
-            console.warning(f"Not found information for {task_id}")
-            progress.remove_task(task_id=progress_task_id)
-            return
-
-        progress.remove_task(task_id=progress_task_id)
-        download_tasks.append(
-            asyncio.create_task(
-                worker(
-                    report=report,
-                    sandbox=sandbox,
-                    out_dir=out_dir / str(task_id),
-                    full_report=result,
-                )
+            if (fetched := await _fetch_report(sandbox, task_id, progress)) is None:
+                console.emit_json({"status": "skipped", "task_id": str(task_id), "reason": "no report"})
+                return True
+            result, report = fetched
+            task_dir = out_dir / str(task_id)
+            await download(
+                report,
+                sandbox,
+                task_dir,
+                options,
+                tracker=tracker,
+                full_report=result,
+                read_timeout=read_timeout,
+                semaphore=semaphore,
             )
+            if unpack:
+                await asyncio.to_thread(unpack_results, task_dir)
+        except Exception as e:
+            reason = describe_error(e)
+            console.error(rf"\[[green1]{task_id}[/]] • {reason}")
+            console.emit_json({"status": "failed", "task_id": str(task_id), "reason": reason})
+            return False
+        console.done(rf"\[[green1]{task_id}[/]] • {task_dir}")
+        console.emit_json(
+            {
+                "status": "done",
+                "task_id": str(task_id),
+                "link": format_link(result, sandbox.api.key.host),
+                "out_dir": str(task_dir),
+            }
         )
+        return True
 
-    # All Sandbox instances are managed via AsyncExitStack so their sessions
-    # are closed automatically when the block exits — even on errors.
     async with AsyncExitStack() as stack:
+        sandboxes: dict[str, Sandbox] = {}
+
+        async def session(sandbox_key: SandboxKey) -> Sandbox:
+            if (sandbox := sandboxes.get(sandbox_key.name)) is None:
+                sandbox = sandboxes[sandbox_key.name] = await stack.enter_async_context(Sandbox(sandbox_key))
+            return sandbox
+
         with progress:
+            targets: list[tuple[Sandbox, str | UUID]] = []
             if query is not None:
-                sandbox = await stack.enter_async_context(Sandbox(get_key_by_name(key_name=key)))
+                sandbox = await session(get_key_by_name(key))
+                targets.extend((sandbox, task_id) for task_id in await _search_tasks(sandbox, query, count))
 
-                limit = min(40, count)
-                viewed, next_cursor = 0, ""
+            for sandbox_key, task_id in resolved:
+                targets.append((await session(sandbox_key), task_id))
 
-                while viewed <= count:
-                    response = await sandbox.get_tasks(query=query, limit=limit, next_cursor=next_cursor)
-                    await asyncio.gather(*(fetch_report(sandbox, task.id) for task in response.tasks))
+            with console.terminal_progress.activity(total=len(targets)):
 
-                    viewed += limit
-                    next_cursor = response.next_cursor
+                async def tracked(sandbox: Sandbox, task_id: str | UUID) -> bool:
+                    try:
+                        return await process(sandbox, task_id)
+                    finally:
+                        console.terminal_progress.advance()
 
-            # Resolve task IDs to (Sandbox, UUID) pairs, enter each Sandbox
-            # context into the stack, then fetch reports concurrently.
-            if tasks_id:
-                resolved: list[tuple[Sandbox, UUID]] = []
-                for task_str in tasks_id:
-                    pair = get_key_and_task(key, task_str)
-                    if pair is not None:
-                        sb, task_id = pair
-                        await stack.enter_async_context(sb)
-                        resolved.append((sb, task_id))
+                results = await asyncio.gather(*(tracked(sb, task_id) for sb, task_id in targets))
 
-                await asyncio.gather(*(fetch_report(sb, task_id) for sb, task_id in resolved))
-
-            # Wait for all downloads to finish (some may already be complete
-            # by now — they started as soon as their report was fetched).
-            await asyncio.gather(*download_tasks)
+    if failed := results.count(False):
+        raise DownloadError(f"Failed to download {failed} of {len(targets)} tasks")

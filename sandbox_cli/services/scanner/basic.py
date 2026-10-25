@@ -47,7 +47,7 @@ async def scan_internal(request: BasicScanRequest, reporter: ScanReporter) -> No
     async with Sandbox(key=key) as sandbox:
         prepared = await prepare_scan(
             sandbox,
-            rules_dir=request.rules_dir,
+            rules=request.rules,
             is_local=request.is_local,
             scan_images=request.images,
             hooks=request.hooks,

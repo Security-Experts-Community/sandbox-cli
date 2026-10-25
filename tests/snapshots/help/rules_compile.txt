@@ -3,8 +3,8 @@ Usage: sandbox-cli rules compile [OPTIONS] RULES
 Compile rules into an archive for third-party services.
 
 ╭─ Arguments ──────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ *  RULES --rules -r  The path to the folder with the rules or a platform alias (windows, linux) resolved against     │
-│                      rules-path [required]                                                                           │
+│ *  RULES --rules -r  The path to the folder with the rules, a platform alias (windows, linux) resolved against       │
+│                      rules-path, or an archive with already compiled rules [required]                                │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 ╭─ Parameters ─────────────────────────────────────────────────────────────────────────────────────────────────────────╮
 │ --out -o    The path where to save the results [default: compiled-rules.local.tmp]                                   │

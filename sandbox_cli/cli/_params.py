@@ -43,7 +43,7 @@ __all__ = [
     "Key",
     "OpenBrowser",
     "OutDir",
-    "RulesDir",
+    "RulesPath",
     "SyscallHooks",
     "UnpackFlag",
     "UploadTimeout",
@@ -114,12 +114,13 @@ JsonOutput = Annotated[
 
 RULES = Parameter(
     name=["--rules", "-r"],
-    help="The path to the folder with the rules or a platform alias (windows, linux) resolved against rules-path",
+    help="The path to the folder with the rules, a platform alias (windows, linux) resolved against rules-path, "
+    "or an archive with already compiled rules",
     converter=rules_path_resolver,
-    validator=existing("dir"),
+    validator=existing("any"),
 )
 """Use as ``Annotated[Path | None, RULES]`` (optional) or ``Annotated[Path, RULES]`` (required)."""
-RulesDir = Annotated[Path | None, RULES]
+RulesPath = Annotated[Path | None, RULES]
 IsLocal = Annotated[bool, switch(["--local", "-l"], "Compile the rules locally using Docker (unix only)")]
 
 UploadTimeout = Annotated[

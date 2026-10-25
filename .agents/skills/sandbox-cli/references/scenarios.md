@@ -356,6 +356,18 @@ is a path. The CLI copies `<platform>/../taxonomy` next to the rules before comp
 Rules compile on the first sandbox of the config over SSH (needs `ssh` credentials there)
 or, with `-l`, in a local Docker container (needs the `[docker]` section).
 
+If `-r` points at a file instead of a folder, the CLI treats it as an archive with already
+compiled rules: it uploads the file as is and skips compilation (`-l` has nothing to do then).
+The file has to be the tar.gz from `rules compile` (or from the rules CI) with
+`event_correlation_graph.json` and `event_normalization_graph.json` inside — anything else is
+rejected before the upload, because the sandbox would silently fall back to its own rules.
+Use it to reuse one archive for many scans when compiling is not an option:
+
+```sh
+sandbox-cli rules compile windows -o out/
+sandbox-cli scanner scan-new sample.exe -r out/compiled-rules.local.tar.gz -U -J
+```
+
 ### Check a rule on an existing trace
 
 The fastest loop when you write or fix a rule: no new detonation, about 20 s per run.
@@ -390,7 +402,8 @@ sandbox-cli scanner scan-new sample.exe -r windows -U -J
 sandbox-cli rules compile windows -o out/
 ```
 
-Writes `out/compiled-rules.local.tar.gz`.
+Writes `out/compiled-rules.local.tar.gz`. Feed it back to `scan-new`, `scan` or `re-scan`
+with `-r out/compiled-rules.local.tar.gz` to skip compilation.
 
 ## Other tasks
 

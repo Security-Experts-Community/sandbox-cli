@@ -91,7 +91,7 @@ def rules_path_resolver(_: Any, tokens: Sequence[Token]) -> Path | None:
             break
         else:
             # no platform alias — use the specified value as a path
-            path = Path(token.value)
+            path = Path(token.value).expanduser()
 
     return path
 
@@ -137,9 +137,9 @@ def files_path_resolver(files: list[Path]) -> list[Path]:
     return sorted(files_for_analysis)
 
 
-def existing(kind: Literal["file", "dir"]) -> Callable[[Any, Any], None]:
+def existing(kind: Literal["file", "dir", "any"]) -> Callable[[Any, Any], None]:
     """
-    cyclopts validator: every given path exists and is a file (or a directory).
+    cyclopts validator: every given path exists and is a file, a directory or either of them.
     """
 
     def validator(_: Any, value: Any) -> None:

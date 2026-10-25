@@ -75,6 +75,29 @@ def test_local_rules_without_docker_config(sample: Path, tmp_path: Path) -> None
     assert "docker" in record["reason"]
 
 
+def test_rules_compile_needs_a_raw_rules_folder(sample: Path, tmp_path: Path) -> None:
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "sandbox_cli",
+            "rules",
+            "compile",
+            "-r",
+            str(sample),
+            "-o",
+            str(tmp_path / "out"),
+        ],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        env=os.environ | {"COLUMNS": "200", "NO_COLOR": "1", "TERM": "dumb"},
+    )
+
+    assert result.returncode == 1
+    assert "is not a folder with raw rules" in result.stdout + result.stderr
+
+
 def test_bad_traces_are_listed_together(tmp_path: Path) -> None:
     empty_dir = tmp_path / "empty"
     empty_dir.mkdir()

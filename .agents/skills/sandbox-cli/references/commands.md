@@ -28,8 +28,8 @@ Send files to scan with the sandbox (advanced scan).
 │ *  FILES  Path to the files or folders to scan [required]                                                            │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 ╭─ Parameters ─────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ --rules -r               The path to the folder with the rules or a platform alias (windows, linux) resolved against │
-│                          rules-path                                                                                  │
+│ --rules -r               The path to the folder with the rules, a platform alias (windows, linux) resolved against   │
+│                          rules-path, or an archive with already compiled rules                                       │
 │ --out -o                 The path where to save the results [default: sandbox]                                       │
 │ --local -l               Compile the rules locally using Docker (unix only) [default: False]                         │
 │ --upload-timeout -T      Upload timeout in seconds (increase if upload big files) [default: 300]                     │
@@ -98,8 +98,8 @@ Send traces to re-scan.
 │ *  TRACES  Path to folder with drakvuf-trace.log.zst and tcpdump.pcap or sandbox_logs.zip [required]                 │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 ╭─ Parameters ─────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ --rules -r          The path to the folder with the rules or a platform alias (windows, linux) resolved against      │
-│                     rules-path                                                                                       │
+│ --rules -r          The path to the folder with the rules, a platform alias (windows, linux) resolved against        │
+│                     rules-path, or an archive with already compiled rules                                            │
 │ --out -o            The path where to save the results [default: sandbox]                                            │
 │ --local -l          Compile the rules locally using Docker (unix only) [default: False]                              │
 │ --unpack -U         Unpack downloaded logs (see the unpack command) [default: False]                                 │
@@ -252,8 +252,8 @@ Usage: sandbox-cli rules compile [OPTIONS] RULES
 Compile rules into an archive for third-party services.
 
 ╭─ Arguments ──────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ *  RULES --rules -r  The path to the folder with the rules or a platform alias (windows, linux) resolved against     │
-│                      rules-path [required]                                                                           │
+│ *  RULES --rules -r  The path to the folder with the rules, a platform alias (windows, linux) resolved against       │
+│                      rules-path, or an archive with already compiled rules [required]                                │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 ╭─ Parameters ─────────────────────────────────────────────────────────────────────────────────────────────────────────╮
 │ --out -o    The path where to save the results [default: compiled-rules.local.tmp]                                   │
@@ -287,8 +287,8 @@ Send files to scan with the sandbox.
 │ *  FILES  Path to the files or folders to scan [required]                                                            │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 ╭─ Parameters ─────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ --rules -r           The path to the folder with the rules or a platform alias (windows, linux) resolved against     │
-│                      rules-path                                                                                      │
+│ --rules -r           The path to the folder with the rules, a platform alias (windows, linux) resolved against       │
+│                      rules-path, or an archive with already compiled rules                                           │
 │ --out -o             The path where to save the results [default: sandbox]                                           │
 │ --local -l           Compile the rules locally using Docker (unix only) [default: False]                             │
 │ --unpack -U          Unpack downloaded logs (see the unpack command) [default: False]                                │

@@ -202,7 +202,7 @@ def test_hook_files_are_uploaded_to_their_debug_options(tmp_path: Path) -> None:
         fileextractor_excludes=files["fileextractor"],
         procdump_excludes=files["procdump"],
     )
-    prepared = asyncio.run(prepare_scan(sandbox, rules_dir=None, is_local=False, hooks=hooks))  # type: ignore[arg-type]
+    prepared = asyncio.run(prepare_scan(sandbox, rules=None, is_local=False, hooks=hooks))  # type: ignore[arg-type]
 
     options = SandboxOptionsAdvanced()
     apply_uploads(options.debug_options, prepared.uploads)
@@ -210,6 +210,65 @@ def test_hook_files_are_uploaded_to_their_debug_options(tmp_path: Path) -> None:
     assert options.debug_options["custom_unimon_hooks"] == "uri-unimon"
     assert options.debug_options["custom_fileextractor_exclude"] == "uri-fileextractor"
     assert options.debug_options["custom_procdump_exclude"] == "uri-procdump"
+
+
+def _compiled_rules_archive(path: Path, *members: str) -> Path:
+    import io
+    import tarfile
+
+    names = members or ("event_correlation_graph.json", "event_normalization_graph.json")
+    with tarfile.open(path, "w:gz") as tar:
+        for name in names:
+            data = b"{}"
+            info = tarfile.TarInfo(name)
+            info.size = len(data)
+            tar.addfile(info, io.BytesIO(data))
+    return path
+
+
+def test_compiled_rules_archive_is_uploaded_as_is(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    from types import SimpleNamespace
+
+    from sandbox_cli.services.scanner import prepare as prepare_module
+    from sandbox_cli.services.scanner.prepare import prepare_scan
+
+    archive = _compiled_rules_archive(tmp_path / "compiled-rules.local.tar.gz")
+
+    async def upload_file(data: bytes) -> SimpleNamespace:
+        return SimpleNamespace(data=SimpleNamespace(file_uri=f"uri-{len(data)}"))
+
+    def unused_compiler(*_: object, **__: object) -> object:
+        raise AssertionError("a ready archive must not be compiled")
+
+    monkeypatch.setattr(prepare_module, "get_compiler", unused_compiler)
+    sandbox = SimpleNamespace(api=SimpleNamespace(upload_file=upload_file))
+
+    prepared = asyncio.run(prepare_scan(sandbox, rules=archive, is_local=False))  # type: ignore[arg-type]
+
+    assert prepared.uploads["rules_url"] == f"uri-{archive.stat().st_size}"
+
+
+def test_rules_archive_without_graphs_is_rejected(tmp_path: Path) -> None:
+    from types import SimpleNamespace
+
+    from sandbox_cli.services.scanner.prepare import prepare_scan
+
+    archive = _compiled_rules_archive(tmp_path / "rules.tar.gz", "event_correlation_graph.json")
+
+    with pytest.raises(ScanError, match=r"no event_normalization_graph\.json inside"):
+        asyncio.run(prepare_scan(SimpleNamespace(), rules=archive, is_local=False))  # type: ignore[arg-type]
+
+
+def test_rules_file_that_is_not_an_archive_is_rejected(tmp_path: Path) -> None:
+    from types import SimpleNamespace
+
+    from sandbox_cli.services.scanner.prepare import prepare_scan
+
+    archive = tmp_path / "rules.tar.gz"
+    archive.write_bytes(b"raw rules, not an archive")
+
+    with pytest.raises(ScanError, match="is not a tar archive with compiled rules"):
+        asyncio.run(prepare_scan(SimpleNamespace(), rules=archive, is_local=False))  # type: ignore[arg-type]
 
 
 def test_json_reporter_prints_one_line_per_job(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:

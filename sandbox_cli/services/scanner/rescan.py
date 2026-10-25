@@ -122,7 +122,7 @@ async def rescan_internal(request: RescanRequest, reporter: ScanReporter) -> Non
     console.info(f"Using key: name={key.name} max_workers={key.max_workers}")
 
     async with Sandbox(key=key) as sandbox:
-        prepared = await prepare_scan(sandbox, rules_dir=request.rules_dir, is_local=request.is_local)
+        prepared = await prepare_scan(sandbox, rules=request.rules, is_local=request.is_local)
 
         options = SandboxBaseScanTaskRequest.Options(analysis_depth=2, passwords_for_unpack=get_settings().passwords)
         options.sandbox.debug_options["save_debug_files"] = True

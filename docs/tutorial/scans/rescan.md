@@ -23,7 +23,7 @@ The same download options as in [scan-new](scan-new.md#download-options) (`-a`, 
 
 | Option                  | Description                                                                                           | Default     |
 | ----------------------- | ----------------------------------------------------------------------------------------------------- | ----------- |
-| `--rules / -r`          | The path to the folder with the rules or the default rules from the sandbox or platform alias.        | `None`      |
+| `--rules / -r`          | The path to the folder with the rules, a platform alias or an archive with already compiled rules.    | `None`      |
 | `--out / -o`            | The path where the analysis results will be saved.                                                    | `./sandbox` |
 | `--local / -l`          | Compile rules locally using Docker (unix only).                                                       | `False`     |
 | `--unpack / -U`         | The downloaded logs will be automatically converted. <br> Learn more in [Analyzing logs](../logs.md). | `False`     |
@@ -80,8 +80,9 @@ Send traces to re-scan.
 │            sandbox_logs.zip [required]                                       │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ╭─ Parameters ─────────────────────────────────────────────────────────────────╮
-│ --rules -r          The path to the folder with the rules or a platform      │
-│                     alias (windows, linux) resolved against rules-path       │
+│ --rules -r          The path to the folder with the rules, a platform alias  │
+│                     (windows, linux) resolved against rules-path, or an      │
+│                     archive with already compiled rules                      │
 │ --out -o            The path where to save the results [default: sandbox]    │
 │ --local -l          Compile the rules locally using Docker (unix only)       │
 │                     [default: False]                                         │

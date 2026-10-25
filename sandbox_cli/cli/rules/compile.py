@@ -22,6 +22,9 @@ async def compile_rules(
     Compile rules into an archive for third-party services.
     """
 
+    if not rules_dir.is_dir():
+        raise CompilationError(f"{rules_dir} is not a folder with raw rules")
+
     with console.status_info("Waiting for the rules to be compiled"):
         async with get_compiler(is_local=is_local) as compiler:
             data = await compiler.compile_rules(rules_dir, out)

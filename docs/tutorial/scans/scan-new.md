@@ -39,7 +39,7 @@ The options allow you to additionally configure which files will be downloaded f
 
 | Option                  | Description                                                                                                                            | Default          |
 | ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------- | ---------------- |
-| `--rules / -r`          | The path to the folder with the rules or the default rules from the sandbox or platform alias (`windows`, `linux`).                    | `None`           |
+| `--rules / -r`          | The path to the folder with the rules, a platform alias (`windows`, `linux`) or an archive with already compiled rules.                | `None`           |
 | `--out / -o`            | The path where the analysis results will be saved.                                                                                     | `./sandbox`      |
 | `--local / -l`          | Compile rules locally using Docker (unix only).                                                                                        | `False`          |
 | `--upload-timeout / -T` | This option allows you to increase the file upload timeout. <br> For example, if you are uploading a large file with a slow internet.  | `300` in seconds |
@@ -161,8 +161,9 @@ Send files to scan with the sandbox (advanced scan).
 │ *  FILES  Path to the files or folders to scan [required]                    │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ╭─ Parameters ─────────────────────────────────────────────────────────────────╮
-│ --rules -r               The path to the folder with the rules or a platform │
-│                          alias (windows, linux) resolved against rules-path  │
+│ --rules -r               The path to the folder with the rules, a platform   │
+│                          alias (windows, linux) resolved against rules-path, │
+│                          or an archive with already compiled rules           │
 │ --out -o                 The path where to save the results [default:        │
 │                          sandbox]                                            │
 │ --local -l               Compile the rules locally using Docker (unix only)  │

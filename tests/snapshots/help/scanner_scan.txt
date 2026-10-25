@@ -6,8 +6,8 @@ Send files to scan with the sandbox.
 │ *  FILES  Path to the files or folders to scan [required]                                                            │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 ╭─ Parameters ─────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ --rules -r           The path to the folder with the rules or a platform alias (windows, linux) resolved against     │
-│                      rules-path                                                                                      │
+│ --rules -r           The path to the folder with the rules, a platform alias (windows, linux) resolved against       │
+│                      rules-path, or an archive with already compiled rules                                           │
 │ --out -o             The path where to save the results [default: sandbox]                                           │
 │ --local -l           Compile the rules locally using Docker (unix only) [default: False]                             │
 │ --unpack -U          Unpack downloaded logs (see the unpack command) [default: False]                                │

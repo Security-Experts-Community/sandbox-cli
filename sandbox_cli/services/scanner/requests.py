@@ -24,7 +24,8 @@ class ScanRequest:
 
     key_name: str
     out_dir: Path
-    rules_dir: Path | None = None
+    rules: Path | None = None
+    """Folder with raw rules to compile, or an archive with already compiled rules."""
     is_local: bool = False
     unpack: bool = False
     open_browser: bool = False

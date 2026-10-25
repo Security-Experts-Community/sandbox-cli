@@ -5,13 +5,16 @@ Preparation shared by all scan commands: rules, images and hook uploads.
 from __future__ import annotations
 
 import asyncio
+import tarfile
 from collections.abc import Coroutine
 from dataclasses import dataclass, field
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import TYPE_CHECKING, Any
 
 from sandbox_cli.core.config import DEFAULT_IMAGE, VMImage
+from sandbox_cli.core.exceptions import ScanError
 from sandbox_cli.services.compiler import get_compiler
+from sandbox_cli.services.compiler.abc import COMPILED_FILES
 from sandbox_cli.services.scanner.compile import compile_rules
 from sandbox_cli.services.scanner.images import fetch_available_images, resolve_scan_images
 from sandbox_cli.services.scanner.uploads import UploadKey, gather_uploads, upload_bytes, upload_dll_hooks, upload_file
@@ -19,7 +22,7 @@ from sandbox_cli.services.scanner.uploads import UploadKey, gather_uploads, uplo
 if TYPE_CHECKING:
     from ptsandbox import Sandbox
 
-__all__ = ["HookFiles", "PreparedScan", "prepare_scan"]
+__all__ = ["HookFiles", "PreparedScan", "check_compiled_rules", "prepare_scan"]
 
 
 @dataclass(frozen=True, slots=True)
@@ -61,10 +64,29 @@ async def _first_error(*tasks: asyncio.Task[Any]) -> None:
     raise failed.exception()  # type: ignore[misc]
 
 
+def check_compiled_rules(archive: Path) -> None:
+    """
+    Ensure ``archive`` is a tar archive with the compiled rules inside.
+
+    The sandbox silently ignores an archive it can't unpack, so a wrong file would
+    mean a scan with the default rules instead of the given ones.
+    """
+    try:
+        with tarfile.open(archive) as tar:
+            members = {PurePosixPath(member.name).name for member in tar.getmembers() if member.isfile()}
+    except OSError as e:
+        raise ScanError(f"Can't read {archive}: {e}") from e
+    except tarfile.TarError as e:
+        raise ScanError(f"{archive} is not a tar archive with compiled rules") from e
+
+    if missing := [name for name in COMPILED_FILES if name not in members]:
+        raise ScanError(f"{archive} is not an archive with compiled rules: no {', '.join(missing)} inside")
+
+
 async def prepare_scan(
     sandbox: Sandbox,
     *,
-    rules_dir: Path | None,
+    rules: Path | None,
     is_local: bool,
     scan_images: set[VMImage | str] | None = None,
     hooks: HookFiles | None = None,
@@ -72,12 +94,20 @@ async def prepare_scan(
     """
     Resolve images, compile rules and upload hook files.
 
-    Fetches the images while the rules compile, then runs all uploads in parallel.
-    ``scan_images=None`` skips image resolution (re-scan doesn't need it).
+    ``rules`` is a folder with raw rules, which is compiled here, or an archive with
+    already compiled rules, which is checked and uploaded as is. Fetches the images while
+    the rules compile, then runs all uploads in parallel. ``scan_images=None`` skips image
+    resolution (re-scan doesn't need it).
     """
-    compiler = get_compiler(is_local=is_local) if rules_dir else None
+    ready_rules = rules if rules is not None and rules.is_file() else None
+    if ready_rules is not None:
+        await asyncio.to_thread(check_compiled_rules, ready_rules)
+
+    compiler = get_compiler(is_local=is_local) if rules is not None and ready_rules is None else None
     rules_task = (
-        asyncio.create_task(compile_rules(rules_dir, compiler, is_local=is_local)) if rules_dir and compiler else None
+        asyncio.create_task(compile_rules(rules, compiler, is_local=is_local))
+        if rules is not None and compiler is not None
+        else None
     )
     images_task = asyncio.create_task(fetch_available_images(sandbox)) if scan_images is not None else None
     await _first_error(*(t for t in (rules_task, images_task) if t is not None))
@@ -92,7 +122,9 @@ async def prepare_scan(
 
     hooks = hooks or HookFiles()
     uploads: dict[UploadKey, Coroutine[Any, Any, str]] = {}
-    if compiled_rules:
+    if ready_rules is not None:
+        uploads["rules_url"] = upload_file(sandbox, ready_rules, label="Upload compiled rules")
+    elif compiled_rules:
         uploads["rules_url"] = upload_bytes(sandbox, compiled_rules)
     if hooks.syscall_hooks:
         uploads["custom_syscall_hooks"] = upload_file(sandbox, hooks.syscall_hooks, label="Upload syscall hooks")

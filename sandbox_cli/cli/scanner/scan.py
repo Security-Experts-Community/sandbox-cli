@@ -27,9 +27,8 @@ from sandbox_cli.cli._params import (
 from sandbox_cli.console import console
 from sandbox_cli.core.config import DEFAULT_DURATION, DEFAULT_IMAGE
 from sandbox_cli.core.reporting import make_scan_reporter
-from sandbox_cli.services.scanner import scan_internal
-from sandbox_cli.services.scanner.prepare import HookFiles
-from sandbox_cli.services.scanner.requests import BasicScanRequest
+from sandbox_cli.services import scanner
+from sandbox_cli.services.scanner.requests import BasicScanRequest, HookFiles
 
 __all__ = ["scan"]
 
@@ -82,4 +81,4 @@ async def scan(
         fake_name=fake_name,
         upload_timeout=upload_timeout,
     )
-    await scan_internal(request, make_scan_reporter(with_image=True, json_output=json_output))
+    await scanner.scan(request, make_scan_reporter(with_image=True, json_output=json_output))

@@ -9,12 +9,12 @@ from rich.table import Table
 from sandbox_cli.cli._params import JsonOutput, Key, default_key, switch
 from sandbox_cli.console import console
 from sandbox_cli.core.config import get_settings
+from sandbox_cli.core.errors import describe_error
 from sandbox_cli.core.exceptions import SandboxCliError
 from sandbox_cli.core.progress import make_progress
 from sandbox_cli.core.sandbox import (
     get_key_by_name,
 )
-from sandbox_cli.services.scanner.runner import describe_error
 
 if TYPE_CHECKING:
     from ptsandbox.models import SandboxImageInfo

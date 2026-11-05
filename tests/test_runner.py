@@ -12,13 +12,14 @@ from typing import Any
 
 import pytest
 
-from sandbox_cli.core.exceptions import ScanError
+from sandbox_cli.core.exceptions import ScanError, ScanFailure
 from sandbox_cli.core.sandbox import get_key_by_name
 from sandbox_cli.core.scan import SandboxArguments, ScanType
 from sandbox_cli.services.downloader import DownloadOptions
-from sandbox_cli.services.scanner.backends import ScanBackend
-from sandbox_cli.services.scanner.rescan import open_trace
-from sandbox_cli.services.scanner.runner import ScanFailure, ScanJob, Submission, run_scan_jobs
+from sandbox_cli.services.scanner.kinds.rescan import open_trace
+from sandbox_cli.services.scanner.pipeline.backends import ScanBackend
+from sandbox_cli.services.scanner.pipeline.jobs import ScanJob, Submission
+from sandbox_cli.services.scanner.pipeline.runner import run_scan_jobs
 
 
 class FakeTask:
@@ -200,8 +201,8 @@ def test_hook_files_are_uploaded_to_their_debug_options(tmp_path: Path) -> None:
 
     from ptsandbox.models import SandboxOptionsAdvanced
 
-    from sandbox_cli.services.scanner.prepare import HookFiles, prepare_scan
-    from sandbox_cli.services.scanner.uploads import apply_uploads
+    from sandbox_cli.services.scanner.prepare import apply_uploads, prepare_scan
+    from sandbox_cli.services.scanner.requests import HookFiles
 
     uploaded: list[bytes] = []
 

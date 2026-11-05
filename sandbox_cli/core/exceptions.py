@@ -7,6 +7,7 @@ __all__ = [
     "DownloadError",
     "SandboxCliError",
     "ScanError",
+    "ScanFailure",
     "UnpackError",
 ]
 
@@ -32,6 +33,12 @@ class CompilationError(SandboxCliError):
 class ScanError(SandboxCliError):
     """
     Raised when a scan cannot be prepared or executed.
+    """
+
+
+class ScanFailure(SandboxCliError):
+    """
+    A single scan failed; the other scans keep running.
     """
 
 

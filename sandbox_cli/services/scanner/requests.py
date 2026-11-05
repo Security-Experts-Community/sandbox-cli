@@ -11,9 +11,21 @@ from ptsandbox.models import VNCMode
 
 from sandbox_cli.core.config import DEFAULT_DURATION, VMImage
 from sandbox_cli.services.downloader import DownloadOptions
-from sandbox_cli.services.scanner.prepare import HookFiles
 
-__all__ = ["AdvancedScanRequest", "BasicScanRequest", "RescanRequest", "ScanRequest"]
+__all__ = ["AdvancedScanRequest", "BasicScanRequest", "HookFiles", "RescanRequest", "ScanRequest"]
+
+
+@dataclass(frozen=True, slots=True)
+class HookFiles:
+    """
+    Optional files uploaded once and referenced from ``debug_options``.
+    """
+
+    syscall_hooks: Path | None = None
+    dll_hooks_dir: Path | None = None
+    unimon_hooks: Path | None = None
+    fileextractor_excludes: Path | None = None
+    procdump_excludes: Path | None = None
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
@@ -22,6 +34,8 @@ class ScanRequest:
     Options shared by every scan command.
     """
 
+    key_names: list[str]
+    """Sandboxes to spread the jobs over."""
     out_dir: Path
     rules: Path | None = None
     """Folder with raw rules to compile, or an archive with already compiled rules."""
@@ -33,8 +47,6 @@ class ScanRequest:
 
 @dataclass(frozen=True, slots=True, kw_only=True)
 class BasicScanRequest(ScanRequest):
-    key_names: list[str]
-    """Sandboxes to spread the files over."""
     files: list[Path]
     images: set[VMImage | str]
     hooks: HookFiles = field(default_factory=HookFiles)
@@ -65,6 +77,5 @@ class AdvancedScanRequest(BasicScanRequest):
 
 @dataclass(frozen=True, slots=True, kw_only=True)
 class RescanRequest(ScanRequest):
-    key_name: str
     traces: list[Path]
     wait_timeout: int | None = None

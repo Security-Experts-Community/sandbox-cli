@@ -20,7 +20,8 @@ if TYPE_CHECKING:
     from rich.progress import TaskID
 
     from sandbox_cli.services.downloader import DownloadTracker
-    from sandbox_cli.services.scanner.runner import ScanJob, ScanReporter
+    from sandbox_cli.services.scanner.pipeline.jobs import ScanJob
+    from sandbox_cli.services.scanner.pipeline.runner import ScanReporter
 
 __all__ = [
     "JsonScanReporter",

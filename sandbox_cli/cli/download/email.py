@@ -10,10 +10,10 @@ from ptsandbox import Sandbox
 
 from sandbox_cli.cli._params import JsonOutput, Key, OutDir, default_key
 from sandbox_cli.console import console
+from sandbox_cli.core.errors import describe_error
 from sandbox_cli.core.exceptions import SandboxCliError
 from sandbox_cli.core.progress import make_progress
 from sandbox_cli.core.sandbox import get_key_by_name
-from sandbox_cli.services.scanner.runner import describe_error
 
 __all__ = ["download_email"]
 

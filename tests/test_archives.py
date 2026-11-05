@@ -9,8 +9,7 @@ from ptsandbox.models import EngineSubsystem, SandboxOptionsAdvanced, VNCMode
 
 from sandbox_cli.core.exceptions import ScanError
 from sandbox_cli.services.downloader import _plan_run_dirs, _sandbox_runs
-from sandbox_cli.services.scanner.advanced import _find_archives, archive_scan_options
-from sandbox_cli.services.scanner.archives import is_archive
+from sandbox_cli.services.scanner.kinds.advanced import archive_scan_options, find_archives, is_archive
 from sandbox_cli.services.scanner.requests import AdvancedScanRequest
 from tests.test_unpack import _make_logs
 
@@ -69,17 +68,17 @@ class TestFindArchives:
         return AdvancedScanRequest(key_names=["main"], out_dir=tmp_path, files=files, images=set(), **kwargs)  # type: ignore[arg-type]
 
     def test_without_flag_archives_are_not_routed(self, tmp_path: Path) -> None:
-        assert _find_archives(self._request(tmp_path)) == set()
+        assert find_archives(self._request(tmp_path)) == set()
 
     def test_with_flag(self, tmp_path: Path) -> None:
-        assert _find_archives(self._request(tmp_path, unpack_archives=True)) == {tmp_path / "a.zip"}
+        assert find_archives(self._request(tmp_path, unpack_archives=True)) == {tmp_path / "a.zip"}
 
     def test_conflicting_flags(self, tmp_path: Path) -> None:
         request = self._request(tmp_path, unpack_archives=True, vnc_mode=VNCMode.FULL, disable_clicker=True)
         with pytest.raises(
             ScanError, match=r"^a\.zip: --disable-clicker, --vnc-mode don't work with --unpack-archives"
         ):
-            _find_archives(request)
+            find_archives(request)
 
 
 def _run(name: str, image: str, children: list[SimpleNamespace] | None = None) -> SimpleNamespace:

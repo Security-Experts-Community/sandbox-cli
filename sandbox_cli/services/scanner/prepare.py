@@ -1,43 +1,62 @@
 """
-Preparation shared by all scan commands: rules, images and hook uploads.
+Preparation shared by all scan commands: compile the rules, resolve the images and
+upload the rules and hook files to every sandbox.
 """
 
 from __future__ import annotations
 
 import asyncio
 import tarfile
+import time
 from collections.abc import Mapping
 from dataclasses import dataclass, field
 from pathlib import Path, PurePosixPath
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Literal
 
 from sandbox_cli.console import console
-from sandbox_cli.core.config import DEFAULT_IMAGE, VMImage
-from sandbox_cli.core.exceptions import ScanError
-from sandbox_cli.services.compiler import get_compiler
+from sandbox_cli.core.config import DEFAULT_IMAGE, LINUX_IMAGES, WINDOWS_IMAGES, VMImage, get_settings, parse_image
+from sandbox_cli.core.exceptions import CompilationError, ScanError
+from sandbox_cli.core.reporting import format_elapsed
+from sandbox_cli.services.compiler import AbstractCompiler, get_compiler
 from sandbox_cli.services.compiler.abc import COMPILED_FILES
-from sandbox_cli.services.scanner.compile import compile_rules
 from sandbox_cli.services.scanner.hooks import merge_dll_hooks
-from sandbox_cli.services.scanner.images import fetch_available_images, resolve_scan_images
-from sandbox_cli.services.scanner.uploads import UploadKey, upload_bytes
+from sandbox_cli.services.scanner.requests import HookFiles
 
 if TYPE_CHECKING:
     from ptsandbox import Sandbox
+    from ptsandbox.models.api import DebugOptions
 
-__all__ = ["HookFiles", "PreparedScan", "check_compiled_rules", "prepare_scan"]
+__all__ = [
+    "PreparedScan",
+    "UploadKey",
+    "apply_uploads",
+    "check_compiled_rules",
+    "compile_rules",
+    "fetch_available_images",
+    "prepare_scan",
+    "resolve_scan_images",
+]
+
+UploadKey = Literal[
+    "rules_url",
+    "custom_syscall_hooks",
+    "custom_unimon_hooks",
+    "custom_dll_hooks",
+    "custom_fileextractor_exclude",
+    "custom_procdump_exclude",
+]
 
 
-@dataclass(frozen=True, slots=True)
-class HookFiles:
+async def upload_bytes(sandbox: Sandbox, data: bytes) -> str:
     """
-    Optional files uploaded once and referenced from ``debug_options``.
+    Upload ``data`` and return the sandbox ``file_uri``.
     """
+    return (await sandbox.api.upload_file(data)).data.file_uri
 
-    syscall_hooks: Path | None = None
-    dll_hooks_dir: Path | None = None
-    unimon_hooks: Path | None = None
-    fileextractor_excludes: Path | None = None
-    procdump_excludes: Path | None = None
+
+def apply_uploads(debug_options: DebugOptions, uris: dict[UploadKey, str]) -> None:
+    for key, uri in uris.items():
+        debug_options[key] = uri
 
 
 @dataclass(slots=True)
@@ -48,6 +67,79 @@ class PreparedScan:
     """Image id for the base sandbox options."""
     uploads: dict[str, dict[UploadKey, str]] = field(default_factory=dict)
     """Per key name: ``debug_options`` entries pointing at the files uploaded to that sandbox."""
+
+
+async def compile_rules(rules_dir: Path, compiler: AbstractCompiler, *, is_local: bool) -> bytes:
+    """
+    Compile rules with ``compiler`` (local docker or the remote sandbox host) and close it.
+
+    Shows its own spinner before the scan progress starts.
+    """
+    where = "locally" if is_local else f"on the remote • [medium_purple]{get_settings().sandbox[0].host}[/]"
+    started = time.monotonic()
+
+    with console.status_info(f"Compiling rules {where}"):
+        async with compiler:
+            result = await compiler.compile_rules(rules_dir, None)
+
+    if not result:
+        raise CompilationError("Bad rules")
+
+    console.info(f"Rules compiled {where} • {format_elapsed(time.monotonic() - started)}")
+    return result
+
+
+def resolve_scan_images(
+    available_images: set[VMImage | str],
+    scan_images: set[VMImage | str],
+) -> tuple[set[VMImage | str], VMImage | str]:
+    """
+    Pick the images to scan on from the images the sandbox has.
+
+    Returns ``(images, default_image)``: the concrete image ids to scan on and the
+    image id for the base sandbox options. Raises ``ScanError`` when the sandbox
+    lacks a requested image or platform.
+    """
+    images: set[VMImage | str] = set()
+    sandbox_image: VMImage | str = DEFAULT_IMAGE
+    for image in scan_images:
+        match image:
+            case VMImage.LINUX:
+                sandbox_image = VMImage.UBUNTU_JAMMY_X64
+                images = available_images & LINUX_IMAGES
+                if not images:
+                    raise ScanError("Sandbox doesn't support linux images")
+            case VMImage.WINDOWS:
+                sandbox_image = VMImage.WIN10_1803_X64
+                images = available_images & WINDOWS_IMAGES
+                if not images:
+                    raise ScanError("Sandbox doesn't support windows images")
+            case _:
+                if image not in available_images:
+                    console.error(f"Sandbox doesn't support {image}.")
+                    console.info(f"Available: [turquoise2]{', '.join(available_images)}[/]")
+                    raise ScanError(f"Sandbox doesn't support {image}.")
+
+                images.add(image)
+                sandbox_image = image
+
+    if images:
+        console.info(f"Scanning on: [turquoise2]{', '.join(images)}[/]")
+
+    return images, sandbox_image
+
+
+async def fetch_available_images(sandbox: Sandbox) -> set[VMImage | str]:
+    """
+    Fetch the set of image ids the sandbox reports as available.
+    """
+    available_images: set[VMImage | str] = set()
+    for check_image in (await sandbox.api.get_images()).data:
+        if not check_image.image_id:
+            continue
+        available_images.add(parse_image(check_image.image_id))
+
+    return available_images
 
 
 async def _first_error(*tasks: asyncio.Task[Any]) -> None:

@@ -23,6 +23,7 @@ from sandbox_cli.cli._params import (
     switch,
 )
 from sandbox_cli.console import console
+from sandbox_cli.core.errors import describe_error
 from sandbox_cli.core.exceptions import DownloadError, SandboxCliError
 from sandbox_cli.core.progress import SandboxProgress, make_progress
 from sandbox_cli.core.reporting import ProgressDownloadTracker
@@ -32,7 +33,6 @@ from sandbox_cli.core.sandbox import (
     get_sandbox_key_by_host,
 )
 from sandbox_cli.services.downloader import DEFAULT_CONCURRENCY, DEFAULT_READ_TIMEOUT, download
-from sandbox_cli.services.scanner.runner import describe_error
 from sandbox_cli.services.unpack import unpack_results
 
 if TYPE_CHECKING:

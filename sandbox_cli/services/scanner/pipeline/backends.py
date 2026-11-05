@@ -17,7 +17,7 @@ from sandbox_cli.core.sandbox import get_key_by_name
 if TYPE_CHECKING:
     from ptsandbox import SandboxKey
 
-    from sandbox_cli.services.scanner.uploads import UploadKey
+    from sandbox_cli.services.scanner.prepare import UploadKey
 
 __all__ = ["ScanBackend", "open_backends"]
 

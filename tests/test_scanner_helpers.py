@@ -7,12 +7,13 @@ import aiohttp
 import pytest
 
 from sandbox_cli.core.config import VMImage
+from sandbox_cli.core.errors import describe_error
 from sandbox_cli.core.exceptions import ScanError
 from sandbox_cli.core.reporting import shorten_name
 from sandbox_cli.services.scanner.hooks import merge_dll_hooks
-from sandbox_cli.services.scanner.images import resolve_scan_images
-from sandbox_cli.services.scanner.runner import describe_error, plan_targets
-from sandbox_cli.services.scanner.utils import compute_wait_time
+from sandbox_cli.services.scanner.kinds.base import compute_wait_time
+from sandbox_cli.services.scanner.pipeline.jobs import plan_targets
+from sandbox_cli.services.scanner.prepare import resolve_scan_images
 
 
 class TestShortenName:
@@ -140,13 +141,40 @@ class TestUniqueDirs:
         ]
 
     def test_rescan_zips_with_the_same_name(self) -> None:
-        from sandbox_cli.services.scanner.rescan import _out_dir_names
+        from sandbox_cli.services.scanner.kinds.rescan import out_dir_names
 
         traces = [Path("a/sandbox_logs.zip"), Path("b/sandbox_logs.zip"), Path("c/raw")]
-        assert _out_dir_names(traces) == ["sandbox_logs", "sandbox_logs_1", "rescan_3"]
+        assert out_dir_names(traces) == ["sandbox_logs", "sandbox_logs_1", "rescan_3"]
 
 
 def test_non_utf8_dll_hooks_are_a_scan_error(tmp_path: Path) -> None:
     (tmp_path / "kernel32.txt").write_bytes(b"CreateFileW,log\n\xff\xfe\n")
     with pytest.raises(ScanError, match=r"Can't read .*kernel32\.txt"):
         merge_dll_hooks(tmp_path)
+
+
+def test_file_scan_binds_every_job_to_the_sandbox_it_runs_on(tmp_path: Path) -> None:
+    from sandbox_cli.core.sandbox import get_key_by_name
+    from sandbox_cli.services.scanner.kinds.advanced import AdvancedScan
+    from sandbox_cli.services.scanner.pipeline.backends import ScanBackend
+    from sandbox_cli.services.scanner.prepare import PreparedScan
+    from sandbox_cli.services.scanner.requests import AdvancedScanRequest
+
+    sample = tmp_path / "a.exe"
+    sample.write_bytes(b"MZ")
+    request = AdvancedScanRequest(
+        key_names=["main", "second"], out_dir=tmp_path / "out", files=[sample], images={VMImage.WIN10_1803_X64}
+    )
+    kind = AdvancedScan(request)
+    kind.check()
+    prepared = PreparedScan(images=[VMImage.WIN10_1803_X64], default_image=VMImage.WIN10_1803_X64)
+    [job] = kind.jobs(prepared)
+
+    bound = {
+        name: job.bind(ScanBackend(key=get_key_by_name(name), sandbox=None, uploads={"rules_url": f"uri-{name}"}))  # type: ignore[arg-type]
+        for name in ("main", "second")
+    }
+
+    for name, submission in bound.items():
+        assert submission.arguments.sandbox_key_name == name
+        assert submission.arguments.sandbox_options.debug_options["rules_url"] == f"uri-{name}"

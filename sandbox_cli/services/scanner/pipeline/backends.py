@@ -7,7 +7,7 @@ from __future__ import annotations
 from collections.abc import AsyncGenerator, Iterable
 from contextlib import AsyncExitStack, asynccontextmanager
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 
 from ptsandbox import Sandbox
 
@@ -16,10 +16,18 @@ from sandbox_cli.core.sandbox import get_key_by_name
 
 if TYPE_CHECKING:
     from ptsandbox import SandboxKey
+    from ptsandbox.models.api import DebugOptions
 
-    from sandbox_cli.services.scanner.prepare import UploadKey
+__all__ = ["ScanBackend", "UploadKey", "open_backends"]
 
-__all__ = ["ScanBackend", "open_backends"]
+UploadKey = Literal[
+    "rules_url",
+    "custom_syscall_hooks",
+    "custom_unimon_hooks",
+    "custom_dll_hooks",
+    "custom_fileextractor_exclude",
+    "custom_procdump_exclude",
+]
 
 
 @dataclass(frozen=True, slots=True)
@@ -35,6 +43,13 @@ class ScanBackend:
     @property
     def name(self) -> str:
         return self.key.name
+
+    def apply_uploads(self, debug_options: DebugOptions) -> None:
+        """
+        Point ``debug_options`` at the files uploaded to this sandbox.
+        """
+        for key, uri in self.uploads.items():
+            debug_options[key] = uri
 
 
 @asynccontextmanager

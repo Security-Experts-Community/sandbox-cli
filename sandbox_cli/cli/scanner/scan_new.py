@@ -32,7 +32,7 @@ from sandbox_cli.cli._params import (
 )
 from sandbox_cli.core.config import DEFAULT_DURATION, DEFAULT_IMAGE
 from sandbox_cli.core.reporting import make_scan_reporter
-from sandbox_cli.services import scanner
+from sandbox_cli.services.scanner import AdvancedScan, execute_scan
 from sandbox_cli.services.scanner.requests import AdvancedScanRequest, HookFiles
 
 __all__ = ["scan_new"]
@@ -186,4 +186,4 @@ async def scan_new(
         outbound_connections=outbound_connections or [],
         file_type_as_ext=file_type_as_ext,
     )
-    await scanner.scan_new(request, make_scan_reporter(with_image=True, json_output=json_output))
+    await execute_scan(AdvancedScan(request), make_scan_reporter(with_image=True, json_output=json_output))

@@ -11,21 +11,17 @@ from typing import TYPE_CHECKING
 from ptsandbox.models import SandboxBaseScanTaskRequest, SandboxOptions, SandboxOptionsAdvanced, VNCMode
 
 from sandbox_cli.console import console
-from sandbox_cli.core.config import get_settings
 from sandbox_cli.core.exceptions import ScanError
-from sandbox_cli.core.scan import SandboxArguments, ScanType
-from sandbox_cli.services.scanner.kinds.base import FileScan, compute_wait_time
+from sandbox_cli.core.scan import ScanType
+from sandbox_cli.services.scanner.kinds.base import FileScan, full_scan_options
 from sandbox_cli.services.scanner.pipeline.jobs import Submission
-from sandbox_cli.services.scanner.prepare import apply_uploads
 from sandbox_cli.services.scanner.requests import AdvancedScanRequest
 
 if TYPE_CHECKING:
     from ptsandbox import Sandbox
     from ptsandbox.models import SandboxBaseTaskResponse
 
-    from sandbox_cli.services.scanner.pipeline.backends import ScanBackend
     from sandbox_cli.services.scanner.pipeline.jobs import ScanTarget
-    from sandbox_cli.services.scanner.prepare import PreparedScan
 
 __all__ = ["AdvancedScan", "archive_scan_options", "find_archives", "guest_filename", "is_archive", "sandbox_options"]
 
@@ -83,9 +79,8 @@ def guest_filename(name: str, *, preserve: bool) -> str:
     return name if preserve else name.rstrip(SAFE_SUFFIXES)  # rstrip is used intentionally
 
 
-def sandbox_options(request: AdvancedScanRequest, prepared: PreparedScan) -> SandboxOptionsAdvanced:
+def sandbox_options(request: AdvancedScanRequest) -> SandboxOptionsAdvanced:
     options = SandboxOptionsAdvanced(
-        image_id=str(prepared.default_image),
         analysis_duration=request.analysis_duration,
         custom_command=request.custom_command,
         procdump_new_processes_on_finish=not request.no_procdumps_on_finish,
@@ -113,10 +108,8 @@ def archive_scan_options(options: SandboxOptionsAdvanced) -> SandboxBaseScanTask
     Options of the full scan for an archive: unpack it with the config passwords and
     run every extracted file with the same VM settings.
     """
-    return SandboxBaseScanTaskRequest.Options(
-        analysis_depth=2,
-        passwords_for_unpack=get_settings().passwords,
-        sandbox=SandboxOptions(
+    return full_scan_options(
+        SandboxOptions(
             image_id=options.image_id,
             analysis_duration=options.analysis_duration,
             custom_command=options.custom_command,
@@ -125,7 +118,7 @@ def archive_scan_options(options: SandboxOptionsAdvanced) -> SandboxBaseScanTask
             bootkitmon=options.bootkitmon,
             analysis_duration_bootkitmon=options.analysis_duration_bootkitmon,
             procdump_new_processes_on_finish=options.procdump_new_processes_on_finish,
-        ),
+        )
     )
 
 
@@ -166,33 +159,34 @@ class AdvancedScan(FileScan[AdvancedScanRequest, SandboxOptionsAdvanced]):
     def check(self) -> None:
         self._archives = find_archives(self.request)
 
-    def wait_timeout(self) -> int:
-        return compute_wait_time(self.request.analysis_duration, self.request.wait_timeout)
-
-    def base_options(self, prepared: PreparedScan) -> SandboxOptionsAdvanced:
+    def base_options(self) -> SandboxOptionsAdvanced:
         request = self.request
         if request.custom_command:
             console.info(f"Commandline: {request.custom_command}")
         if request.file_type_as_ext is not None:
             console.info("Using magic types from the sandbox")
-        return sandbox_options(request, prepared)
+        return sandbox_options(request)
 
-    def submission(self, target: ScanTarget, options: SandboxOptionsAdvanced, backend: ScanBackend) -> Submission:
+    def submission(self, target: ScanTarget, options: SandboxOptionsAdvanced) -> Submission:
         request = self.request
         options = options.model_copy(update={"image_id": str(target.image)}, deep=True)
-        apply_uploads(options.debug_options, backend.uploads)
         file_name = request.fake_name or guest_filename(target.file.name, preserve=request.preserve_filename)
 
-        async def submit_archive(sandbox: Sandbox) -> SandboxBaseTaskResponse:
-            return await sandbox.create_scan(
-                target.file,
-                file_name=file_name,
-                options=archive_scan_options(options),
-                rules=None,
-                priority=request.priority,
-                upload_timeout=request.upload_timeout,
-                async_result=True,
-            )
+        if target.file in self._archives:
+            full = archive_scan_options(options)
+
+            async def submit_archive(sandbox: Sandbox) -> SandboxBaseTaskResponse:
+                return await sandbox.create_scan(
+                    target.file,
+                    file_name=file_name,
+                    options=full,
+                    rules=None,
+                    priority=request.priority,
+                    upload_timeout=request.upload_timeout,
+                    async_result=True,
+                )
+
+            return Submission(type=ScanType.SCAN, options=full.sandbox, submit=submit_archive)
 
         async def submit(sandbox: Sandbox) -> SandboxBaseTaskResponse:
             return await sandbox.create_advanced_scan(
@@ -205,7 +199,4 @@ class AdvancedScan(FileScan[AdvancedScanRequest, SandboxOptionsAdvanced]):
                 sandbox=options,
             )
 
-        return Submission(
-            arguments=SandboxArguments(type=ScanType.SCAN_NEW, sandbox_key_name=backend.name, sandbox_options=options),
-            submit=submit_archive if target.file in self._archives else submit,
-        )
+        return Submission(type=ScanType.SCAN_NEW, options=options, submit=submit)

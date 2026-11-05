@@ -19,7 +19,7 @@ from sandbox_cli.cli._params import (
     default_key,
 )
 from sandbox_cli.core.reporting import make_scan_reporter
-from sandbox_cli.services import scanner
+from sandbox_cli.services.scanner import Rescan, execute_scan
 from sandbox_cli.services.scanner.requests import RescanRequest
 
 __all__ = ["re_scan"]
@@ -61,4 +61,4 @@ async def re_scan(
         traces=traces,
         wait_timeout=wait_timeout,
     )
-    await scanner.rescan(request, make_scan_reporter(with_image=False, json_output=json_output))
+    await execute_scan(Rescan(request), make_scan_reporter(with_image=False, json_output=json_output))

@@ -8,13 +8,20 @@ from __future__ import annotations
 import asyncio
 import tarfile
 import time
-from collections.abc import Mapping
-from dataclasses import dataclass, field
+from collections.abc import Mapping, Sequence
+from dataclasses import dataclass, replace
 from pathlib import Path, PurePosixPath
-from typing import TYPE_CHECKING, Any, Literal
+from typing import TYPE_CHECKING
 
 from sandbox_cli.console import console
-from sandbox_cli.core.config import DEFAULT_IMAGE, LINUX_IMAGES, WINDOWS_IMAGES, VMImage, get_settings, parse_image
+from sandbox_cli.core.config import (
+    DEFAULT_IMAGE,
+    LINUX_IMAGES,
+    WINDOWS_IMAGES,
+    VMImage,
+    get_settings,
+    parse_image,
+)
 from sandbox_cli.core.exceptions import CompilationError, ScanError
 from sandbox_cli.core.reporting import format_elapsed
 from sandbox_cli.services.compiler import AbstractCompiler, get_compiler
@@ -24,26 +31,16 @@ from sandbox_cli.services.scanner.requests import HookFiles
 
 if TYPE_CHECKING:
     from ptsandbox import Sandbox
-    from ptsandbox.models.api import DebugOptions
+
+    from sandbox_cli.services.scanner.pipeline.backends import ScanBackend, UploadKey
 
 __all__ = [
     "PreparedScan",
-    "UploadKey",
-    "apply_uploads",
     "check_compiled_rules",
     "compile_rules",
     "fetch_available_images",
     "prepare_scan",
     "resolve_scan_images",
-]
-
-UploadKey = Literal[
-    "rules_url",
-    "custom_syscall_hooks",
-    "custom_unimon_hooks",
-    "custom_dll_hooks",
-    "custom_fileextractor_exclude",
-    "custom_procdump_exclude",
 ]
 
 
@@ -54,19 +51,12 @@ async def upload_bytes(sandbox: Sandbox, data: bytes) -> str:
     return (await sandbox.api.upload_file(data)).data.file_uri
 
 
-def apply_uploads(debug_options: DebugOptions, uris: dict[UploadKey, str]) -> None:
-    for key, uri in uris.items():
-        debug_options[key] = uri
-
-
-@dataclass(slots=True)
+@dataclass(frozen=True, slots=True)
 class PreparedScan:
     images: list[VMImage | str]
     """Concrete images to scan on."""
-    default_image: VMImage | str
-    """Image id for the base sandbox options."""
-    uploads: dict[str, dict[UploadKey, str]] = field(default_factory=dict)
-    """Per key name: ``debug_options`` entries pointing at the files uploaded to that sandbox."""
+    backends: list[ScanBackend]
+    """The sandboxes with the rules and hook files uploaded to them."""
 
 
 async def compile_rules(rules_dir: Path, compiler: AbstractCompiler, *, is_local: bool) -> bytes:
@@ -134,28 +124,12 @@ async def fetch_available_images(sandbox: Sandbox) -> set[VMImage | str]:
     Fetch the set of image ids the sandbox reports as available.
     """
     available_images: set[VMImage | str] = set()
-    for check_image in (await sandbox.api.get_images()).data:
+    for check_image in await sandbox.get_images():
         if not check_image.image_id:
             continue
         available_images.add(parse_image(check_image.image_id))
 
     return available_images
-
-
-async def _first_error(*tasks: asyncio.Task[Any]) -> None:
-    """
-    Wait for ``tasks``; on the first failure cancel the rest and raise that error.
-    """
-    if not tasks:
-        return
-    done, pending = await asyncio.wait(tasks, return_when=asyncio.FIRST_EXCEPTION)
-    failed = next((t for t in done if not t.cancelled() and t.exception() is not None), None)
-    if failed is None:
-        return
-    for task in pending:
-        task.cancel()
-    await asyncio.gather(*pending, return_exceptions=True)
-    raise failed.exception()  # type: ignore[misc]
 
 
 def check_compiled_rules(archive: Path) -> None:
@@ -208,13 +182,30 @@ async def _read_hook_files(hooks: HookFiles) -> dict[UploadKey, bytes]:
     return payloads
 
 
-async def _upload_all(sandbox: Sandbox, payloads: Mapping[UploadKey, bytes]) -> dict[UploadKey, str]:
-    uris = await asyncio.gather(*(upload_bytes(sandbox, data) for data in payloads.values()))
-    return dict(zip(payloads, uris, strict=True))
+async def _read_rules(rules: Path, *, is_local: bool) -> bytes:
+    """
+    The compiled rules: ``rules`` as is when it's an archive of compiled rules, otherwise compiled from the folder.
+    """
+    if rules.is_file():
+        await asyncio.to_thread(check_compiled_rules, rules)
+        console.info(f"Upload compiled rules: {rules}")
+        return await asyncio.to_thread(rules.read_bytes)
+    return await compile_rules(rules, get_compiler(is_local=is_local), is_local=is_local)
+
+
+def _common_images(available: Mapping[str, set[VMImage | str]], scan_images: set[VMImage | str]) -> list[VMImage | str]:
+    """
+    The requested images every sandbox has.
+    """
+    if len(available) > 1:
+        _check_image_everywhere(available, scan_images)
+    common = set.intersection(*available.values()) if available else set()
+    resolved, default_image = resolve_scan_images(common, scan_images)
+    return sorted(resolved, key=str) or [default_image]
 
 
 async def prepare_scan(
-    sandboxes: Mapping[str, Sandbox],
+    backends: Sequence[ScanBackend],
     *,
     rules: Path | None,
     is_local: bool,
@@ -222,52 +213,40 @@ async def prepare_scan(
     hooks: HookFiles | None = None,
 ) -> PreparedScan:
     """
-    Resolve images, compile rules and upload hook files to every sandbox (keyed by key name).
+    Resolve images, compile rules and upload the rules and hook files to every sandbox.
 
     ``rules`` is a folder with raw rules, which is compiled once here, or an archive with
-    already compiled rules, which is checked and uploaded as is. Fetches the images while
-    the rules compile, then uploads everything to all sandboxes in parallel. Only images
-    every sandbox has are used. ``scan_images=None`` skips image resolution (re-scan
-    doesn't need it).
+    already compiled rules, which is checked and uploaded as is. The rules, the images
+    and the hook files are fetched in parallel, then everything is uploaded to all
+    sandboxes in parallel. Only images every sandbox has are used. ``scan_images=None``
+    skips image resolution (re-scan doesn't need it).
     """
-    ready_rules = rules if rules is not None and rules.is_file() else None
-    if ready_rules is not None:
-        await asyncio.to_thread(check_compiled_rules, ready_rules)
-
-    compiler = get_compiler(is_local=is_local) if rules is not None and ready_rules is None else None
-    rules_task = (
-        asyncio.create_task(compile_rules(rules, compiler, is_local=is_local))
-        if rules is not None and compiler is not None
-        else None
-    )
-    images_tasks = (
-        {name: asyncio.create_task(fetch_available_images(sandbox)) for name, sandbox in sandboxes.items()}
-        if scan_images is not None
-        else {}
-    )
-    await _first_error(*(t for t in (rules_task, *images_tasks.values()) if t is not None))
-    compiled_rules = rules_task.result() if rules_task is not None else None
+    async with asyncio.TaskGroup() as tg:
+        rules_task = tg.create_task(_read_rules(rules, is_local=is_local)) if rules is not None else None
+        hooks_task = tg.create_task(_read_hook_files(hooks or HookFiles()))
+        images_tasks = (
+            {backend.name: tg.create_task(fetch_available_images(backend.sandbox)) for backend in backends}
+            if scan_images is not None
+            else {}
+        )
 
     images: list[VMImage | str] = []
-    default_image: VMImage | str = DEFAULT_IMAGE
     if scan_images is not None:
-        available = {name: task.result() for name, task in images_tasks.items()}
-        if len(available) > 1:
-            _check_image_everywhere(available, scan_images)
-        common = set.intersection(*available.values()) if available else set()
-        resolved, default_image = resolve_scan_images(common, scan_images)
-        images = sorted(resolved, key=str) or [default_image]
+        images = _common_images({name: task.result() for name, task in images_tasks.items()}, scan_images)
 
-    payloads = await _read_hook_files(hooks or HookFiles())
-    if ready_rules is not None:
-        console.info(f"Upload compiled rules: {ready_rules}")
-        payloads["rules_url"] = await asyncio.to_thread(ready_rules.read_bytes)
-    elif compiled_rules:
-        payloads["rules_url"] = compiled_rules
+    payloads = hooks_task.result()
+    if rules_task is not None:
+        payloads["rules_url"] = rules_task.result()
 
-    uploads = await asyncio.gather(*(_upload_all(sandbox, payloads) for sandbox in sandboxes.values()))
+    async with asyncio.TaskGroup() as tg:
+        upload_tasks = [
+            {key: tg.create_task(upload_bytes(backend.sandbox, data)) for key, data in payloads.items()}
+            for backend in backends
+        ]
     return PreparedScan(
         images=images,
-        default_image=default_image,
-        uploads=dict(zip(sandboxes, uploads, strict=True)),
+        backends=[
+            replace(backend, uploads={key: task.result() for key, task in tasks.items()})
+            for backend, tasks in zip(backends, upload_tasks, strict=True)
+        ],
     )

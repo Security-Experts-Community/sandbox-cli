@@ -21,6 +21,15 @@ def _http_status(error: BaseException) -> int | None:
     return None
 
 
+def _leaves(error: BaseException) -> list[BaseException]:
+    """
+    The errors inside (nested) exception groups, or just ``error``.
+    """
+    if isinstance(error, BaseExceptionGroup):
+        return [leaf for inner in error.exceptions for leaf in _leaves(inner)]
+    return [error]
+
+
 def _json_requested(argv: list[str]) -> bool:
     return any(arg in {"--json", "-J"} for arg in argv)
 
@@ -54,21 +63,23 @@ def main() -> None:
             app(exit_on_error=not json_mode)
         except CycloptsError as e:
             _fail(str(e), printed=True)
-    except SandboxCliError as e:
-        _fail(str(e))
     except KeyboardInterrupt:
         console.warning("Operation cancelled")
         console.emit_json({"status": "error", "reason": "cancelled"})
         sys.exit(130)
-    except Exception as e:
-        if _http_status(e) == HTTPStatus.UNAUTHORIZED:
-            _fail(f"The specified token is not valid. {e}")
+    except Exception as group:
+        error, *others = _leaves(group)
+        more = f" (+{len(others)} more)" if others else ""
+        if isinstance(error, SandboxCliError):
+            _fail(f"{error}{more}")
+        if _http_status(error) == HTTPStatus.UNAUTHORIZED:
+            _fail(f"The specified token is not valid. {error}{more}")
         if os.environ.get("DEBUG"):
             console.print_exception()
-            console.emit_json({"status": "error", "reason": f"{type(e).__name__}: {e}"})
+            console.emit_json({"status": "error", "reason": f"{type(error).__name__}: {error}{more}"})
             sys.exit(1)
         # Show a concise error by default; full traceback only with DEBUG env var.
-        reason = f"{type(e).__name__}: {e}"
+        reason = f"{type(error).__name__}: {error}{more}"
         console.error(reason)
         console.info("Set DEBUG=1 for a full traceback.")
         _fail(reason, printed=True)

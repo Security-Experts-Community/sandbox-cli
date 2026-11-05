@@ -14,14 +14,10 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 from zipfile import BadZipFile, ZipFile
 
-from ptsandbox.models import SandboxBaseScanTaskRequest
-
-from sandbox_cli.core.config import get_settings
 from sandbox_cli.core.exceptions import ScanError
-from sandbox_cli.core.scan import SandboxArguments, ScanType
-from sandbox_cli.services.scanner.kinds.base import ScanKind
+from sandbox_cli.core.scan import ScanType
+from sandbox_cli.services.scanner.kinds.base import ScanKind, full_scan_options
 from sandbox_cli.services.scanner.pipeline.jobs import ScanJob, Submission, unique_names
-from sandbox_cli.services.scanner.prepare import apply_uploads
 from sandbox_cli.services.scanner.requests import RescanRequest
 from sandbox_cli.services.unpack import RAW_DIR
 
@@ -29,7 +25,6 @@ if TYPE_CHECKING:
     from ptsandbox import Sandbox
     from ptsandbox.models import SandboxBaseTaskResponse
 
-    from sandbox_cli.services.scanner.pipeline.backends import ScanBackend
     from sandbox_cli.services.scanner.prepare import PreparedScan
 
 __all__ = ["Rescan", "check_traces", "open_trace", "out_dir_names"]
@@ -117,18 +112,19 @@ def out_dir_names(traces: list[Path]) -> list[str]:
         trace.stem if trace.suffix == ".zip" else ("rescan" if len(traces) == 1 else f"rescan_{i + 1}")
         for i, trace in enumerate(traces)
     ]
-    by_trace = dict(zip(traces, names, strict=True))
-    return unique_names(traces, lambda trace: by_trace[trace], fallback=lambda trace: by_trace[trace])
+    return unique_names(names)
 
 
 class Rescan(ScanKind[RescanRequest]):
     def check(self) -> None:
         check_traces(self.request.traces)
 
+    def default_wait_timeout(self) -> int:
+        return DEFAULT_WAIT_TIMEOUT
+
     def jobs(self, prepared: PreparedScan) -> list[ScanJob]:
         request = self.request
         download_options = replace(request.download_options, logs=True)
-        wait_timeout = request.wait_timeout or DEFAULT_WAIT_TIMEOUT
         dir_names = out_dir_names(request.traces)
         jobs: list[ScanJob] = []
         for index, trace in enumerate(request.traces):
@@ -139,17 +135,16 @@ class Rescan(ScanKind[RescanRequest]):
                     name=trace.name if trace.is_file() else "/".join(trace.parts[-2:]),
                     out_dir=out_dir,
                     idx=f"{index + 1}/{len(request.traces)}",
-                    bind=partial(self.submission, trace, wait_timeout),
-                    wait_timeout=wait_timeout,
+                    submission=partial(self.submission, trace),
+                    wait_timeout=self.wait_timeout,
                     download_options=download_options,
                 )
             )
         return jobs
 
-    def submission(self, trace: Path, wait_timeout: int, backend: ScanBackend) -> Submission:
-        options = SandboxBaseScanTaskRequest.Options(analysis_depth=2, passwords_for_unpack=get_settings().passwords)
-        options.sandbox.debug_options["save_debug_files"] = True
-        apply_uploads(options.sandbox.debug_options, backend.uploads)
+    def submission(self, trace: Path) -> Submission:
+        options = full_scan_options()
+        wait_timeout = self.wait_timeout
 
         async def submit(sandbox: Sandbox) -> SandboxBaseTaskResponse:
             async with open_trace(trace) as (drakvuf_trace, tcpdump_pcap):
@@ -161,9 +156,4 @@ class Rescan(ScanKind[RescanRequest]):
                     read_timeout=wait_timeout,
                 )
 
-        return Submission(
-            arguments=SandboxArguments(
-                type=ScanType.RE_SCAN, sandbox_key_name=backend.name, sandbox_options=options.sandbox
-            ),
-            submit=submit,
-        )
+        return Submission(type=ScanType.RE_SCAN, options=options.sandbox, submit=submit)

@@ -33,8 +33,17 @@ class TestShortenName:
 
 
 class TestComputeWaitTime:
-    def test_explicit_timeout_wins(self) -> None:
-        assert compute_wait_time(300, 42) == 42
+    def test_explicit_timeout_wins(self, tmp_path: Path) -> None:
+        from sandbox_cli.services.scanner.kinds.advanced import AdvancedScan
+        from sandbox_cli.services.scanner.kinds.rescan import Rescan
+        from sandbox_cli.services.scanner.requests import AdvancedScanRequest, RescanRequest
+
+        scan = AdvancedScanRequest(key_names=["main"], out_dir=tmp_path, files=[], images=set(), wait_timeout=42)
+        assert AdvancedScan(scan).wait_timeout == 42
+        assert AdvancedScan(
+            AdvancedScanRequest(key_names=["main"], out_dir=tmp_path, files=[], images=set())
+        ).wait_timeout == compute_wait_time(300)
+        assert Rescan(RescanRequest(key_names=["main"], out_dir=tmp_path, traces=[])).wait_timeout == 300
 
     def test_short_analysis_gets_bigger_bonus(self) -> None:
         assert compute_wait_time(60) == 60 * 4 + 300
@@ -153,28 +162,55 @@ def test_non_utf8_dll_hooks_are_a_scan_error(tmp_path: Path) -> None:
         merge_dll_hooks(tmp_path)
 
 
-def test_file_scan_binds_every_job_to_the_sandbox_it_runs_on(tmp_path: Path) -> None:
-    from sandbox_cli.core.sandbox import get_key_by_name
+def test_file_scan_builds_fresh_options_for_every_submission(tmp_path: Path) -> None:
+    import zipfile
+
+    from sandbox_cli.core.scan import ScanType
     from sandbox_cli.services.scanner.kinds.advanced import AdvancedScan
-    from sandbox_cli.services.scanner.pipeline.backends import ScanBackend
     from sandbox_cli.services.scanner.prepare import PreparedScan
     from sandbox_cli.services.scanner.requests import AdvancedScanRequest
 
     sample = tmp_path / "a.exe"
     sample.write_bytes(b"MZ")
+    archive = tmp_path / "b.zip"
+    with zipfile.ZipFile(archive, "w") as zf:
+        zf.writestr("x.exe", b"MZ")
     request = AdvancedScanRequest(
-        key_names=["main", "second"], out_dir=tmp_path / "out", files=[sample], images={VMImage.WIN10_1803_X64}
+        key_names=["main"],
+        out_dir=tmp_path / "out",
+        files=[sample, archive],
+        images={VMImage.WIN10_1803_X64},
+        unpack_archives=True,
     )
     kind = AdvancedScan(request)
     kind.check()
-    prepared = PreparedScan(images=[VMImage.WIN10_1803_X64], default_image=VMImage.WIN10_1803_X64)
-    [job] = kind.jobs(prepared)
+    sample_job, archive_job = kind.jobs(PreparedScan(images=[VMImage.WIN10_1803_X64], backends=[]))
 
-    bound = {
-        name: job.bind(ScanBackend(key=get_key_by_name(name), sandbox=None, uploads={"rules_url": f"uri-{name}"}))  # type: ignore[arg-type]
-        for name in ("main", "second")
-    }
+    first, second = sample_job.submission(), sample_job.submission()
+    assert first.type == ScanType.SCAN_NEW
+    assert first.options.image_id == str(VMImage.WIN10_1803_X64)
+    assert first.options is not second.options
 
-    for name, submission in bound.items():
-        assert submission.arguments.sandbox_key_name == name
-        assert submission.arguments.sandbox_options.debug_options["rules_url"] == f"uri-{name}"
+    full = archive_job.submission()
+    assert full.type == ScanType.SCAN
+    assert full.options.image_id == str(VMImage.WIN10_1803_X64)
+
+
+def test_connection_errors_wrapped_by_the_library_are_described() -> None:
+    from types import SimpleNamespace
+
+    from ptsandbox.exceptions import SandboxUploadException
+
+    from sandbox_cli.core.errors import is_unreachable
+
+    refused = aiohttp.ClientConnectorError(
+        SimpleNamespace(host="second.example.com", port=443, ssl=True),  # type: ignore[arg-type]
+        OSError(61, "Connection refused"),
+    )
+    try:
+        raise SandboxUploadException("Can't upload files to server") from ExceptionGroup("upload", [refused])
+    except SandboxUploadException as e:
+        error = e
+
+    assert is_unreachable(error)
+    assert describe_error(error).startswith("connection error • Cannot connect to host second.example.com:443")

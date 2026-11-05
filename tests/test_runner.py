@@ -14,7 +14,7 @@ import pytest
 
 from sandbox_cli.core.exceptions import ScanError, ScanFailure
 from sandbox_cli.core.sandbox import get_key_by_name
-from sandbox_cli.core.scan import SandboxArguments, ScanType
+from sandbox_cli.core.scan import ScanType
 from sandbox_cli.services.downloader import DownloadOptions
 from sandbox_cli.services.scanner.kinds.rescan import open_trace
 from sandbox_cli.services.scanner.pipeline.backends import ScanBackend
@@ -84,17 +84,11 @@ def _job(tmp_path: Path, name: str, submit: Any) -> ScanJob:
     out = tmp_path / name
     out.mkdir()
 
-    def bind(backend: ScanBackend) -> Submission:
-        arguments = SandboxArguments(
-            type=ScanType.SCAN, sandbox_key_name=backend.name, sandbox_options=SandboxOptions()
-        )
-        return Submission(arguments=arguments, submit=submit)
-
     return ScanJob(
         name=name,
         out_dir=out,
         idx="1/1",
-        bind=bind,
+        submission=lambda: Submission(type=ScanType.SCAN, options=SandboxOptions(), submit=submit),
         wait_timeout=1,
         download_options=DownloadOptions(),
     )
@@ -201,7 +195,7 @@ def test_hook_files_are_uploaded_to_their_debug_options(tmp_path: Path) -> None:
 
     from ptsandbox.models import SandboxOptionsAdvanced
 
-    from sandbox_cli.services.scanner.prepare import apply_uploads, prepare_scan
+    from sandbox_cli.services.scanner.prepare import prepare_scan
     from sandbox_cli.services.scanner.requests import HookFiles
 
     uploaded: list[bytes] = []
@@ -222,10 +216,10 @@ def test_hook_files_are_uploaded_to_their_debug_options(tmp_path: Path) -> None:
         fileextractor_excludes=files["fileextractor"],
         procdump_excludes=files["procdump"],
     )
-    prepared = asyncio.run(prepare_scan({"main": sandbox}, rules=None, is_local=False, hooks=hooks))  # type: ignore[arg-type]
+    prepared = asyncio.run(prepare_scan([_backend(sandbox)], rules=None, is_local=False, hooks=hooks))
 
     options = SandboxOptionsAdvanced()
-    apply_uploads(options.debug_options, prepared.uploads["main"])
+    prepared.backends[0].apply_uploads(options.debug_options)
     assert options.debug_options["custom_syscall_hooks"] == "uri-syscall"
     assert options.debug_options["custom_unimon_hooks"] == "uri-unimon"
     assert options.debug_options["custom_fileextractor_exclude"] == "uri-fileextractor"
@@ -263,9 +257,9 @@ def test_compiled_rules_archive_is_uploaded_as_is(tmp_path: Path, monkeypatch: p
     monkeypatch.setattr(prepare_module, "get_compiler", unused_compiler)
     sandbox = SimpleNamespace(api=SimpleNamespace(upload_file=upload_file))
 
-    prepared = asyncio.run(prepare_scan({"main": sandbox}, rules=archive, is_local=False))  # type: ignore[arg-type]
+    prepared = asyncio.run(prepare_scan([_backend(sandbox)], rules=archive, is_local=False))
 
-    assert prepared.uploads["main"]["rules_url"] == f"uri-{archive.stat().st_size}"
+    assert prepared.backends[0].uploads["rules_url"] == f"uri-{archive.stat().st_size}"
 
 
 def test_rules_archive_without_graphs_is_rejected(tmp_path: Path) -> None:
@@ -275,8 +269,8 @@ def test_rules_archive_without_graphs_is_rejected(tmp_path: Path) -> None:
 
     archive = _compiled_rules_archive(tmp_path / "rules.tar.gz", "event_correlation_graph.json")
 
-    with pytest.raises(ScanError, match=r"no event_normalization_graph\.json inside"):
-        asyncio.run(prepare_scan({"main": SimpleNamespace()}, rules=archive, is_local=False))  # type: ignore[arg-type]
+    with pytest.RaisesGroup(pytest.RaisesExc(ScanError, match=r"no event_normalization_graph\.json inside")):
+        asyncio.run(prepare_scan([_backend(SimpleNamespace())], rules=archive, is_local=False))
 
 
 def test_rules_file_that_is_not_an_archive_is_rejected(tmp_path: Path) -> None:
@@ -287,8 +281,8 @@ def test_rules_file_that_is_not_an_archive_is_rejected(tmp_path: Path) -> None:
     archive = tmp_path / "rules.tar.gz"
     archive.write_bytes(b"raw rules, not an archive")
 
-    with pytest.raises(ScanError, match="is not a tar archive with compiled rules"):
-        asyncio.run(prepare_scan({"main": SimpleNamespace()}, rules=archive, is_local=False))  # type: ignore[arg-type]
+    with pytest.RaisesGroup(pytest.RaisesExc(ScanError, match="is not a tar archive with compiled rules")):
+        asyncio.run(prepare_scan([_backend(SimpleNamespace())], rules=archive, is_local=False))
 
 
 def test_json_reporter_prints_one_line_per_job(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -402,8 +396,9 @@ def test_unreachable_sandbox_hands_jobs_to_the_others(tmp_path: Path) -> None:
 
     assert error == "Failed 5 of 5 tasks"  # only because FakeTask has no full report
     assert _submitted_to(reporter) == ["main"] * 5
-    [(_, requeued)] = [e for e in reporter.events if e[0] == "requeued"]
-    assert "second is unreachable" in requeued
+    requeued = [event for kind, event in reporter.events if kind == "requeued"]
+    assert requeued
+    assert all("second is unreachable" in event and "connection error" in event for event in requeued)
     assert all("full report not available" in event for kind, event in reporter.events if kind == "failed")
     assert len([e for e in reporter.events if e[0] == "finished"]) == 5
 
@@ -416,3 +411,32 @@ def test_last_reachable_sandbox_fails_its_jobs(tmp_path: Path) -> None:
     assert error == "Failed 1 of 1 tasks"
     assert not [e for e in reporter.events if e[0] == "requeued"]
     assert reporter.events[-1] == ("finished", "a")
+
+
+def test_prepare_stops_the_other_sandboxes_on_the_first_error() -> None:
+    from sandbox_cli.services.scanner.prepare import prepare_scan
+
+    async def down() -> object:
+        raise ScanError("second is down")
+
+    async def slow() -> object:
+        await asyncio.sleep(10)
+        raise AssertionError("must be cancelled")
+
+    backends = [
+        _backend(SimpleNamespace(get_images=slow), "main"),
+        _backend(SimpleNamespace(get_images=down), "second"),
+    ]
+
+    with pytest.RaisesGroup(pytest.RaisesExc(ScanError, match="second is down")):
+        asyncio.run(prepare_scan(backends, rules=None, is_local=False, scan_images=set()))
+
+
+def test_cli_reports_the_errors_inside_a_group() -> None:
+    from sandbox_cli.__main__ import _leaves
+
+    first, second = ScanError("a"), ValueError("b")
+    group = ExceptionGroup("outer", [first, ExceptionGroup("inner", [second])])
+
+    assert _leaves(group) == [first, second]
+    assert _leaves(first) == [first]

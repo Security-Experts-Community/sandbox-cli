@@ -43,6 +43,8 @@ class ScanRequest:
     unpack: bool = False
     open_browser: bool = False
     download_options: DownloadOptions = field(default_factory=DownloadOptions)
+    wait_timeout: int | None = None
+    """How long to wait for a task report; ``None`` picks the default of the scan kind."""
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
@@ -58,7 +60,6 @@ class BasicScanRequest(ScanRequest):
 
 @dataclass(frozen=True, slots=True, kw_only=True)
 class AdvancedScanRequest(BasicScanRequest):
-    wait_timeout: int | None = None
     priority: int = 3
     preserve_filename: bool = False
     unpack_archives: bool = False
@@ -78,4 +79,3 @@ class AdvancedScanRequest(BasicScanRequest):
 @dataclass(frozen=True, slots=True, kw_only=True)
 class RescanRequest(ScanRequest):
     traces: list[Path]
-    wait_timeout: int | None = None

@@ -4,7 +4,7 @@ The steps every scan command shares.
 
 from __future__ import annotations
 
-from dataclasses import replace
+import asyncio
 from typing import TYPE_CHECKING, Any
 
 from sandbox_cli.services.scanner.pipeline.backends import open_backends
@@ -23,17 +23,11 @@ async def execute_scan(kind: ScanKind[Any], reporter: ScanReporter) -> None:
     Check the input, open the sandboxes, prepare them and run the jobs of ``kind``.
     """
     request = kind.request
-    kind.check()
+    await asyncio.to_thread(kind.check)
 
     async with open_backends(request.key_names) as backends:
         prepared = await prepare_scan(
-            {backend.name: backend.sandbox for backend in backends},
-            rules=request.rules,
-            is_local=request.is_local,
-            scan_images=kind.scan_images,
-            hooks=kind.hooks,
+            backends, rules=request.rules, is_local=request.is_local, scan_images=kind.scan_images, hooks=kind.hooks
         )
-        backends = [replace(backend, uploads=prepared.uploads[backend.name]) for backend in backends]
-        await run_scan_jobs(
-            backends, kind.jobs(prepared), reporter, unpack=request.unpack, open_browser=request.open_browser
-        )
+        jobs = await asyncio.to_thread(kind.jobs, prepared)
+        await run_scan_jobs(prepared.backends, jobs, reporter, unpack=request.unpack, open_browser=request.open_browser)

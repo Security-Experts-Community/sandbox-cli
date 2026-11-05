@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 import asyncio
+import json
 import sys
 import zipfile
 from collections.abc import Generator
 from contextlib import contextmanager
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any
 
 import pytest
@@ -14,8 +16,9 @@ from sandbox_cli.core.exceptions import ScanError
 from sandbox_cli.core.sandbox import get_key_by_name
 from sandbox_cli.core.scan import SandboxArguments, ScanType
 from sandbox_cli.services.downloader import DownloadOptions
+from sandbox_cli.services.scanner.backends import ScanBackend
 from sandbox_cli.services.scanner.rescan import open_trace
-from sandbox_cli.services.scanner.runner import ScanFailure, ScanJob, run_scan_jobs
+from sandbox_cli.services.scanner.runner import ScanFailure, ScanJob, Submission, run_scan_jobs
 
 
 class FakeTask:
@@ -52,8 +55,11 @@ class RecordingReporter:
     def job_started(self, job: ScanJob) -> None:
         self.events.append(("started", job.name))
 
+    def job_requeued(self, job: ScanJob, reason: str) -> None:
+        self.events.append(("requeued", f"{job.name}: {reason}"))
+
     def job_submitted(self, job: ScanJob, link: str) -> None:
-        self.events.append(("submitted", job.name))
+        self.events.append(("submitted", f"{job.name}@{job.key_name}"))
 
     def job_downloading(self, job: ScanJob) -> None:
         self.events.append(("downloading", job.name))
@@ -76,24 +82,37 @@ def _job(tmp_path: Path, name: str, submit: Any) -> ScanJob:
 
     out = tmp_path / name
     out.mkdir()
+
+    def bind(backend: ScanBackend) -> Submission:
+        arguments = SandboxArguments(
+            type=ScanType.SCAN, sandbox_key_name=backend.name, sandbox_options=SandboxOptions()
+        )
+        return Submission(arguments=arguments, submit=submit)
+
     return ScanJob(
         name=name,
         out_dir=out,
         idx="1/1",
-        submit=submit,
+        bind=bind,
         wait_timeout=1,
         download_options=DownloadOptions(),
-        arguments=SandboxArguments(type=ScanType.SCAN, sandbox_key_name="main", sandbox_options=SandboxOptions()),
     )
 
 
-def _run(sandbox: FakeSandbox, jobs: list[ScanJob], reporter: RecordingReporter) -> str | None:
+def _backend(sandbox: object, name: str = "main", max_workers: int | None = None) -> ScanBackend:
+    key = get_key_by_name(name)
+    if max_workers is not None:
+        key = key.model_copy(update={"max_workers": max_workers})
+    return ScanBackend(key=key, sandbox=sandbox)  # type: ignore[arg-type]
+
+
+def _run(sandbox: FakeSandbox | list[ScanBackend], jobs: list[ScanJob], reporter: RecordingReporter) -> str | None:
     """
     Run the jobs; return the final error message (``None`` when every job succeeded).
     """
-    key = get_key_by_name("main")
+    backends = sandbox if isinstance(sandbox, list) else [_backend(sandbox)]
     try:
-        asyncio.run(run_scan_jobs(sandbox, key, jobs, reporter, unpack=False, open_browser=False))  # type: ignore[arg-type]
+        asyncio.run(run_scan_jobs(backends, jobs, reporter, unpack=False, open_browser=False))  # type: ignore[arg-type]
     except ScanFailure as e:
         return str(e)
     return None
@@ -114,7 +133,7 @@ def test_every_job_is_finished_whatever_happens(tmp_path: Path) -> None:
     assert ("session", "2") in reporter.events
     assert ("failed", "a: full report not available") in reporter.events
     assert ("failed", "b: unexpected error • RuntimeError: upload exploded") in reporter.events
-    assert [e for e in reporter.events if e[0] == "finished"] == [("finished", "a"), ("finished", "b")]
+    assert sorted(e for e in reporter.events if e[0] == "finished") == [("finished", "a"), ("finished", "b")]
     assert (tmp_path / "a" / "report.json").exists()
     assert (tmp_path / "b" / "scan_config.json").exists()
 
@@ -202,10 +221,10 @@ def test_hook_files_are_uploaded_to_their_debug_options(tmp_path: Path) -> None:
         fileextractor_excludes=files["fileextractor"],
         procdump_excludes=files["procdump"],
     )
-    prepared = asyncio.run(prepare_scan(sandbox, rules=None, is_local=False, hooks=hooks))  # type: ignore[arg-type]
+    prepared = asyncio.run(prepare_scan({"main": sandbox}, rules=None, is_local=False, hooks=hooks))  # type: ignore[arg-type]
 
     options = SandboxOptionsAdvanced()
-    apply_uploads(options.debug_options, prepared.uploads)
+    apply_uploads(options.debug_options, prepared.uploads["main"])
     assert options.debug_options["custom_syscall_hooks"] == "uri-syscall"
     assert options.debug_options["custom_unimon_hooks"] == "uri-unimon"
     assert options.debug_options["custom_fileextractor_exclude"] == "uri-fileextractor"
@@ -243,9 +262,9 @@ def test_compiled_rules_archive_is_uploaded_as_is(tmp_path: Path, monkeypatch: p
     monkeypatch.setattr(prepare_module, "get_compiler", unused_compiler)
     sandbox = SimpleNamespace(api=SimpleNamespace(upload_file=upload_file))
 
-    prepared = asyncio.run(prepare_scan(sandbox, rules=archive, is_local=False))  # type: ignore[arg-type]
+    prepared = asyncio.run(prepare_scan({"main": sandbox}, rules=archive, is_local=False))  # type: ignore[arg-type]
 
-    assert prepared.uploads["rules_url"] == f"uri-{archive.stat().st_size}"
+    assert prepared.uploads["main"]["rules_url"] == f"uri-{archive.stat().st_size}"
 
 
 def test_rules_archive_without_graphs_is_rejected(tmp_path: Path) -> None:
@@ -256,7 +275,7 @@ def test_rules_archive_without_graphs_is_rejected(tmp_path: Path) -> None:
     archive = _compiled_rules_archive(tmp_path / "rules.tar.gz", "event_correlation_graph.json")
 
     with pytest.raises(ScanError, match=r"no event_normalization_graph\.json inside"):
-        asyncio.run(prepare_scan(SimpleNamespace(), rules=archive, is_local=False))  # type: ignore[arg-type]
+        asyncio.run(prepare_scan({"main": SimpleNamespace()}, rules=archive, is_local=False))  # type: ignore[arg-type]
 
 
 def test_rules_file_that_is_not_an_archive_is_rejected(tmp_path: Path) -> None:
@@ -268,7 +287,7 @@ def test_rules_file_that_is_not_an_archive_is_rejected(tmp_path: Path) -> None:
     archive.write_bytes(b"raw rules, not an archive")
 
     with pytest.raises(ScanError, match="is not a tar archive with compiled rules"):
-        asyncio.run(prepare_scan(SimpleNamespace(), rules=archive, is_local=False))  # type: ignore[arg-type]
+        asyncio.run(prepare_scan({"main": SimpleNamespace()}, rules=archive, is_local=False))  # type: ignore[arg-type]
 
 
 def test_json_reporter_prints_one_line_per_job(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -311,3 +330,88 @@ def test_open_trace_finds_unpacked_raw(tmp_path: Path) -> None:
             assert (trace.parent, pcap.parent) == (raw, raw)
 
     asyncio.run(check())
+
+
+class TimedSandbox:
+    """
+    Finishes every task after ``delay`` seconds; with ``down`` it can't be connected to.
+    """
+
+    def __init__(self, delay: float = 0, *, down: bool = False) -> None:
+        self.delay = delay
+        self.down = down
+
+    async def wait_for_report(self, task: FakeTask, wait_time: float) -> FakeTask:
+        await asyncio.sleep(self.delay)
+        return FakeTask()
+
+
+async def _submit_to(sandbox: TimedSandbox) -> FakeTask:
+    if sandbox.down:
+        import aiohttp
+        from ptsandbox.exceptions import SandboxUploadException
+
+        refused = aiohttp.ClientConnectorError(
+            SimpleNamespace(host="second.example.com", port=443, ssl=True),  # type: ignore[arg-type]
+            OSError(61, "Connection refused"),
+        )
+        raise SandboxUploadException("Can't upload files to server") from ExceptionGroup("upload", [refused])
+    return FakeTask()
+
+
+def _submitted_to(reporter: RecordingReporter) -> list[str]:
+    return [event.split("@")[1] for kind, event in reporter.events if kind == "submitted"]
+
+
+def test_faster_sandbox_takes_more_jobs(tmp_path: Path) -> None:
+    backends = [
+        _backend(TimedSandbox(0.3), "main", max_workers=1),
+        _backend(TimedSandbox(0.01), "second", max_workers=1),
+    ]
+    jobs = [_job(tmp_path, f"s{i}", _submit_to) for i in range(6)]
+    reporter = RecordingReporter()
+
+    _run(backends, jobs, reporter)
+
+    keys = _submitted_to(reporter)
+    assert len(keys) == 6
+    assert keys.count("main") == 1
+    assert keys.count("second") == 5
+    assert {json.loads((job.out_dir / "scan_config.json").read_text())["sandbox_key_name"] for job in jobs} == {
+        "main",
+        "second",
+    }
+
+
+def test_few_jobs_spread_over_all_sandboxes(tmp_path: Path) -> None:
+    backends = [_backend(TimedSandbox(0.05), "main"), _backend(TimedSandbox(0.05), "second")]
+    reporter = RecordingReporter()
+
+    _run(backends, [_job(tmp_path, "a", _submit_to), _job(tmp_path, "b", _submit_to)], reporter)
+
+    assert sorted(_submitted_to(reporter)) == ["main", "second"]
+
+
+def test_unreachable_sandbox_hands_jobs_to_the_others(tmp_path: Path) -> None:
+    backends = [_backend(TimedSandbox(0.05), "main", max_workers=2), _backend(TimedSandbox(down=True), "second")]
+    jobs = [_job(tmp_path, f"s{i}", _submit_to) for i in range(5)]
+    reporter = RecordingReporter()
+
+    error = _run(backends, jobs, reporter)
+
+    assert error == "Failed 5 of 5 tasks"  # only because FakeTask has no full report
+    assert _submitted_to(reporter) == ["main"] * 5
+    [(_, requeued)] = [e for e in reporter.events if e[0] == "requeued"]
+    assert "second is unreachable" in requeued
+    assert all("full report not available" in event for kind, event in reporter.events if kind == "failed")
+    assert len([e for e in reporter.events if e[0] == "finished"]) == 5
+
+
+def test_last_reachable_sandbox_fails_its_jobs(tmp_path: Path) -> None:
+    reporter = RecordingReporter()
+
+    error = _run([_backend(TimedSandbox(down=True))], [_job(tmp_path, "a", _submit_to)], reporter)
+
+    assert error == "Failed 1 of 1 tasks"
+    assert not [e for e in reporter.events if e[0] == "requeued"]
+    assert reporter.events[-1] == ("finished", "a")

@@ -127,6 +127,12 @@ class ProgressScanReporter:
         row.started = time.monotonic()
         row.task_id = self._progress.add_task("Creating task", **self._fields(job))
 
+    def job_requeued(self, job: ScanJob, reason: str) -> None:
+        row = self._rows.pop(id(job), None)
+        if row is not None and row.task_id is not None:
+            self._progress.remove_task(row.task_id)
+        console.warning(f"[yellow]{escape(shorten_name(job.name))}[/]{_SEP}{escape(reason)}")
+
     def job_submitted(self, job: ScanJob, link: str) -> None:
         row = self._row(job)
         row.link = link
@@ -162,7 +168,7 @@ class JsonScanReporter:
     """
     Wrap another reporter and print one JSON line per finished job.
 
-    Fields: ``status`` (``done``/``failed``), ``name``, ``image``, ``task_id``,
+    Fields: ``status`` (``done``/``failed``), ``name``, ``image``, ``key``, ``task_id``,
     ``link``, ``out_dir``, ``elapsed`` (seconds) and ``reason`` for failures.
     """
 
@@ -176,6 +182,9 @@ class JsonScanReporter:
     def job_started(self, job: ScanJob) -> None:
         self._started[id(job)] = time.monotonic()
         self._inner.job_started(job)
+
+    def job_requeued(self, job: ScanJob, reason: str) -> None:
+        self._inner.job_requeued(job, reason)
 
     def job_submitted(self, job: ScanJob, link: str) -> None:
         self._inner.job_submitted(job, link)
@@ -205,6 +214,7 @@ class JsonScanReporter:
                 "status": status,
                 "name": job.name,
                 "image": job.image,
+                "key": job.key_name,
                 "task_id": job.task_id,
                 "link": job.link,
                 "out_dir": str(job.out_dir),

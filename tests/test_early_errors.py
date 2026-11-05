@@ -125,3 +125,9 @@ def test_missing_report_dir(tmp_path: Path) -> None:
     code, record = _run("report", str(tmp_path / "nothing"))
     assert code == 1
     assert "nothing doesn't exist" in record["reason"]
+
+
+def test_unknown_key_among_several(sample: Path) -> None:
+    code, record = _run("scanner", "scan-new", str(sample), "-k", "main", "-k", "missing")
+    assert code == 1
+    assert 'Key "missing" doesn\'t exist' in record["reason"]

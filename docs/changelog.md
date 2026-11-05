@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Added
+
+- `scan` and `scan-new` take `--key` several times and spread the files over these sandboxes:
+  a sandbox takes the next file as soon as it has a free slot (`max-workers`), so faster
+  sandboxes take more files; an unreachable sandbox hands its files to the others
+- `key` field in the `--json` output of scans
+
 ## 0.4.0
 
 ### Breaking changes

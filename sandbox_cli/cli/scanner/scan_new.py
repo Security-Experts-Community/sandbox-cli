@@ -18,7 +18,7 @@ from sandbox_cli.cli._params import (
     Images,
     IsLocal,
     JsonOutput,
-    Key,
+    Keys,
     OpenBrowser,
     OutDir,
     RulesPath,
@@ -26,7 +26,7 @@ from sandbox_cli.cli._params import (
     UnpackFlag,
     UploadTimeout,
     WaitTimeout,
-    default_key,
+    default_keys,
     sandbox_option,
     sandbox_switch,
 )
@@ -46,7 +46,7 @@ async def scan_new(
     rules: RulesPath = None,
     out_dir: OutDir = Path("./sandbox"),
     images: Images = None,
-    key: Key = default_key(),
+    key: Keys = default_keys(),
     is_local: IsLocal = False,
     upload_timeout: UploadTimeout = 300,
     wait_timeout: WaitTimeout = None,
@@ -145,10 +145,13 @@ async def scan_new(
 ) -> None:
     """
     Send files to scan with the sandbox (advanced scan).
+
+    Repeat ``--key`` to spread the files over several sandboxes: every sandbox runs up to
+    its ``max-workers`` tasks and takes the next file as soon as one of them finishes.
     """
 
     request = AdvancedScanRequest(
-        key_name=key,
+        key_names=key,
         out_dir=out_dir,
         rules=rules,
         is_local=is_local,

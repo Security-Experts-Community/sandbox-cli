@@ -25,6 +25,8 @@ The index below covers the usual tasks; you shouldn't need `--help`.
 4. **One command, many files.** Pass all files or a folder to one `scan-new`: the key's
    `max-workers` throttles them. Parallel commands overload the sandbox queue.
 5. **Keys.** `-k <name>` picks a sandbox from the config; the default is the first one.
+   `scan`/`scan-new` take `-k` several times (`-k a -k b`) to spread the files over these
+   sandboxes: each runs up to its `max-workers` tasks and takes the next file when one finishes.
    Never print the config or its tokens. Without a config, follow [config.md](references/config.md).
 6. **Task links pick their own sandbox.** `download` takes any number of links and ids in
    one call and maps every link to the configured sandbox with the same host, so links
@@ -67,8 +69,8 @@ priority, exclusions, email headers, completion) are in [scenarios.md](reference
 `scanner scan-new`, `scanner scan` and `scanner re-scan` print one line per task:
 
 ```json
-{"status": "done", "name": "hello.sh", "image": "ubuntu-jammy-x64", "task_id": "2c2e…", "link": "https://sandbox.example.com/tasks/2c2e…", "out_dir": "/abs/sandbox/ubuntu-jammy-x64", "elapsed": 109.1}
-{"status": "failed", "name": "a.exe", "image": "win10-22H2-x64", "task_id": null, "link": null, "out_dir": "/abs/sandbox/win10-22H2-x64", "elapsed": 3.2, "reason": "connection error • …"}
+{"status": "done", "name": "hello.sh", "image": "ubuntu-jammy-x64", "key": "main", "task_id": "2c2e…", "link": "https://sandbox.example.com/tasks/2c2e…", "out_dir": "/abs/sandbox/ubuntu-jammy-x64", "elapsed": 109.1}
+{"status": "failed", "name": "a.exe", "image": "win10-22H2-x64", "key": "main", "task_id": null, "link": null, "out_dir": "/abs/sandbox/win10-22H2-x64", "elapsed": 3.2, "reason": "connection error • …"}
 ```
 
 | Command | Fields |

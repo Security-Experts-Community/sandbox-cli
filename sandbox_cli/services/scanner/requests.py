@@ -22,7 +22,6 @@ class ScanRequest:
     Options shared by every scan command.
     """
 
-    key_name: str
     out_dir: Path
     rules: Path | None = None
     """Folder with raw rules to compile, or an archive with already compiled rules."""
@@ -34,6 +33,8 @@ class ScanRequest:
 
 @dataclass(frozen=True, slots=True, kw_only=True)
 class BasicScanRequest(ScanRequest):
+    key_names: list[str]
+    """Sandboxes to spread the files over."""
     files: list[Path]
     images: set[VMImage | str]
     hooks: HookFiles = field(default_factory=HookFiles)
@@ -64,5 +65,6 @@ class AdvancedScanRequest(BasicScanRequest):
 
 @dataclass(frozen=True, slots=True, kw_only=True)
 class RescanRequest(ScanRequest):
+    key_name: str
     traces: list[Path]
     wait_timeout: int | None = None

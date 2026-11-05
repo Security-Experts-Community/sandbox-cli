@@ -6,18 +6,20 @@ from __future__ import annotations
 
 import asyncio
 import tarfile
-from collections.abc import Coroutine
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from pathlib import Path, PurePosixPath
 from typing import TYPE_CHECKING, Any
 
+from sandbox_cli.console import console
 from sandbox_cli.core.config import DEFAULT_IMAGE, VMImage
 from sandbox_cli.core.exceptions import ScanError
 from sandbox_cli.services.compiler import get_compiler
 from sandbox_cli.services.compiler.abc import COMPILED_FILES
 from sandbox_cli.services.scanner.compile import compile_rules
+from sandbox_cli.services.scanner.hooks import merge_dll_hooks
 from sandbox_cli.services.scanner.images import fetch_available_images, resolve_scan_images
-from sandbox_cli.services.scanner.uploads import UploadKey, gather_uploads, upload_bytes, upload_dll_hooks, upload_file
+from sandbox_cli.services.scanner.uploads import UploadKey, upload_bytes
 
 if TYPE_CHECKING:
     from ptsandbox import Sandbox
@@ -44,8 +46,8 @@ class PreparedScan:
     """Concrete images to scan on."""
     default_image: VMImage | str
     """Image id for the base sandbox options."""
-    uploads: dict[UploadKey, str] = field(default_factory=dict)
-    """``debug_options`` entries pointing at uploaded files."""
+    uploads: dict[str, dict[UploadKey, str]] = field(default_factory=dict)
+    """Per key name: ``debug_options`` entries pointing at the files uploaded to that sandbox."""
 
 
 async def _first_error(*tasks: asyncio.Task[Any]) -> None:
@@ -83,8 +85,44 @@ def check_compiled_rules(archive: Path) -> None:
         raise ScanError(f"{archive} is not an archive with compiled rules: no {', '.join(missing)} inside")
 
 
+def _check_image_everywhere(available: Mapping[str, set[VMImage | str]], scan_images: set[VMImage | str]) -> None:
+    """
+    Name the key that lacks a requested image, rather than report the common images of all keys.
+    """
+    for image in scan_images:
+        if image in (VMImage.LINUX, VMImage.WINDOWS):
+            continue
+        for name, images in available.items():
+            if image not in images:
+                console.info(f"Available on {name}: [turquoise2]{', '.join(sorted(map(str, images)))}[/]")
+                raise ScanError(f'Sandbox "{name}" doesn\'t support {image}.')
+
+
+async def _read_hook_files(hooks: HookFiles) -> dict[UploadKey, bytes]:
+    files: dict[UploadKey, tuple[str, Path | None]] = {
+        "custom_syscall_hooks": ("Upload syscall hooks", hooks.syscall_hooks),
+        "custom_unimon_hooks": ("Upload unimon hooks", hooks.unimon_hooks),
+        "custom_fileextractor_exclude": ("Upload fileextractor excludes", hooks.fileextractor_excludes),
+        "custom_procdump_exclude": ("Upload procdump excludes", hooks.procdump_excludes),
+    }
+    payloads: dict[UploadKey, bytes] = {}
+    for key, (label, path) in files.items():
+        if path is not None:
+            console.info(f"{label}: {path}")
+            payloads[key] = await asyncio.to_thread(path.read_bytes)
+    if hooks.dll_hooks_dir:
+        console.info(f"Upload dll hooks: {hooks.dll_hooks_dir}")
+        payloads["custom_dll_hooks"] = await asyncio.to_thread(merge_dll_hooks, hooks.dll_hooks_dir)
+    return payloads
+
+
+async def _upload_all(sandbox: Sandbox, payloads: Mapping[UploadKey, bytes]) -> dict[UploadKey, str]:
+    uris = await asyncio.gather(*(upload_bytes(sandbox, data) for data in payloads.values()))
+    return dict(zip(payloads, uris, strict=True))
+
+
 async def prepare_scan(
-    sandbox: Sandbox,
+    sandboxes: Mapping[str, Sandbox],
     *,
     rules: Path | None,
     is_local: bool,
@@ -92,12 +130,13 @@ async def prepare_scan(
     hooks: HookFiles | None = None,
 ) -> PreparedScan:
     """
-    Resolve images, compile rules and upload hook files.
+    Resolve images, compile rules and upload hook files to every sandbox (keyed by key name).
 
-    ``rules`` is a folder with raw rules, which is compiled here, or an archive with
+    ``rules`` is a folder with raw rules, which is compiled once here, or an archive with
     already compiled rules, which is checked and uploaded as is. Fetches the images while
-    the rules compile, then runs all uploads in parallel. ``scan_images=None`` skips image
-    resolution (re-scan doesn't need it).
+    the rules compile, then uploads everything to all sandboxes in parallel. Only images
+    every sandbox has are used. ``scan_images=None`` skips image resolution (re-scan
+    doesn't need it).
     """
     ready_rules = rules if rules is not None and rules.is_file() else None
     if ready_rules is not None:
@@ -109,36 +148,34 @@ async def prepare_scan(
         if rules is not None and compiler is not None
         else None
     )
-    images_task = asyncio.create_task(fetch_available_images(sandbox)) if scan_images is not None else None
-    await _first_error(*(t for t in (rules_task, images_task) if t is not None))
+    images_tasks = (
+        {name: asyncio.create_task(fetch_available_images(sandbox)) for name, sandbox in sandboxes.items()}
+        if scan_images is not None
+        else {}
+    )
+    await _first_error(*(t for t in (rules_task, *images_tasks.values()) if t is not None))
     compiled_rules = rules_task.result() if rules_task is not None else None
-    available = images_task.result() if images_task is not None else set()
 
     images: list[VMImage | str] = []
     default_image: VMImage | str = DEFAULT_IMAGE
     if scan_images is not None:
-        resolved, default_image = resolve_scan_images(available, scan_images)
+        available = {name: task.result() for name, task in images_tasks.items()}
+        if len(available) > 1:
+            _check_image_everywhere(available, scan_images)
+        common = set.intersection(*available.values()) if available else set()
+        resolved, default_image = resolve_scan_images(common, scan_images)
         images = sorted(resolved, key=str) or [default_image]
 
-    hooks = hooks or HookFiles()
-    uploads: dict[UploadKey, Coroutine[Any, Any, str]] = {}
+    payloads = await _read_hook_files(hooks or HookFiles())
     if ready_rules is not None:
-        uploads["rules_url"] = upload_file(sandbox, ready_rules, label="Upload compiled rules")
+        console.info(f"Upload compiled rules: {ready_rules}")
+        payloads["rules_url"] = await asyncio.to_thread(ready_rules.read_bytes)
     elif compiled_rules:
-        uploads["rules_url"] = upload_bytes(sandbox, compiled_rules)
-    if hooks.syscall_hooks:
-        uploads["custom_syscall_hooks"] = upload_file(sandbox, hooks.syscall_hooks, label="Upload syscall hooks")
-    if hooks.unimon_hooks:
-        uploads["custom_unimon_hooks"] = upload_file(sandbox, hooks.unimon_hooks, label="Upload unimon hooks")
-    if hooks.dll_hooks_dir:
-        uploads["custom_dll_hooks"] = upload_dll_hooks(sandbox, hooks.dll_hooks_dir)
-    if hooks.fileextractor_excludes:
-        uploads["custom_fileextractor_exclude"] = upload_file(
-            sandbox, hooks.fileextractor_excludes, label="Upload fileextractor excludes"
-        )
-    if hooks.procdump_excludes:
-        uploads["custom_procdump_exclude"] = upload_file(
-            sandbox, hooks.procdump_excludes, label="Upload procdump excludes"
-        )
+        payloads["rules_url"] = compiled_rules
 
-    return PreparedScan(images=images, default_image=default_image, uploads=await gather_uploads(uploads))
+    uploads = await asyncio.gather(*(_upload_all(sandbox, payloads) for sandbox in sandboxes.values()))
+    return PreparedScan(
+        images=images,
+        default_image=default_image,
+        uploads=dict(zip(sandboxes, uploads, strict=True)),
+    )

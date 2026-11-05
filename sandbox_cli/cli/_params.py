@@ -41,6 +41,7 @@ __all__ = [
     "IsLocal",
     "JsonOutput",
     "Key",
+    "Keys",
     "OpenBrowser",
     "OutDir",
     "RulesPath",
@@ -49,6 +50,7 @@ __all__ = [
     "UploadTimeout",
     "WaitTimeout",
     "default_key",
+    "default_keys",
     "sandbox_option",
     "sandbox_switch",
     "switch",
@@ -65,6 +67,13 @@ def default_key() -> str:
     Name of the first configured sandbox, the default for ``--key``.
     """
     return get_settings().default_key_name
+
+
+def default_keys() -> list[str]:
+    """
+    ``default_key`` as the default for a repeatable ``--key``.
+    """
+    return [default_key()]
 
 
 def switch(
@@ -93,10 +102,10 @@ def sandbox_switch(name: list[str], help: str, *, validator: Callable[[Any, Any]
     return switch(name, help, SANDBOX_OPTIONS, validator=validator)
 
 
-Key = Annotated[
-    str,
-    Parameter(name=["--key", "-k"], help=key_help(), validator=validate_key, group=SANDBOX_OPTIONS),
-]
+KEY = Parameter(name=["--key", "-k"], help=key_help(), validator=validate_key, group=SANDBOX_OPTIONS)
+Key = Annotated[str, KEY]
+Keys = Annotated[list[str], KEY, Parameter(negative="", show_default=", ".join)]
+"""Several ``--key`` flags: the files are spread over all the sandboxes."""
 OutDir = Annotated[
     Path,
     Parameter(

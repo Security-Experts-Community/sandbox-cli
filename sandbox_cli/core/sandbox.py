@@ -59,10 +59,11 @@ def get_sandbox_key_by_host(task_host: str) -> SandboxKey:
 
 def validate_key(_: Any, value: Any) -> None:
     """
-    cyclopts validator for ``--key``; ``None`` means no key was given.
+    cyclopts validator for ``--key`` (one name or a list of them); ``None`` means no key was given.
     """
-    if value is not None:
-        get_sandbox_config(value)
+    for name in value if isinstance(value, list | tuple) else [value]:
+        if name is not None:
+            get_sandbox_config(name)
 
 
 def format_link(report: SandboxBaseTaskResponse, host: str) -> str:

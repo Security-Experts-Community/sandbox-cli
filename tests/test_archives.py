@@ -66,7 +66,7 @@ class TestFindArchives:
     def _request(tmp_path: Path, **kwargs: object) -> AdvancedScanRequest:
         files = [_zip(tmp_path / "a.zip", ["x.exe"]), tmp_path / "b.exe"]
         files[1].write_bytes(b"MZ")
-        return AdvancedScanRequest(key_name="main", out_dir=tmp_path, files=files, images=set(), **kwargs)  # type: ignore[arg-type]
+        return AdvancedScanRequest(key_names=["main"], out_dir=tmp_path, files=files, images=set(), **kwargs)  # type: ignore[arg-type]
 
     def test_without_flag_archives_are_not_routed(self, tmp_path: Path) -> None:
         assert _find_archives(self._request(tmp_path)) == set()

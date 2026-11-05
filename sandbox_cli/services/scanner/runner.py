@@ -5,6 +5,11 @@ Every scan goes through the same stages: submit → wait for the report →
 save ``report.json`` → download results → unpack (with ``--unpack``).
 Commands differ only in how they submit a task: they build ``ScanJob`` objects
 and pass them to ``run_scan_jobs``. Progress and messages go to a ``ScanReporter``.
+
+Jobs are spread over one or more sandboxes (``ScanBackend``): every sandbox has
+``max_workers`` slots and a free slot pulls the next job from a shared queue, so a
+faster sandbox takes more jobs. A sandbox that can't be reached is dropped and
+its job goes back to the queue for the others.
 """
 
 from __future__ import annotations
@@ -12,8 +17,8 @@ from __future__ import annotations
 import asyncio
 import multiprocessing
 import os
-from collections import Counter
-from collections.abc import Awaitable, Callable, Iterable
+from collections import Counter, deque
+from collections.abc import Awaitable, Callable, Iterable, Sequence
 from concurrent.futures import Executor, ProcessPoolExecutor
 from contextlib import AbstractContextManager, nullcontext
 from dataclasses import dataclass
@@ -32,18 +37,24 @@ from sandbox_cli.services.downloader import DEFAULT_CONCURRENCY, DownloadOptions
 from sandbox_cli.services.unpack import unpack_results
 
 if TYPE_CHECKING:
-    from ptsandbox import Sandbox, SandboxKey
+    from ptsandbox import Sandbox
     from ptsandbox.models import SandboxBaseTaskResponse
 
+    from sandbox_cli.services.scanner.backends import ScanBackend
+
 __all__ = [
+    "JobQueue",
     "ScanFailure",
     "ScanJob",
     "ScanReporter",
     "ScanTarget",
+    "Submission",
     "describe_error",
+    "is_unreachable",
     "plan_targets",
     "run_scan_jobs",
     "unique_names",
+    "worker_slots",
 ]
 
 
@@ -65,6 +76,16 @@ class ScanTarget:
     idx: str
 
 
+@dataclass(frozen=True, slots=True)
+class Submission:
+    """
+    A job bound to a sandbox: what to save in ``scan_config.json`` and how to create the task.
+    """
+
+    arguments: SandboxArguments
+    submit: Callable[[Sandbox], Awaitable[SandboxBaseTaskResponse]]
+
+
 @dataclass(slots=True)
 class ScanJob:
     """
@@ -75,44 +96,16 @@ class ScanJob:
     """File or trace name shown in the output."""
     out_dir: Path
     idx: str
-    submit: Callable[[Sandbox], Awaitable[SandboxBaseTaskResponse]]
+    bind: Callable[[ScanBackend], Submission]
+    """Build the task for the sandbox the job was given to."""
     wait_timeout: int
     download_options: DownloadOptions
-    arguments: SandboxArguments
     image: str | None = None
+    key_name: str | None = None
+    """Set once the job is given to a sandbox."""
     task_id: str | None = None
     """Set once the sandbox accepts the task."""
     link: str | None = None
-
-
-class ScanReporter(Protocol):
-    """
-    UI hooks for the scan pipeline (implemented by the CLI).
-    """
-
-    def session(self, total: int) -> AbstractContextManager[None]:
-        """
-        Wrap the whole run; ``total`` is the number of jobs.
-        """
-        ...
-
-    def job_started(self, job: ScanJob) -> None: ...
-
-    def job_submitted(self, job: ScanJob, link: str) -> None: ...
-
-    def job_downloading(self, job: ScanJob) -> None: ...
-
-    def job_done(self, job: ScanJob) -> None: ...
-
-    def job_failed(self, job: ScanJob, reason: str) -> None: ...
-
-    def job_finished(self, job: ScanJob) -> None:
-        """
-        Called last for every job, whatever the outcome.
-        """
-        ...
-
-    def download_tracker(self, job: ScanJob) -> DownloadTracker | None: ...
 
 
 def unique_names(
@@ -175,9 +168,111 @@ def describe_error(error: BaseException) -> str:
             return f"unexpected error • {type(error).__name__}: {error}"
 
 
+def is_unreachable(error: BaseException) -> bool:
+    """
+    Whether ``error`` (or what caused it) means the sandbox host can't be connected to.
+    """
+    if isinstance(error, aiohttp.ClientConnectorError):
+        return True
+    if isinstance(error, BaseExceptionGroup):
+        return any(is_unreachable(e) for e in error.exceptions)
+    return error.__cause__ is not None and is_unreachable(error.__cause__)
+
+
+def worker_slots(backends: Sequence[ScanBackend]) -> list[ScanBackend]:
+    """
+    One entry per worker slot, interleaved across sandboxes so a few jobs spread over all of them.
+    """
+    most = max(backend.key.max_workers for backend in backends)
+    return [backend for i in range(most) for backend in backends if i < backend.key.max_workers]
+
+
+class JobQueue:
+    """
+    Jobs waiting for a free slot on any sandbox.
+
+    A slot leaves when the queue is empty and no job is being submitted: a failed
+    submission may still put its job back.
+    """
+
+    def __init__(self, jobs: Iterable[ScanJob], backends: Iterable[ScanBackend]) -> None:
+        self._pending = deque(jobs)
+        self._alive = {backend.name for backend in backends}
+        self._submitting = 0
+        self._changed = asyncio.Condition()
+
+    def _can_leave(self, backend: ScanBackend) -> bool:
+        return backend.name not in self._alive or (not self._pending and not self._submitting)
+
+    async def take(self, backend: ScanBackend) -> ScanJob | None:
+        """
+        The next job for a free slot of ``backend``; ``None`` when the slot should stop.
+        """
+        async with self._changed:
+            await self._changed.wait_for(lambda: self._can_leave(backend) or bool(self._pending))
+            if backend.name not in self._alive or not self._pending:
+                return None
+            self._submitting += 1
+            return self._pending.popleft()
+
+    async def submitted(self, requeue: ScanJob | None = None) -> None:
+        """
+        A submission taken with ``take`` ended; ``requeue`` goes back to the front of the queue.
+        """
+        async with self._changed:
+            self._submitting -= 1
+            if requeue is not None:
+                self._pending.appendleft(requeue)
+            self._changed.notify_all()
+
+    def retire(self, backend: ScanBackend) -> bool:
+        """
+        Stop giving jobs to ``backend``; ``False`` (and nothing changes) when it is the last one.
+        """
+        if self._alive - {backend.name}:
+            self._alive.discard(backend.name)
+            return True
+        return False
+
+
+class ScanReporter(Protocol):
+    """
+    UI hooks for the scan pipeline (implemented by the CLI).
+    """
+
+    def session(self, total: int) -> AbstractContextManager[None]:
+        """
+        Wrap the whole run; ``total`` is the number of jobs.
+        """
+        ...
+
+    def job_started(self, job: ScanJob) -> None: ...
+
+    def job_requeued(self, job: ScanJob, reason: str) -> None:
+        """
+        The job didn't reach its sandbox and goes back to the queue; ``job_started`` follows again.
+        """
+        ...
+
+    def job_submitted(self, job: ScanJob, link: str) -> None: ...
+
+    def job_downloading(self, job: ScanJob) -> None: ...
+
+    def job_done(self, job: ScanJob) -> None: ...
+
+    def job_failed(self, job: ScanJob, reason: str) -> None: ...
+
+    def job_finished(self, job: ScanJob) -> None:
+        """
+        Called last for every job, whatever the outcome.
+        """
+        ...
+
+    def download_tracker(self, job: ScanJob) -> DownloadTracker | None: ...
+
+
 async def run_scan_jobs(
-    sandbox: Sandbox,
-    key: SandboxKey,
+    backends: Sequence[ScanBackend],
     jobs: list[ScanJob],
     reporter: ScanReporter,
     *,
@@ -185,29 +280,46 @@ async def run_scan_jobs(
     open_browser: bool,
 ) -> None:
     """
-    Run ``jobs`` concurrently, at most ``key.max_workers`` tasks in the sandbox at a time.
+    Run ``jobs`` on ``backends``, at most ``key.max_workers`` tasks in each sandbox at a time.
 
     Raises ``ScanFailure`` after all jobs finished if any of them failed.
     """
-    sandbox_sem = asyncio.Semaphore(key.max_workers)
+    if not backends:
+        raise ValueError("no sandboxes to scan on")
+
+    queue = JobQueue(jobs, backends)
     download_sem = asyncio.Semaphore(DEFAULT_CONCURRENCY)
+    failed: list[ScanJob] = []
 
-    async def run(job: ScanJob, unpack_pool: Executor | None) -> None:
-        save_scan_arguments(job.out_dir, job.arguments)
+    def fail(job: ScanJob, error: BaseException) -> None:
+        failed.append(job)
+        reporter.job_failed(job, describe_error(error))
+        reporter.job_finished(job)
+
+    async def submit(job: ScanJob, backend: ScanBackend) -> SandboxBaseTaskResponse | None:
+        """
+        Create the task; ``None`` when the job went back to the queue.
+        """
+        requeue = False
         try:
-            async with sandbox_sem:
-                reporter.job_started(job)
-                task = await job.submit(sandbox)
-                if short_report := task.get_short_report():
-                    job.task_id = str(short_report.scan_id)
-                job.link = format_link(task, key.host)
-                reporter.job_submitted(job, job.link)
-                if open_browser:
-                    open_link(job.link)
+            submission = job.bind(backend)
+            job.key_name = backend.name
+            save_scan_arguments(job.out_dir, submission.arguments)
+            reporter.job_started(job)
+            return await submission.submit(backend.sandbox)
+        except Exception as e:
+            if not (is_unreachable(e) and queue.retire(backend)):
+                raise
+            requeue = True
+            reporter.job_requeued(job, f"{backend.name} is unreachable, using the other keys • {describe_error(e)}")
+            return None
+        finally:
+            await queue.submitted(job if requeue else None)
 
-                if not (result := await sandbox.wait_for_report(task, job.wait_timeout)):
-                    raise ScanFailure("scan failed")
-
+    async def finish(
+        job: ScanJob, backend: ScanBackend, result: SandboxBaseTaskResponse, unpack_pool: Executor | None
+    ) -> None:
+        try:
             save_report(job.out_dir, result)
             if not (long_report := result.get_long_report()):
                 raise ScanFailure("full report not available")
@@ -215,7 +327,7 @@ async def run_scan_jobs(
             reporter.job_downloading(job)
             await download(
                 long_report,
-                sandbox,
+                backend.sandbox,
                 job.out_dir,
                 job.download_options,
                 tracker=reporter.download_tracker(job),
@@ -224,12 +336,30 @@ async def run_scan_jobs(
             )
             if unpack_pool is not None:
                 await asyncio.get_running_loop().run_in_executor(unpack_pool, unpack_results, job.out_dir)
-            reporter.job_done(job)
         except Exception as e:
-            failed.append(job)
-            reporter.job_failed(job, describe_error(e))
-        finally:
-            reporter.job_finished(job)
+            fail(job, e)
+            return
+        reporter.job_done(job)
+        reporter.job_finished(job)
+
+    async def worker(backend: ScanBackend, tg: asyncio.TaskGroup, unpack_pool: Executor | None) -> None:
+        while (job := await queue.take(backend)) is not None:
+            try:
+                if (task := await submit(job, backend)) is None:
+                    continue
+                if short_report := task.get_short_report():
+                    job.task_id = str(short_report.scan_id)
+                job.link = format_link(task, backend.key.host)
+                reporter.job_submitted(job, job.link)
+                if open_browser:
+                    open_link(job.link)
+
+                if not (result := await backend.sandbox.wait_for_report(task, job.wait_timeout)):
+                    raise ScanFailure("scan failed")
+            except Exception as e:
+                fail(job, e)
+                continue
+            tg.create_task(finish(job, backend, result, unpack_pool))
 
     pool_size = min(len(jobs), os.cpu_count() or 1)
     pool_cm = (
@@ -237,9 +367,10 @@ async def run_scan_jobs(
         if unpack and jobs
         else nullcontext(None)
     )
-    failed: list[ScanJob] = []
     with pool_cm as unpack_pool, reporter.session(total=len(jobs)):
-        await asyncio.gather(*(run(job, unpack_pool) for job in jobs))
+        async with asyncio.TaskGroup() as tg:
+            for backend in worker_slots(backends):
+                tg.create_task(worker(backend, tg, unpack_pool))
 
     if failed:
         raise ScanFailure(f"Failed {len(failed)} of {len(jobs)} tasks")

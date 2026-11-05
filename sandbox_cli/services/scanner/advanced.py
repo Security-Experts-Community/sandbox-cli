@@ -3,25 +3,33 @@ from __future__ import annotations
 from dataclasses import replace
 from typing import TYPE_CHECKING
 
-from ptsandbox import Sandbox
 from ptsandbox.models import SandboxBaseScanTaskRequest, SandboxOptions, SandboxOptionsAdvanced, VNCMode
 
 from sandbox_cli.console import console
 from sandbox_cli.core.config import get_settings
 from sandbox_cli.core.exceptions import ScanError
-from sandbox_cli.core.sandbox import get_key_by_name
 from sandbox_cli.core.scan import SandboxArguments, ScanType
 from sandbox_cli.services.scanner.archives import is_archive
+from sandbox_cli.services.scanner.backends import open_backends
 from sandbox_cli.services.scanner.prepare import PreparedScan, prepare_scan
-from sandbox_cli.services.scanner.runner import ScanJob, ScanReporter, ScanTarget, plan_targets, run_scan_jobs
+from sandbox_cli.services.scanner.runner import (
+    ScanJob,
+    ScanReporter,
+    ScanTarget,
+    Submission,
+    plan_targets,
+    run_scan_jobs,
+)
 from sandbox_cli.services.scanner.uploads import apply_uploads
 from sandbox_cli.services.scanner.utils import compute_wait_time
 
 if TYPE_CHECKING:
     from pathlib import Path
 
+    from ptsandbox import Sandbox
     from ptsandbox.models import SandboxBaseTaskResponse
 
+    from sandbox_cli.services.scanner.backends import ScanBackend
     from sandbox_cli.services.scanner.requests import AdvancedScanRequest
 
 __all__ = ["archive_scan_options", "guest_filename", "scan_internal_advanced"]
@@ -61,7 +69,6 @@ def _sandbox_options(request: AdvancedScanRequest, prepared: PreparedScan) -> Sa
     debug["allowed_outbound_connections"] = request.outbound_connections
     if request.file_type_as_ext is not None:
         debug["file_type_as_ext"] = request.file_type_as_ext
-    apply_uploads(debug, prepared.uploads)
     return options
 
 
@@ -116,18 +123,17 @@ def _find_archives(request: AdvancedScanRequest) -> set[Path]:
 
 
 async def scan_internal_advanced(request: AdvancedScanRequest, reporter: ScanReporter) -> None:
-    key = get_key_by_name(request.key_name)
     archives = _find_archives(request)
-    console.info(f"Using key: name={key.name} max_workers={key.max_workers}")
 
-    async with Sandbox(key=key) as sandbox:
+    async with open_backends(request.key_names) as backends:
         prepared = await prepare_scan(
-            sandbox,
+            {backend.name: backend.sandbox for backend in backends},
             rules=request.rules,
             is_local=request.is_local,
             scan_images=request.images,
             hooks=request.hooks,
         )
+        backends = [replace(backend, uploads=prepared.uploads[backend.name]) for backend in backends]
         base_options = _sandbox_options(request, prepared)
         if request.custom_command:
             console.info(f"Commandline: {request.custom_command}")
@@ -138,30 +144,39 @@ async def scan_internal_advanced(request: AdvancedScanRequest, reporter: ScanRep
         download_options = replace(request.download_options, video=True, logs=True)
 
         def make_job(target: ScanTarget) -> ScanJob:
-            options = base_options.model_copy(update={"image_id": str(target.image)}, deep=True)
-
             file_name = request.fake_name or guest_filename(target.file.name, preserve=request.preserve_filename)
 
-            async def submit_archive(sandbox: Sandbox) -> SandboxBaseTaskResponse:
-                return await sandbox.create_scan(
-                    target.file,
-                    file_name=file_name,
-                    options=archive_scan_options(options),
-                    rules=None,
-                    priority=request.priority,
-                    upload_timeout=request.upload_timeout,
-                    async_result=True,
-                )
+            def bind(backend: ScanBackend) -> Submission:
+                options = base_options.model_copy(update={"image_id": str(target.image)}, deep=True)
+                apply_uploads(options.debug_options, backend.uploads)
 
-            async def submit(sandbox: Sandbox) -> SandboxBaseTaskResponse:
-                return await sandbox.create_advanced_scan(
-                    target.file,
-                    file_name=file_name,
-                    extra_files=request.extra_files,
-                    async_result=True,
-                    priority=request.priority,
-                    upload_timeout=request.upload_timeout,
-                    sandbox=options,
+                async def submit_archive(sandbox: Sandbox) -> SandboxBaseTaskResponse:
+                    return await sandbox.create_scan(
+                        target.file,
+                        file_name=file_name,
+                        options=archive_scan_options(options),
+                        rules=None,
+                        priority=request.priority,
+                        upload_timeout=request.upload_timeout,
+                        async_result=True,
+                    )
+
+                async def submit(sandbox: Sandbox) -> SandboxBaseTaskResponse:
+                    return await sandbox.create_advanced_scan(
+                        target.file,
+                        file_name=file_name,
+                        extra_files=request.extra_files,
+                        async_result=True,
+                        priority=request.priority,
+                        upload_timeout=request.upload_timeout,
+                        sandbox=options,
+                    )
+
+                return Submission(
+                    arguments=SandboxArguments(
+                        type=ScanType.SCAN_NEW, sandbox_key_name=backend.name, sandbox_options=options
+                    ),
+                    submit=submit_archive if target.file in archives else submit,
                 )
 
             return ScanJob(
@@ -169,11 +184,10 @@ async def scan_internal_advanced(request: AdvancedScanRequest, reporter: ScanRep
                 image=str(target.image),
                 out_dir=target.out_dir,
                 idx=target.idx,
-                submit=submit_archive if target.file in archives else submit,
+                bind=bind,
                 wait_timeout=wait_timeout,
                 download_options=download_options,
-                arguments=SandboxArguments(type=ScanType.SCAN_NEW, sandbox_key_name=key.name, sandbox_options=options),
             )
 
         jobs = [make_job(t) for t in plan_targets(request.files, prepared.images, request.out_dir)]
-        await run_scan_jobs(sandbox, key, jobs, reporter, unpack=request.unpack, open_browser=request.open_browser)
+        await run_scan_jobs(backends, jobs, reporter, unpack=request.unpack, open_browser=request.open_browser)

@@ -54,7 +54,7 @@ The options allow you to additionally configure which files will be downloaded f
 | Option                                    | Description                                                                                                                                    | Default          |
 | ----------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- | ---------------- |
 | `--image / -i`                            | The image on which the behavioral analysis will be performed.                                                                                  | `None`           |
-| `--key / -k`                              | The name of the key for accessing a specific sandbox.                                                                                          | `None`           |
+| `--key / -k`                              | The name of the key for accessing a specific sandbox. Repeat to spread the files over several sandboxes.                                       | `None`           |
 | `--name / -n`                             | The name of the file that will be in the sandbox.                                                                                              | `{filename}`     |
 | `--timeout / -t`                          | Analysis duration.                                                                                                                             | `300` in seconds |
 | `--syscall-hooks / -s`                    | Read more about it in [py-ptsandbox](https://security-experts-community.github.io/py-ptsandbox/usage/public-api/scanning/scan/#advanced-scan). | `None`           |
@@ -145,6 +145,21 @@ $ sandbox-cli scanner scan-new -i windows -t 120 malware.elf
 # -U - automatic unpacking of logs
 $ sandbox-cli scanner scan-new -U -i win11-23H2-x64 -t 120 samples/*.exe
 ```
+
+### Spreading samples over several sandboxes
+
+<!-- termynal -->
+
+```sh
+# every -k adds a sandbox from the config
+$ sandbox-cli scanner scan-new -k main -k second -t 120 samples/
+```
+
+Every sandbox runs up to its `max-workers` tasks at a time and takes the next sample as
+soon as one of its tasks finishes, so a faster sandbox gets more samples. Samples are read
+from disk only when they are uploaded. Only the images every sandbox has are used, and the
+rules and hooks are uploaded to each of them. A sandbox that can't be reached is dropped
+and its samples go to the others. `scan_config.json` of every result keeps the key it ran on.
 
 ## Help
 

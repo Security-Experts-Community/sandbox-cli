@@ -15,14 +15,14 @@ from sandbox_cli.cli._params import (
     Images,
     IsLocal,
     JsonOutput,
-    Key,
+    Keys,
     OpenBrowser,
     OutDir,
     RulesPath,
     SyscallHooks,
     UnpackFlag,
     UploadTimeout,
-    default_key,
+    default_keys,
 )
 from sandbox_cli.console import console
 from sandbox_cli.core.config import DEFAULT_DURATION, DEFAULT_IMAGE
@@ -41,7 +41,7 @@ async def scan(
     rules: RulesPath = None,
     out_dir: OutDir = Path("./sandbox"),
     images: Images = None,
-    key: Key = default_key(),
+    key: Keys = default_keys(),
     is_local: IsLocal = False,
     unpack: UnpackFlag = False,
     upload_timeout: UploadTimeout = 300,
@@ -61,12 +61,13 @@ async def scan(
         Use ``scan-new`` instead.
 
     Folders are scanned recursively. ``max-workers`` of the key limits parallel scans (usually 8).
+    Repeat ``--key`` to spread the files over several sandboxes.
     """
 
     console.warning('The "scan" command is deprecated. Use "scan-new" instead.')
 
     request = BasicScanRequest(
-        key_name=key,
+        key_names=key,
         out_dir=out_dir,
         rules=rules,
         is_local=is_local,

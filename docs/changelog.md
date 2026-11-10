@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Changed
+
+- Migrated documentation to Zensical with the modern theme; terminal examples use
+  standard code blocks instead of Termynal.
+
 ### Added
 
 - `scan` and `scan-new` take `--key` several times and spread the files over these sandboxes:

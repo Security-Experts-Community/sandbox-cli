@@ -32,7 +32,7 @@ dev = [
   "types-aiofiles==25.1.0.20260518",
   "types-docker==7.2.0.20260728",
 ]
-docs = ["mkdocs==1.6.1", "mkdocs-material==9.7.7", "termynal==0.14.0"]
+docs = ["zensical>=0.1.0"]
 
 [project.scripts]
 sandbox-cli = "sandbox_cli.__main__:main"

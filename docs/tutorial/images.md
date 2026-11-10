@@ -1,10 +1,10 @@
+# Images
+
 After receiving the token, you can verify its working by running `sandbox-cli images`.
 
 The command will display a list of available images in the sandbox.
 
-<!-- termynal -->
-
-```sh
+```console
 $ sandbox-cli images
 
 ┏━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━┓
@@ -25,9 +25,7 @@ $ sandbox-cli images
 
 When running with the `-h` flag, you can view the list of available options, in particular the sandboxes specified in the config file.
 
-<!-- termynal -->
-
-```sh
+```console
 $ sandbox-cli images -h
 
 Usage: sandbox-cli images [OPTIONS]

@@ -1,3 +1,5 @@
+# Configuration
+
 The utility is configured via a `toml` file.
 
 !!! note "Note"

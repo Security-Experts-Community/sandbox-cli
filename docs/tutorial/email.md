@@ -1,18 +1,18 @@
+# Analyze emails
+
 !!! info "Info"
 
     For this option, you need to specify at least one sandbox in the config.
 
 To get the email headers, specify the `eml` file in the parameters.
 
-<!-- termynal -->
-
-```sh
+```console
 $ sandbox-cli email file.eml
 ```
 
 The files will be downloaded to the `downloads` directory with the `headers` suffix.
 
-```sh title="tree"
+```text title="tree"
 downloads/
 └── file.eml.headers
 ```
@@ -23,9 +23,7 @@ downloads/
 
 ## Help
 
-<!-- termynal -->
-
-```sh
+```console
 $ sandbox-cli email --help
 
 Usage: sandbox-cli email [OPTIONS] EMAILS

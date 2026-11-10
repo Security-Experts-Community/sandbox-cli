@@ -1,3 +1,5 @@
+# Analyzing logs
+
 ## Structure
 
 After the behavioral analysis, you can download the analysis results which include:
@@ -13,9 +15,7 @@ After the behavioral analysis, you can download the analysis results which inclu
 
 Just call the `conv` (or `unpack`) option and specify the file with the downloaded logs. In this case, `sandbox_logs.zip`:
 
-<!-- termynal -->
-
-```
+```console
 $ sandbox-cli conv sandbox_logs.zip
 
 [INFO] Unpacking sandbox_logs.zip
@@ -23,7 +23,7 @@ $ sandbox-cli conv sandbox_logs.zip
 
 The `sandbox-cli` unpacks logs into a convenient format, decomposes events by plugins, structures output, etc.
 
-```sh title="tree" hl_lines="5"
+```text title="tree" hl_lines="5"
 sandbox_logs
 ├── correlated
 │   ├── events-correlated.log
@@ -74,9 +74,7 @@ Now you can easily find a suspicious event and analyze it.
 
 ## Help
 
-<!-- termynal -->
-
-```sh
+```console
 $ sandbox-cli conv --help
 
 Usage: sandbox-cli conv TRACES

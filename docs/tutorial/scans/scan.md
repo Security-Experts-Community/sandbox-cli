@@ -1,3 +1,5 @@
+# Scan
+
 !!! warning "Warning"
 
     This is an outdated option and not supported as well as others, it is recommended to use [Advanced scan](./scan-new.md).
@@ -8,8 +10,6 @@
 
 ## Quick start
 
-<!-- termynal -->
-
-```sh
+```console
 $ sandbox-cli scanner scan -t 120 malware
 ```

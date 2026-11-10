@@ -1,3 +1,5 @@
+# Download files
+
 !!! info "Info"
 
     For this option, you need to specify at least one sandbox in the config.
@@ -6,9 +8,7 @@ It is often necessary to download some information from the task.
 
 If you don't want to poke all the buttons in the interface, you can simply run one of the following commands:
 
-<!-- termynal -->
-
-```sh
+```console
 # Download all available data by task id
 $ sandbox-cli download --all b2ece7fa-b3db-4ed5-86c7-2bba4b55f563
 
@@ -25,9 +25,9 @@ $ sandbox-cli download --all b2ece7fa-b3db-4ed5-86c7-2bba4b55f563 https://sandbo
 $ sandbox-cli download --sample b2ece7fa-b3db-4ed5-86c7-2bba4b55f563
 ```
 
-The structure of the 'downloads` directory.
+The structure of the `downloads` directory:
 
-```sh title="tree" hl_lines="2 11"
+```text title="tree" hl_lines="2 11"
 downloads/
 ├── b2ece7fa-b3db-4ed5-86c7-2bba4b55f563
 │   ├── artifacts/
@@ -60,9 +60,7 @@ downloads/
 
 ## Help
 
-<!-- termynal -->
-
-```sh
+```console
 $ sandbox-cli download --help
 
 Usage: sandbox-cli download [OPTIONS] [ARGS]

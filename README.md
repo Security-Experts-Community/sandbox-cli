@@ -37,14 +37,14 @@ nix shell 'github:Security-Experts-Community/sandbox-cli'
 
 ### Config
 
-You must create default config file as described in `docs/config-examples/config.toml`:
+Create a configuration file as described in the [configuration guide](docs/configuration.md#full-configuration):
 
 Linux/MacOS:
 
 ```sh
 ~/.config/sandbox-cli/config.toml
 or
-$XDG_HOME_CONFIG_HOME/sandbox-cli/config.toml
+$XDG_CONFIG_HOME/sandbox-cli/config.toml
 ```
 
 Windows:
@@ -112,3 +112,23 @@ sandbox-cli scanner scan-new -i windows -t 60 -U malware.exe
 ```bash
 uv sync
 ```
+
+
+### Documentation
+
+The documentation uses Zensical with the modern theme. Settings and navigation
+are configured in `zensical.toml`; page sources are in `docs/`.
+
+```bash
+# Install documentation dependencies
+uv sync --group docs
+
+# Preview locally
+uv run --group docs zensical serve
+
+# Build the static site in site/
+uv run --group docs zensical build --clean
+```
+
+GitHub Actions builds the documentation and publishes it to the `gh-pages`
+branch used by GitHub Pages.

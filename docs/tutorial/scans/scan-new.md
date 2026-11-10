@@ -1,12 +1,12 @@
+# Advanced scan
+
 !!! info "Info"
 
     For this option, you need to specify at least one sandbox in the config.
 
 ## Quick start
 
-<!-- termynal -->
-
-```sh
+```console
 # "-t" is the time of behavioral analysis
 $ sandbox-cli scanner scan-new -t 120 malware
 
@@ -97,9 +97,7 @@ The options allow you to additionally configure which files will be downloaded f
 
 ### Starting a manual analysis
 
-<!-- termynal -->
-
-```sh
+```console
 # -V full - a task will be created in a special mode with support for manual analysis
 # -dc - disabling the clicker to control the mouse yourself
 # -i - selecting a scan image
@@ -109,9 +107,7 @@ $ sandbox-cli scanner scan-new -V full -dc -i ubuntu-jammy-x64 -t 300 malware.el
 
 ### Scan a password-protected archive
 
-<!-- termynal -->
-
-```sh
+```console
 # -ua - unpack the archive with the passwords from the config
 $ sandbox-cli scanner scan-new -ua -i windows -t 120 samples.zip
 ```
@@ -122,9 +118,7 @@ Each extracted file gets its own folder: `sandbox/<image>/<file>/`.
 
 For example, there are only three Windows images available on the stand, and analysis will be launched on all of them.
 
-<!-- termynal -->
-
-```sh
+```console
 $ sandbox-cli scanner scan-new -i windows -t 120 malware.elf
 
 [INFO] Using key: name=test-1 max_workers=8
@@ -139,18 +133,14 @@ $ sandbox-cli scanner scan-new -i windows -t 120 malware.elf
 
 ### Scanning a large amount of samples at a time
 
-<!-- termynal -->
-
-```sh
+```console
 # -U - automatic unpacking of logs
 $ sandbox-cli scanner scan-new -U -i win11-23H2-x64 -t 120 samples/*.exe
 ```
 
 ### Spreading samples over several sandboxes
 
-<!-- termynal -->
-
-```sh
+```console
 # every -k adds a sandbox from the config
 $ sandbox-cli scanner scan-new -k main -k second -t 120 samples/
 ```
@@ -163,9 +153,7 @@ and its samples go to the others. `scan_config.json` of every result keeps the k
 
 ## Help
 
-<!-- termynal -->
-
-```sh
+```console
 $ sandbox-cli scanner scan-new --help
 
 Usage: sandbox-cli scanner scan-new [OPTIONS] FILES

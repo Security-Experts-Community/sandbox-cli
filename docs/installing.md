@@ -1,8 +1,8 @@
 # Install sandbox-cli
 
-`sandbox-cli` is availabe as [sandbox-cli](https://pypi.org/project/sandbox-cli/) on PyPi.
+`sandbox-cli` is available as [sandbox-cli](https://pypi.org/project/sandbox-cli/) on PyPI.
 
-Can be installed with `pipx` (recommeded) or `pip`:
+Can be installed with `pipx` (recommended) or `pip`:
 
 ```shell
 # with pipx

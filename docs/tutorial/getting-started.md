@@ -1,3 +1,5 @@
+# Getting started
+
 ## Get Public API token
 
 !!! info "Info"
@@ -22,9 +24,7 @@ The details are described in [Configuration](../configuration.md)
 
 ## Help
 
-<!-- termynal -->
-
-```sh
+```console
 $ sandbox-cli --help
 
 Usage: sandbox-cli COMMAND
@@ -48,4 +48,4 @@ Work with sandbox like a pro
 
 !!! tip "Tip"
 
-    It looks much better in the terminal :smile:
+    It looks much better in the terminal 🙂

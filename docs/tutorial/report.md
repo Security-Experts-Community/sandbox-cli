@@ -4,9 +4,7 @@ After scanning, you need to quickly understand what the sandbox was able to dete
 
 To do this, you can generate a short report in the terminal by transferring the directory where the scan data was saved.
 
-<!-- termynal -->
-
-```sh
+```console
 $ sandbox-cli report sandbox/
 ```
 
@@ -28,9 +26,7 @@ By default, the report will be printed to the terminal as a table.
 
 ## Help
 
-<!-- termynal -->
-
-```sh
+```console
 $ sandbox-cli report --help
 
 Usage: sandbox-cli report [OPTIONS] SRC

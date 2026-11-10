@@ -1,12 +1,12 @@
+# Rescan
+
 !!! info "Info"
 
     For this option, you need to specify at least one sandbox in the config.
 
 ## Quick start
 
-<!-- termynal -->
-
-```sh
+```console
 $ sandbox-cli scanner re-scan sandbox_logs.zip
 
 [INFO] Using key: name=test-1 max_workers=8
@@ -40,25 +40,19 @@ The same download options as in [scan-new](scan-new.md#download-options) (`-a`, 
 
 ### Rescan multiple files
 
-<!-- termynal -->
-
-```sh
+```console
 $ sandbox-cli scanner re-scan sandbox_logs.zip sandbox_logs_1.zip sandbox_logs_2.zip
 ```
 
 ### Rescan with automatic unpacking
 
-<!-- termynal -->
-
-```sh
+```console
 $ sandbox-cli scanner re-scan -U sandbox_logs.zip sandbox_logs_1.zip sandbox_logs_2.zip
 ```
 
 ### Rescan and view results
 
-<!-- termynal -->
-
-```sh
+```console
 $ sandbox-cli scanner re-scan -U sandbox_logs.zip sandbox_logs_1.zip sandbox_logs_2.zip
 
 $ sandbox-cli report sandbox/
@@ -66,9 +60,7 @@ $ sandbox-cli report sandbox/
 
 ## Help
 
-<!-- termynal -->
-
-```sh
+```console
 $ sandbox-cli scanner re-scan --help
 
 Usage: sandbox-cli scanner re-scan [OPTIONS] TRACES

@@ -10,6 +10,9 @@
       
       
       
+        <link rel="canonical" href="https://security-experts-community.github.io/sandbox-cli/changelog/">
+      
+      
       
         <link rel="prev" href="../configuration/">
       
@@ -19,7 +22,7 @@
       
       
       <link rel="icon" href="../assets/main_logo_no_text.svg">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+      <meta name="generator" content="zensical-0.1.0">
     
     
       
@@ -27,10 +30,15 @@
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
       
         
-        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      <link rel="stylesheet" href="../assets/stylesheets/modern/main.4ab2de0c.min.css">
+      
+        
+          
+        
+        <link rel="stylesheet" href="../assets/stylesheets/modern/palette.b60ce83d.min.css">
       
       
 
@@ -44,16 +52,12 @@
         
         
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
-        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,300i,400,400i,500,500i,700,700i%7CJetBrains+Mono:400,400i,700,700i&amp;display=fallback">
+        <style>:root{--md-text-font:"Inter";--md-code-font:"JetBrains Mono"}</style>
       
     
     
-      <link rel="stylesheet" href="../css/style.css">
-    
-      <link rel="stylesheet" href="../termynal.css">
-    
-    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("..",location),__md_scope.pathname.endsWith("/")||(__md_scope=new URL(__md_scope.pathname+"/",location)),__md_hash=e=>[...e].reduce(((e,t)=>(e<<5)-e+t.charCodeAt(0)),0),__md_get=(e,t=localStorage,_=__md_scope)=>JSON.parse(t.getItem(_.pathname+"."+e)),__md_set=(e,t,_=localStorage,a=__md_scope)=>{try{_.setItem(a.pathname+"."+e,JSON.stringify(t))}catch(e){}},document.documentElement.setAttribute("data-platform",navigator.platform)</script>
     
       
 
@@ -74,14 +78,11 @@
     
     <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
     <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
-    <label class="md-overlay" for="__drawer"></label>
+    <label class="md-overlay" for="__drawer" aria-hidden="true"></label>
     <div data-md-component="skip">
-      
-        
-        <a href="#changelog" class="md-skip">
-          Skip to content
-        </a>
-      
+      <a href="#__skip" class="md-skip">
+        Skip to content
+      </a>
     </div>
     <div data-md-component="announce">
       
@@ -94,14 +95,15 @@
 
 <header class="md-header md-header--shadow" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href=".." title="sandbox-cli" class="md-header__button md-logo" aria-label="sandbox-cli" data-md-component="logo">
+    <a href="./.." title="sandbox-cli" class="md-header__button md-logo" aria-label="sandbox-cli" data-md-component="logo">
       
-  <img src="../assets/main_logo_no_text.svg" alt="logo">
+  <img src="../assets/main_logo_no_text.svg" alt="sandbox-cli">
 
     </a>
     <label class="md-header__button md-icon" for="__drawer">
       
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-menu" viewBox="0 0 24 24"><path d="M4 5h16M4 12h16M4 19h16"/></svg>
+      <span class="md-visually-hidden">Navigation</span>
     </label>
     <div class="md-header__title" data-md-component="header-title">
       <div class="md-header__ellipsis">
@@ -126,7 +128,7 @@
     
     
     
-    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="indigo"  aria-label="Dark"  type="radio" name="__palette" id="__palette_0">
+    <input class="md-option" data-md-color-media="none" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="indigo"  aria-label="Dark"  type="radio" name="__palette" id="__palette_0">
     
       <label class="md-header__button md-icon" title="Dark" for="__palette_1" hidden>
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 7H7a5 5 0 0 0-5 5 5 5 0 0 0 5 5h10a5 5 0 0 0 5-5 5 5 0 0 0-5-5m0 8a3 3 0 0 1-3-3 3 3 0 0 1 3-3 3 3 0 0 1 3 3 3 3 0 0 1-3 3"/></svg>
@@ -136,7 +138,7 @@
     
     
     
-    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="black" data-md-color-accent="indigo"  aria-label="Light"  type="radio" name="__palette" id="__palette_1">
+    <input class="md-option" data-md-color-media="none" data-md-color-scheme="slate" data-md-color-primary="black" data-md-color-accent="indigo"  aria-label="Light"  type="radio" name="__palette" id="__palette_1">
     
       <label class="md-header__button md-icon" title="Light" for="__palette_0" hidden>
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 7H7a5 5 0 0 0-5 5 5 5 0 0 0 5 5h10a5 5 0 0 0 5-5 5 5 0 0 0-5-5M7 15a3 3 0 0 1-3-3 3 3 0 0 1 3-3 3 3 0 0 1 3 3 3 3 0 0 1-3 3"/></svg>
@@ -155,55 +157,29 @@
       
         <label class="md-header__button md-icon" for="__search">
           
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-search" viewBox="0 0 24 24"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg>
+          <span class="md-visually-hidden">Search</span>
         </label>
-        <div class="md-search" data-md-component="search" role="dialog">
-  <label class="md-search__overlay" for="__search"></label>
-  <div class="md-search__inner" role="search">
-    <form class="md-search__form" name="search">
-      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
-      <label class="md-search__icon md-icon" for="__search">
-        
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
-        
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
-      </label>
-      <nav class="md-search__options" aria-label="Search">
-        
-        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
-          
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
-        </button>
-      </nav>
-      
-    </form>
-    <div class="md-search__output">
-      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
-        <div class="md-search-result" data-md-component="search-result">
-          <div class="md-search-result__meta">
-            Initializing search
-          </div>
-          <ol class="md-search-result__list" role="presentation"></ol>
-        </div>
-      </div>
-    </div>
-  </div>
+        <div class="md-search" data-md-component="search" role="dialog" aria-label="Search">
+  <button type="button" class="md-search__button">
+    Search
+  </button>
 </div>
       
     
-    
-      <div class="md-header__source">
+    <div class="md-header__source">
+      
         <a href="https://github.com/Security-Experts-Community/sandbox-cli" title="Go to repository" class="md-source" data-md-component="source">
   <div class="md-source__icon md-icon">
     
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M216.5 362.5c-66-8-112.5-55.5-112.5-117 0-25 9-52 24-70-6.5-16.5-5.5-51.5 2-66 20-2.5 47 8 63 22.5 19-6 39-9 63.5-9s44.5 3 62.5 8.5c15.5-14 43-24.5 63-22 7 13.5 8 48.5 1.5 65.5 16 19 24.5 44.5 24.5 70.5 0 61.5-46.5 108-113.5 116.5 17 11 28.5 35 28.5 62.5v52c0 15 12.5 23.5 27.5 17.5C441 459.5 512 369 512 257 512 115.5 397 0 255.5 0S0 115.5 0 257c0 111 70.5 203 165.5 237.5 13.5 5 26.5-4 26.5-17.5v-40c-7 3-16 5-24 5-33 0-52.5-18-66.5-51.5-5.5-13.5-11.5-21.5-23-23-6-.5-8-3-8-6 0-6 10-10.5 20-10.5 14.5 0 27 9 40 27.5 10 14.5 20.5 21 33 21s20.5-4.5 32-16c8.5-8.5 15-16 21-21"/></svg>
   </div>
   <div class="md-source__repository">
     sandbox-cli
   </div>
 </a>
-      </div>
-    
+      
+    </div>
   </nav>
   
 </header>
@@ -229,9 +205,9 @@
 
 <nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href=".." title="sandbox-cli" class="md-nav__button md-logo" aria-label="sandbox-cli" data-md-component="logo">
+    <a href="./.." title="sandbox-cli" class="md-nav__button md-logo" aria-label="sandbox-cli" data-md-component="logo">
       
-  <img src="../assets/main_logo_no_text.svg" alt="logo">
+  <img src="../assets/main_logo_no_text.svg" alt="sandbox-cli">
 
     </a>
     sandbox-cli
@@ -241,7 +217,7 @@
       <a href="https://github.com/Security-Experts-Community/sandbox-cli" title="Go to repository" class="md-source" data-md-component="source">
   <div class="md-source__icon md-icon">
     
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M216.5 362.5c-66-8-112.5-55.5-112.5-117 0-25 9-52 24-70-6.5-16.5-5.5-51.5 2-66 20-2.5 47 8 63 22.5 19-6 39-9 63.5-9s44.5 3 62.5 8.5c15.5-14 43-24.5 63-22 7 13.5 8 48.5 1.5 65.5 16 19 24.5 44.5 24.5 70.5 0 61.5-46.5 108-113.5 116.5 17 11 28.5 35 28.5 62.5v52c0 15 12.5 23.5 27.5 17.5C441 459.5 512 369 512 257 512 115.5 397 0 255.5 0S0 115.5 0 257c0 111 70.5 203 165.5 237.5 13.5 5 26.5-4 26.5-17.5v-40c-7 3-16 5-24 5-33 0-52.5-18-66.5-51.5-5.5-13.5-11.5-21.5-23-23-6-.5-8-3-8-6 0-6 10-10.5 20-10.5 14.5 0 27 9 40 27.5 10 14.5 20.5 21 33 21s20.5-4.5 32-16c8.5-8.5 15-16 21-21"/></svg>
   </div>
   <div class="md-source__repository">
     sandbox-cli
@@ -258,15 +234,14 @@
   
   
     <li class="md-nav__item">
-      <a href=".." class="md-nav__link">
+      <a href="./.." class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    Overview
-  
+  Overview
 
     
   </span>
@@ -292,8 +267,7 @@
   <span class="md-ellipsis">
     
   
-    Installation
-  
+  Installation
 
     
   </span>
@@ -337,8 +311,7 @@
   <span class="md-ellipsis">
     
   
-    Tutorial
-  
+  Tutorial
 
     
   </span>
@@ -348,19 +321,19 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_3">
-            <span class="md-nav__icon md-icon"></span>
-            
+        
+          <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+            <label class="md-nav__title" for="__nav_3">
+              <span class="md-nav__icon md-icon"></span>
+              
   
-    Tutorial
-  
+  Tutorial
 
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
+            </label>
+            <ul class="md-nav__list" data-md-scrollfix>
               
                 
+                  
   
   
   
@@ -373,8 +346,7 @@
   <span class="md-ellipsis">
     
   
-    Getting started
-  
+  Getting started
 
     
   </span>
@@ -385,10 +357,10 @@
     </li>
   
 
-              
-            
+                
               
                 
+                  
   
   
   
@@ -401,8 +373,7 @@
   <span class="md-ellipsis">
     
   
-    Images
-  
+  Images
 
     
   </span>
@@ -413,10 +384,10 @@
     </li>
   
 
-              
-            
+                
               
                 
+                  
   
   
   
@@ -444,8 +415,7 @@
   <span class="md-ellipsis">
     
   
-    Scans
-  
+  Scans
 
     
   </span>
@@ -455,19 +425,19 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_3_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_3_3">
-            <span class="md-nav__icon md-icon"></span>
-            
+        
+          <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_3_label" aria-expanded="false">
+            <label class="md-nav__title" for="__nav_3_3">
+              <span class="md-nav__icon md-icon"></span>
+              
   
-    Scans
-  
+  Scans
 
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
+            </label>
+            <ul class="md-nav__list" data-md-scrollfix>
               
                 
+                  
   
   
   
@@ -480,8 +450,7 @@
   <span class="md-ellipsis">
     
   
-    Advanced scan
-  
+  Advanced scan
 
     
   </span>
@@ -492,10 +461,10 @@
     </li>
   
 
-              
-            
+                
               
                 
+                  
   
   
   
@@ -508,8 +477,7 @@
   <span class="md-ellipsis">
     
   
-    Rescan
-  
+  Rescan
 
     
   </span>
@@ -520,10 +488,10 @@
     </li>
   
 
-              
-            
+                
               
                 
+                  
   
   
   
@@ -536,8 +504,7 @@
   <span class="md-ellipsis">
     
   
-    Scan
-  
+  Scan
 
     
   </span>
@@ -548,18 +515,19 @@
     </li>
   
 
+                
               
-            
-          </ul>
-        </nav>
+            </ul>
+          </nav>
+        
       
     </li>
   
 
-              
-            
+                
               
                 
+                  
   
   
   
@@ -572,8 +540,7 @@
   <span class="md-ellipsis">
     
   
-    Analyzing logs
-  
+  Analyzing logs
 
     
   </span>
@@ -584,10 +551,10 @@
     </li>
   
 
-              
-            
+                
               
                 
+                  
   
   
   
@@ -600,8 +567,7 @@
   <span class="md-ellipsis">
     
   
-    View report
-  
+  View report
 
     
   </span>
@@ -612,10 +578,10 @@
     </li>
   
 
-              
-            
+                
               
                 
+                  
   
   
   
@@ -628,8 +594,7 @@
   <span class="md-ellipsis">
     
   
-    Download files
-  
+  Download files
 
     
   </span>
@@ -640,10 +605,10 @@
     </li>
   
 
-              
-            
+                
               
                 
+                  
   
   
   
@@ -656,8 +621,7 @@
   <span class="md-ellipsis">
     
   
-    Analyze emails
-  
+  Analyze emails
 
     
   </span>
@@ -668,10 +632,11 @@
     </li>
   
 
+                
               
-            
-          </ul>
-        </nav>
+            </ul>
+          </nav>
+        
       
     </li>
   
@@ -691,8 +656,7 @@
   <span class="md-ellipsis">
     
   
-    Configuration
-  
+  Configuration
 
     
   </span>
@@ -714,7 +678,7 @@
   
     <li class="md-nav__item md-nav__item--active">
       
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
       
       
         
@@ -727,8 +691,7 @@
   <span class="md-ellipsis">
     
   
-    Changelog
-  
+  Changelog
 
     
   </span>
@@ -738,15 +701,14 @@
           <span class="md-nav__icon md-icon"></span>
         </label>
       
-      <a href="./" class="md-nav__link md-nav__link--active">
+      <a href="././" class="md-nav__link md-nav__link--active">
         
   
   
   <span class="md-ellipsis">
     
   
-    Changelog
-  
+  Changelog
 
     
   </span>
@@ -757,7 +719,8 @@
       
         
 
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
   
   
   
@@ -766,16 +729,16 @@
   
     <label class="md-nav__title" for="__toc">
       <span class="md-nav__icon md-icon"></span>
-      Table of contents
+      On this page
     </label>
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
   <a href="#unreleased" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         Unreleased
-      
+      </span>
     </span>
   </a>
   
@@ -783,11 +746,22 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#changed" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Changed
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#added" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         Added
-      
+      </span>
     </span>
   </a>
   
@@ -801,9 +775,9 @@
         <li class="md-nav__item">
   <a href="#040" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         0.4.0
-      
+      </span>
     </span>
   </a>
   
@@ -813,9 +787,9 @@
           <li class="md-nav__item">
   <a href="#breaking-changes" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         Breaking changes
-      
+      </span>
     </span>
   </a>
   
@@ -824,20 +798,20 @@
           <li class="md-nav__item">
   <a href="#added_1" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         Added
-      
+      </span>
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#changed" class="md-nav__link">
+  <a href="#changed_1" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         Changed
-      
+      </span>
     </span>
   </a>
   
@@ -846,9 +820,9 @@
           <li class="md-nav__item">
   <a href="#fixed" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         Fixed
-      
+      </span>
     </span>
   </a>
   
@@ -862,9 +836,9 @@
         <li class="md-nav__item">
   <a href="#030" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         0.3.0
-      
+      </span>
     </span>
   </a>
   
@@ -874,20 +848,20 @@
           <li class="md-nav__item">
   <a href="#added_2" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         Added
-      
+      </span>
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#changed_1" class="md-nav__link">
+  <a href="#changed_2" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         Changed
-      
+      </span>
     </span>
   </a>
   
@@ -896,9 +870,9 @@
           <li class="md-nav__item">
   <a href="#fixed_1" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         Fixed
-      
+      </span>
     </span>
   </a>
   
@@ -912,9 +886,9 @@
         <li class="md-nav__item">
   <a href="#0250" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         0.2.50
-      
+      </span>
     </span>
   </a>
   
@@ -924,9 +898,9 @@
           <li class="md-nav__item">
   <a href="#fixed_2" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         Fixed
-      
+      </span>
     </span>
   </a>
   
@@ -940,9 +914,9 @@
         <li class="md-nav__item">
   <a href="#0249" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         0.2.49
-      
+      </span>
     </span>
   </a>
   
@@ -952,9 +926,9 @@
           <li class="md-nav__item">
   <a href="#added_3" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         Added
-      
+      </span>
     </span>
   </a>
   
@@ -968,9 +942,9 @@
         <li class="md-nav__item">
   <a href="#0248" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         0.2.48
-      
+      </span>
     </span>
   </a>
   
@@ -980,9 +954,9 @@
           <li class="md-nav__item">
   <a href="#added_4" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         Added
-      
+      </span>
     </span>
   </a>
   
@@ -996,9 +970,9 @@
         <li class="md-nav__item">
   <a href="#0247" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         0.2.47
-      
+      </span>
     </span>
   </a>
   
@@ -1008,9 +982,9 @@
           <li class="md-nav__item">
   <a href="#added_5" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         Added
-      
+      </span>
     </span>
   </a>
   
@@ -1024,9 +998,9 @@
         <li class="md-nav__item">
   <a href="#0246" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         0.2.46
-      
+      </span>
     </span>
   </a>
   
@@ -1036,9 +1010,9 @@
           <li class="md-nav__item">
   <a href="#added_6" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         Added
-      
+      </span>
     </span>
   </a>
   
@@ -1052,9 +1026,9 @@
         <li class="md-nav__item">
   <a href="#0245" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         0.2.45
-      
+      </span>
     </span>
   </a>
   
@@ -1064,9 +1038,9 @@
           <li class="md-nav__item">
   <a href="#added_7" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         Added
-      
+      </span>
     </span>
   </a>
   
@@ -1080,9 +1054,9 @@
         <li class="md-nav__item">
   <a href="#0244" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         0.2.44
-      
+      </span>
     </span>
   </a>
   
@@ -1092,9 +1066,9 @@
           <li class="md-nav__item">
   <a href="#added_8" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         Added
-      
+      </span>
     </span>
   </a>
   
@@ -1108,9 +1082,9 @@
         <li class="md-nav__item">
   <a href="#0243" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         0.2.43
-      
+      </span>
     </span>
   </a>
   
@@ -1120,20 +1094,20 @@
           <li class="md-nav__item">
   <a href="#added_9" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         Added
-      
+      </span>
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#changed_2" class="md-nav__link">
+  <a href="#changed_3" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         Changed
-      
+      </span>
     </span>
   </a>
   
@@ -1147,9 +1121,9 @@
         <li class="md-nav__item">
   <a href="#0242" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         0.2.42
-      
+      </span>
     </span>
   </a>
   
@@ -1159,9 +1133,9 @@
           <li class="md-nav__item">
   <a href="#added_10" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         Added
-      
+      </span>
     </span>
   </a>
   
@@ -1170,9 +1144,9 @@
           <li class="md-nav__item">
   <a href="#fixed_3" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         Fixed
-      
+      </span>
     </span>
   </a>
   
@@ -1186,9 +1160,9 @@
         <li class="md-nav__item">
   <a href="#0241" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         0.2.41
-      
+      </span>
     </span>
   </a>
   
@@ -1198,9 +1172,9 @@
           <li class="md-nav__item">
   <a href="#added_11" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         Added
-      
+      </span>
     </span>
   </a>
   
@@ -1214,9 +1188,9 @@
         <li class="md-nav__item">
   <a href="#0240" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         0.2.40
-      
+      </span>
     </span>
   </a>
   
@@ -1226,9 +1200,9 @@
           <li class="md-nav__item">
   <a href="#fixed_4" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         Fixed
-      
+      </span>
     </span>
   </a>
   
@@ -1242,9 +1216,9 @@
         <li class="md-nav__item">
   <a href="#0239" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         0.2.39
-      
+      </span>
     </span>
   </a>
   
@@ -1254,9 +1228,9 @@
           <li class="md-nav__item">
   <a href="#added_12" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         Added
-      
+      </span>
     </span>
   </a>
   
@@ -1265,9 +1239,9 @@
           <li class="md-nav__item">
   <a href="#fixed_5" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         Fixed
-      
+      </span>
     </span>
   </a>
   
@@ -1281,9 +1255,9 @@
         <li class="md-nav__item">
   <a href="#0238" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         0.2.38
-      
+      </span>
     </span>
   </a>
   
@@ -1293,9 +1267,9 @@
           <li class="md-nav__item">
   <a href="#added_13" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         Added
-      
+      </span>
     </span>
   </a>
   
@@ -1309,9 +1283,9 @@
         <li class="md-nav__item">
   <a href="#0234" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         0.2.34
-      
+      </span>
     </span>
   </a>
   
@@ -1321,9 +1295,9 @@
           <li class="md-nav__item">
   <a href="#added_14" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         Added
-      
+      </span>
     </span>
   </a>
   
@@ -1337,9 +1311,9 @@
         <li class="md-nav__item">
   <a href="#0233" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         0.2.33
-      
+      </span>
     </span>
   </a>
   
@@ -1349,9 +1323,9 @@
           <li class="md-nav__item">
   <a href="#added_15" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         Added
-      
+      </span>
     </span>
   </a>
   
@@ -1365,9 +1339,9 @@
         <li class="md-nav__item">
   <a href="#0232" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         0.2.32
-      
+      </span>
     </span>
   </a>
   
@@ -1377,9 +1351,9 @@
           <li class="md-nav__item">
   <a href="#added_16" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         Added
-      
+      </span>
     </span>
   </a>
   
@@ -1393,9 +1367,9 @@
         <li class="md-nav__item">
   <a href="#0231" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         0.2.31
-      
+      </span>
     </span>
   </a>
   
@@ -1405,9 +1379,9 @@
           <li class="md-nav__item">
   <a href="#added_17" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         Added
-      
+      </span>
     </span>
   </a>
   
@@ -1421,9 +1395,9 @@
         <li class="md-nav__item">
   <a href="#0230" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         0.2.30
-      
+      </span>
     </span>
   </a>
   
@@ -1433,9 +1407,9 @@
           <li class="md-nav__item">
   <a href="#added_18" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         Added
-      
+      </span>
     </span>
   </a>
   
@@ -1444,9 +1418,9 @@
           <li class="md-nav__item">
   <a href="#fixed_6" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         Fixed
-      
+      </span>
     </span>
   </a>
   
@@ -1460,9 +1434,9 @@
         <li class="md-nav__item">
   <a href="#0229" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         0.2.29
-      
+      </span>
     </span>
   </a>
   
@@ -1472,9 +1446,9 @@
           <li class="md-nav__item">
   <a href="#fixed_7" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         Fixed
-      
+      </span>
     </span>
   </a>
   
@@ -1488,9 +1462,9 @@
         <li class="md-nav__item">
   <a href="#0228" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         0.2.28
-      
+      </span>
     </span>
   </a>
   
@@ -1500,9 +1474,9 @@
           <li class="md-nav__item">
   <a href="#added_19" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         Added
-      
+      </span>
     </span>
   </a>
   
@@ -1516,9 +1490,9 @@
         <li class="md-nav__item">
   <a href="#0227" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         0.2.27
-      
+      </span>
     </span>
   </a>
   
@@ -1528,9 +1502,9 @@
           <li class="md-nav__item">
   <a href="#added_20" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         Added
-      
+      </span>
     </span>
   </a>
   
@@ -1539,9 +1513,9 @@
           <li class="md-nav__item">
   <a href="#fixed_8" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         Fixed
-      
+      </span>
     </span>
   </a>
   
@@ -1555,9 +1529,9 @@
         <li class="md-nav__item">
   <a href="#0226" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         0.2.26
-      
+      </span>
     </span>
   </a>
   
@@ -1567,20 +1541,20 @@
           <li class="md-nav__item">
   <a href="#added_21" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         Added
-      
+      </span>
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#changed_3" class="md-nav__link">
+  <a href="#changed_4" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         Changed
-      
+      </span>
     </span>
   </a>
   
@@ -1594,9 +1568,9 @@
         <li class="md-nav__item">
   <a href="#0225" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         0.2.25
-      
+      </span>
     </span>
   </a>
   
@@ -1606,9 +1580,9 @@
           <li class="md-nav__item">
   <a href="#added_22" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         Added
-      
+      </span>
     </span>
   </a>
   
@@ -1637,10 +1611,24 @@
               
               <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
                 <div class="md-sidebar__scrollwrap">
+                  
+                    
+                    
+                    
+                      
+                    
+                    
+                      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+                      <div class="md-sidebar-button__wrapper">
+                        <label class="md-sidebar-button" for="__toc"></label>
+                      </div>
+                    
+                  
                   <div class="md-sidebar__inner">
                     
 
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
   
   
   
@@ -1649,16 +1637,16 @@
   
     <label class="md-nav__title" for="__toc">
       <span class="md-nav__icon md-icon"></span>
-      Table of contents
+      On this page
     </label>
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
   <a href="#unreleased" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         Unreleased
-      
+      </span>
     </span>
   </a>
   
@@ -1666,11 +1654,22 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#changed" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Changed
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#added" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         Added
-      
+      </span>
     </span>
   </a>
   
@@ -1684,9 +1683,9 @@
         <li class="md-nav__item">
   <a href="#040" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         0.4.0
-      
+      </span>
     </span>
   </a>
   
@@ -1696,9 +1695,9 @@
           <li class="md-nav__item">
   <a href="#breaking-changes" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         Breaking changes
-      
+      </span>
     </span>
   </a>
   
@@ -1707,20 +1706,20 @@
           <li class="md-nav__item">
   <a href="#added_1" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         Added
-      
+      </span>
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#changed" class="md-nav__link">
+  <a href="#changed_1" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         Changed
-      
+      </span>
     </span>
   </a>
   
@@ -1729,9 +1728,9 @@
           <li class="md-nav__item">
   <a href="#fixed" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         Fixed
-      
+      </span>
     </span>
   </a>
   
@@ -1745,9 +1744,9 @@
         <li class="md-nav__item">
   <a href="#030" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         0.3.0
-      
+      </span>
     </span>
   </a>
   
@@ -1757,20 +1756,20 @@
           <li class="md-nav__item">
   <a href="#added_2" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         Added
-      
+      </span>
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#changed_1" class="md-nav__link">
+  <a href="#changed_2" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         Changed
-      
+      </span>
     </span>
   </a>
   
@@ -1779,9 +1778,9 @@
           <li class="md-nav__item">
   <a href="#fixed_1" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         Fixed
-      
+      </span>
     </span>
   </a>
   
@@ -1795,9 +1794,9 @@
         <li class="md-nav__item">
   <a href="#0250" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         0.2.50
-      
+      </span>
     </span>
   </a>
   
@@ -1807,9 +1806,9 @@
           <li class="md-nav__item">
   <a href="#fixed_2" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         Fixed
-      
+      </span>
     </span>
   </a>
   
@@ -1823,9 +1822,9 @@
         <li class="md-nav__item">
   <a href="#0249" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         0.2.49
-      
+      </span>
     </span>
   </a>
   
@@ -1835,9 +1834,9 @@
           <li class="md-nav__item">
   <a href="#added_3" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         Added
-      
+      </span>
     </span>
   </a>
   
@@ -1851,9 +1850,9 @@
         <li class="md-nav__item">
   <a href="#0248" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         0.2.48
-      
+      </span>
     </span>
   </a>
   
@@ -1863,9 +1862,9 @@
           <li class="md-nav__item">
   <a href="#added_4" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         Added
-      
+      </span>
     </span>
   </a>
   
@@ -1879,9 +1878,9 @@
         <li class="md-nav__item">
   <a href="#0247" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         0.2.47
-      
+      </span>
     </span>
   </a>
   
@@ -1891,9 +1890,9 @@
           <li class="md-nav__item">
   <a href="#added_5" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         Added
-      
+      </span>
     </span>
   </a>
   
@@ -1907,9 +1906,9 @@
         <li class="md-nav__item">
   <a href="#0246" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         0.2.46
-      
+      </span>
     </span>
   </a>
   
@@ -1919,9 +1918,9 @@
           <li class="md-nav__item">
   <a href="#added_6" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         Added
-      
+      </span>
     </span>
   </a>
   
@@ -1935,9 +1934,9 @@
         <li class="md-nav__item">
   <a href="#0245" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         0.2.45
-      
+      </span>
     </span>
   </a>
   
@@ -1947,9 +1946,9 @@
           <li class="md-nav__item">
   <a href="#added_7" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         Added
-      
+      </span>
     </span>
   </a>
   
@@ -1963,9 +1962,9 @@
         <li class="md-nav__item">
   <a href="#0244" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         0.2.44
-      
+      </span>
     </span>
   </a>
   
@@ -1975,9 +1974,9 @@
           <li class="md-nav__item">
   <a href="#added_8" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         Added
-      
+      </span>
     </span>
   </a>
   
@@ -1991,9 +1990,9 @@
         <li class="md-nav__item">
   <a href="#0243" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         0.2.43
-      
+      </span>
     </span>
   </a>
   
@@ -2003,20 +2002,20 @@
           <li class="md-nav__item">
   <a href="#added_9" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         Added
-      
+      </span>
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#changed_2" class="md-nav__link">
+  <a href="#changed_3" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         Changed
-      
+      </span>
     </span>
   </a>
   
@@ -2030,9 +2029,9 @@
         <li class="md-nav__item">
   <a href="#0242" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         0.2.42
-      
+      </span>
     </span>
   </a>
   
@@ -2042,9 +2041,9 @@
           <li class="md-nav__item">
   <a href="#added_10" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         Added
-      
+      </span>
     </span>
   </a>
   
@@ -2053,9 +2052,9 @@
           <li class="md-nav__item">
   <a href="#fixed_3" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         Fixed
-      
+      </span>
     </span>
   </a>
   
@@ -2069,9 +2068,9 @@
         <li class="md-nav__item">
   <a href="#0241" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         0.2.41
-      
+      </span>
     </span>
   </a>
   
@@ -2081,9 +2080,9 @@
           <li class="md-nav__item">
   <a href="#added_11" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         Added
-      
+      </span>
     </span>
   </a>
   
@@ -2097,9 +2096,9 @@
         <li class="md-nav__item">
   <a href="#0240" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         0.2.40
-      
+      </span>
     </span>
   </a>
   
@@ -2109,9 +2108,9 @@
           <li class="md-nav__item">
   <a href="#fixed_4" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         Fixed
-      
+      </span>
     </span>
   </a>
   
@@ -2125,9 +2124,9 @@
         <li class="md-nav__item">
   <a href="#0239" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         0.2.39
-      
+      </span>
     </span>
   </a>
   
@@ -2137,9 +2136,9 @@
           <li class="md-nav__item">
   <a href="#added_12" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         Added
-      
+      </span>
     </span>
   </a>
   
@@ -2148,9 +2147,9 @@
           <li class="md-nav__item">
   <a href="#fixed_5" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         Fixed
-      
+      </span>
     </span>
   </a>
   
@@ -2164,9 +2163,9 @@
         <li class="md-nav__item">
   <a href="#0238" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         0.2.38
-      
+      </span>
     </span>
   </a>
   
@@ -2176,9 +2175,9 @@
           <li class="md-nav__item">
   <a href="#added_13" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         Added
-      
+      </span>
     </span>
   </a>
   
@@ -2192,9 +2191,9 @@
         <li class="md-nav__item">
   <a href="#0234" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         0.2.34
-      
+      </span>
     </span>
   </a>
   
@@ -2204,9 +2203,9 @@
           <li class="md-nav__item">
   <a href="#added_14" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         Added
-      
+      </span>
     </span>
   </a>
   
@@ -2220,9 +2219,9 @@
         <li class="md-nav__item">
   <a href="#0233" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         0.2.33
-      
+      </span>
     </span>
   </a>
   
@@ -2232,9 +2231,9 @@
           <li class="md-nav__item">
   <a href="#added_15" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         Added
-      
+      </span>
     </span>
   </a>
   
@@ -2248,9 +2247,9 @@
         <li class="md-nav__item">
   <a href="#0232" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         0.2.32
-      
+      </span>
     </span>
   </a>
   
@@ -2260,9 +2259,9 @@
           <li class="md-nav__item">
   <a href="#added_16" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         Added
-      
+      </span>
     </span>
   </a>
   
@@ -2276,9 +2275,9 @@
         <li class="md-nav__item">
   <a href="#0231" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         0.2.31
-      
+      </span>
     </span>
   </a>
   
@@ -2288,9 +2287,9 @@
           <li class="md-nav__item">
   <a href="#added_17" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         Added
-      
+      </span>
     </span>
   </a>
   
@@ -2304,9 +2303,9 @@
         <li class="md-nav__item">
   <a href="#0230" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         0.2.30
-      
+      </span>
     </span>
   </a>
   
@@ -2316,9 +2315,9 @@
           <li class="md-nav__item">
   <a href="#added_18" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         Added
-      
+      </span>
     </span>
   </a>
   
@@ -2327,9 +2326,9 @@
           <li class="md-nav__item">
   <a href="#fixed_6" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         Fixed
-      
+      </span>
     </span>
   </a>
   
@@ -2343,9 +2342,9 @@
         <li class="md-nav__item">
   <a href="#0229" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         0.2.29
-      
+      </span>
     </span>
   </a>
   
@@ -2355,9 +2354,9 @@
           <li class="md-nav__item">
   <a href="#fixed_7" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         Fixed
-      
+      </span>
     </span>
   </a>
   
@@ -2371,9 +2370,9 @@
         <li class="md-nav__item">
   <a href="#0228" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         0.2.28
-      
+      </span>
     </span>
   </a>
   
@@ -2383,9 +2382,9 @@
           <li class="md-nav__item">
   <a href="#added_19" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         Added
-      
+      </span>
     </span>
   </a>
   
@@ -2399,9 +2398,9 @@
         <li class="md-nav__item">
   <a href="#0227" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         0.2.27
-      
+      </span>
     </span>
   </a>
   
@@ -2411,9 +2410,9 @@
           <li class="md-nav__item">
   <a href="#added_20" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         Added
-      
+      </span>
     </span>
   </a>
   
@@ -2422,9 +2421,9 @@
           <li class="md-nav__item">
   <a href="#fixed_8" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         Fixed
-      
+      </span>
     </span>
   </a>
   
@@ -2438,9 +2437,9 @@
         <li class="md-nav__item">
   <a href="#0226" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         0.2.26
-      
+      </span>
     </span>
   </a>
   
@@ -2450,20 +2449,20 @@
           <li class="md-nav__item">
   <a href="#added_21" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         Added
-      
+      </span>
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#changed_3" class="md-nav__link">
+  <a href="#changed_4" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         Changed
-      
+      </span>
     </span>
   </a>
   
@@ -2477,9 +2476,9 @@
         <li class="md-nav__item">
   <a href="#0225" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         0.2.25
-      
+      </span>
     </span>
   </a>
   
@@ -2489,9 +2488,9 @@
           <li class="md-nav__item">
   <a href="#added_22" class="md-nav__link">
     <span class="md-ellipsis">
-      
+      <span class="md-typeset">
         Added
-      
+      </span>
     </span>
   </a>
   
@@ -2514,9 +2513,9 @@
             <div class="md-content" data-md-component="content">
               
               <article class="md-content__inner md-typeset">
+                <a id="__skip" tabindex="-1"></a>
                 
                   
-
 
   
   
@@ -2527,6 +2526,15 @@
 <p>The format is based on <a href="https://keepachangelog.com/en/1.1.0/">Keep a Changelog</a>,
 and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semantic Versioning</a>.</p>
 <h2 id="unreleased">Unreleased</h2>
+<h3 id="changed">Changed</h3>
+<ul>
+<li>Upgraded to <code>cyclopts&gt;=5.3.3</code>. Help now shows value types (<code>PATH</code>, <code>INT</code>, <code>CHOICE</code>);
+  parse errors exit with code 2 in both text and JSON modes; command failures still
+  exit with code 1. Command names must match exactly: use <code>scan-new</code> and <code>re-scan</code>,
+  not <code>scannew</code> or <code>rescan</code>.</li>
+<li>Migrated documentation to Zensical with the modern theme; terminal examples use
+  standard code blocks instead of Termynal.</li>
+</ul>
 <h3 id="added">Added</h3>
 <ul>
 <li><code>scan</code> and <code>scan-new</code> take <code>--key</code> several times and spread the files over these sandboxes:
@@ -2612,7 +2620,7 @@ and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semant
 <li><code>[DONE]</code>/<code>[ERROR]</code> line per task for <code>download</code> and <code>email</code></li>
 <li>With <code>--json</code> a command-level error is printed as <code>{"status": "error", "reason": "…"}</code> on stdout as well</li>
 </ul>
-<h3 id="changed">Changed</h3>
+<h3 id="changed_1">Changed</h3>
 <ul>
 <li>Faster startup: <code>--help</code>, <code>--version</code> and shell completion no longer import the sandbox API client</li>
 <li>Errors exit with a non-zero status code; a failed task, sandbox or email no longer aborts the others, and the command exits with 1 after the rest finished</li>
@@ -2671,7 +2679,7 @@ and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semant
 <li>Support for task links in <code>download</code> command</li>
 <li>Support for wildcard scan files on Windows</li>
 </ul>
-<h3 id="changed_1">Changed</h3>
+<h3 id="changed_2">Changed</h3>
 <ul>
 <li><strong>Breaking:</strong> <code>--procdump-new-processes-on-finish</code> renamed to <code>--no-procdumps-on-finish</code> (inverted semantics)</li>
 <li><strong>Breaking:</strong> <code>--latest</code> flag removed from <code>report</code> command</li>
@@ -2731,7 +2739,7 @@ and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semant
 <ul>
 <li>Shell completion command (<code>sandbox-cli completion</code>)</li>
 </ul>
-<h3 id="changed_2">Changed</h3>
+<h3 id="changed_3">Changed</h3>
 <ul>
 <li>Refactor file names in unpack output</li>
 </ul>
@@ -2828,7 +2836,7 @@ and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semant
 <li>Project documentation in <code>mkdocs</code> format</li>
 <li>Project logos</li>
 </ul>
-<h3 id="changed_3">Changed</h3>
+<h3 id="changed_4">Changed</h3>
 <ul>
 <li>Rename <code>compiler</code> option to <code>rules</code></li>
 <li>Refactoring of the internal code base before the public release</li>
@@ -2836,6 +2844,8 @@ and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semant
 <h2 id="0225">0.2.25</h2>
 <h3 id="added_22">Added</h3>
 <p>Internal development</p>
+
+
 
 
 
@@ -2860,7 +2870,7 @@ and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semant
         
           <button type="button" class="md-top md-icon" data-md-component="top" hidden>
   
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-circle-arrow-up" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m16 12-4-4-4 4M12 16V8"/></svg>
   Back to top
 </button>
         
@@ -2874,8 +2884,8 @@ and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semant
   
   
     Made with
-    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
-      Material for MkDocs
+    <a href="https://zensical.org/" target="_blank" rel="noopener">
+      Zensical
     </a>
   
 </div>
@@ -2885,7 +2895,7 @@ and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semant
 </footer>
       
     </div>
-    <div class="md-dialog" data-md-component="dialog">
+    <div class="md-dialog" data-md-component="dialog" role="status" aria-atomic="true">
       <div class="md-dialog__inner md-typeset"></div>
     </div>
     
@@ -2893,12 +2903,14 @@ and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semant
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["content.code.copy", "content.code.annotate", "content.tabs.link", "navigation.instant", "navigation.expand", "navigation.sections", "navigation.top"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
-    
-    
-      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
       
-        <script src="../termynal.js"></script>
+      
+        
+        
+      <script id="__config" type="application/json">{"annotate":null,"base":"..","features":["content.code.copy","content.code.annotate","content.tabs.link","navigation.instant","navigation.expand","navigation.sections","navigation.top"],"redirect":null,"search":"../assets/javascripts/workers/search.719e0d91.min.js","tags":null,"translations":{"clipboard.copied":"Copied to clipboard","clipboard.copy":"Copy to clipboard","clipboard.error":"Could not copy to clipboard","search.result.more.one":"1 more on this page","search.result.more.other":"# more on this page","search.result.none":"No matching documents","search.result.one":"1 matching document","search.result.other":"# matching documents","search.result.placeholder":"Type to start searching","search.result.term.missing":"Missing","select.version":"Select version"},"version":null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.d31f0ffa.min.js"></script>
       
     
   </body>

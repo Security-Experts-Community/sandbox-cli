@@ -28,12 +28,12 @@ Send files to scan with the sandbox (advanced scan).
 │ *  FILES  Path to the files or folders to scan [required]                                                            │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 ╭─ Parameters ─────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ --rules -r               The path to the folder with the rules, a platform alias (windows, linux) resolved against   │
+│ --rules -r PATH          The path to the folder with the rules, a platform alias (windows, linux) resolved against   │
 │                          rules-path, or an archive with already compiled rules                                       │
-│ --out -o                 The path where to save the results [default: sandbox]                                       │
+│ --out -o PATH            The path where to save the results [default: sandbox]                                       │
 │ --local -l               Compile the rules locally using Docker (unix only) [default: False]                         │
-│ --upload-timeout -T      Upload timeout in seconds (increase if upload big files) [default: 300]                     │
-│ --wait-timeout -W        How long to wait for the task result in seconds (increase for heavy samples or large        │
+│ --upload-timeout -T INT  Upload timeout in seconds (increase if upload big files) [default: 300]                     │
+│ --wait-timeout -W INT    How long to wait for the task result in seconds (increase for heavy samples or large        │
 │                          traces)                                                                                     │
 │ --unpack -U              Unpack downloaded logs (see the unpack command) [default: False]                            │
 │ --open-browser -ob       Open analysis link in the default browser [default: False]                                  │
@@ -55,35 +55,36 @@ Send files to scan with the sandbox (advanced scan).
 │ --decompress -D  Decompress downloaded procdumps [default: False]                                                    │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 ╭─ Sandbox Options ────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ --image -i                       The name of the image to scan (don't mix different platforms) Available images:     │
-│                                  altworkstation-10-x64, astralinux-smolensk-x64, redos-8-x64, redos-murom-x64,       │
-│                                  ubuntu-jammy-x64, win10-1803-x64, win10-22H2-x64, win11-23H2-x64, win7-sp1-x64,     │
-│                                  win7-sp1-x64-ics, win8.1-update1-x64, winserv2016-1198-x64, winserv2019-1879-x64    │
-│ --key -k                         The key to access the sandbox main [default: main]                                  │
-│ --name -n                        Fake name for the sandbox (if specified more than one file will be applied to all   │
-│                                  files)                                                                              │
-│ --timeout -t                     Analysis duration in seconds [default: 300]                                         │
-│ --syscall-hooks -s               Path to file with syscall hooks (file with syscall names split by newline)          │
-│ --dll-hooks-dir -dll             Path to directory with dll hooks                                                    │
-│ --unimon-hooks -u                Path to file with unimon hooks                                                      │
-│ --fileextractor-excludes -fe     Path to file with fileextractor excludes                                            │
-│ --procdump-excludes -pe          Path to file with procdump excludes (regular expressions of process paths, one per  │
-│                                  line)                                                                               │
-│ --cmd                            Command line for file execution rundll32.exe {file},#1                              │
-│ --priority -pr                   Priority of the scan (1-4) [default: 3]                                             │
-│ --no-procdumps-on-finish -P      Disable dumps for all created and not finished processes [default: False]           │
-│ --disable-lightweight-dumps -dl  Disable lightweight memory dumps (mostly for testing purposes) [default: False]     │
-│ --bootkitmon -b                  Enable bootkitmon [default: False]                                                  │
-│ --bootkitmon-duration -bd        Bootkitmon duration in seconds [default: 60]                                        │
-│ --mitm-disabled -M               Disable MITM [default: False]                                                       │
-│ --disable-clicker -dc            Disable clicker [default: False]                                                    │
-│ --skip-sample-run -S             Skip sample run [default: False]                                                    │
-│ --vnc-mode -V                    VNC mode [choices: disabled, full, read-only] [default: disabled]                   │
-│ --extra-files -e                 Extra files to upload                                                               │
-│ --outbound-connections -oc       Whitelist of IP addresses to which connections from a VM are allowed (backconnect)  │
-│ --file-type-as-ext -fte          Use a file type as an extension for a file                                          │
-│ --unpack-archives -ua            Unpack archives in the sandbox with the passwords from the config and analyze every │
-│                                  extracted file [default: False]                                                     │
+│ --image -i CHOICE|STR...           The name of the image to scan (don't mix different platforms) Available images:   │
+│                                    altworkstation-10-x64, astralinux-smolensk-x64, redos-8-x64, redos-murom-x64,     │
+│                                    ubuntu-jammy-x64, win10-1803-x64, win10-22H2-x64, win11-23H2-x64, win7-sp1-x64,   │
+│                                    win7-sp1-x64-ics, win8.1-update1-x64, winserv2016-1198-x64, winserv2019-1879-x64  │
+│ --key -k STR...                    The key to access the sandbox main [default: main]                                │
+│ --name -n STR                      Fake name for the sandbox (if specified more than one file will be applied to all │
+│                                    files)                                                                            │
+│ --timeout -t INT                   Analysis duration in seconds [default: 300]                                       │
+│ --syscall-hooks -s PATH            Path to file with syscall hooks (file with syscall names split by newline)        │
+│ --dll-hooks-dir -dll PATH          Path to directory with dll hooks                                                  │
+│ --unimon-hooks -u PATH             Path to file with unimon hooks                                                    │
+│ --fileextractor-excludes -fe PATH  Path to file with fileextractor excludes                                          │
+│ --procdump-excludes -pe PATH       Path to file with procdump excludes (regular expressions of process paths, one    │
+│                                    per line)                                                                         │
+│ --cmd STR                          Command line for file execution rundll32.exe {file},#1                            │
+│ --priority -pr INT                 Priority of the scan (1-4) [default: 3]                                           │
+│ --no-procdumps-on-finish -P        Disable dumps for all created and not finished processes [default: False]         │
+│ --disable-lightweight-dumps -dl    Disable lightweight memory dumps (mostly for testing purposes) [default: False]   │
+│ --bootkitmon -b                    Enable bootkitmon [default: False]                                                │
+│ --bootkitmon-duration -bd INT      Bootkitmon duration in seconds [default: 60]                                      │
+│ --mitm-disabled -M                 Disable MITM [default: False]                                                     │
+│ --disable-clicker -dc              Disable clicker [default: False]                                                  │
+│ --skip-sample-run -S               Skip sample run [default: False]                                                  │
+│ --vnc-mode -V CHOICE               VNC mode [choices: disabled, full, read-only] [default: disabled]                 │
+│ --extra-files -e PATH...           Extra files to upload                                                             │
+│ --outbound-connections -oc STR...  Whitelist of IP addresses to which connections from a VM are allowed              │
+│                                    (backconnect)                                                                     │
+│ --file-type-as-ext -fte            Use a file type as an extension for a file                                        │
+│ --unpack-archives -ua              Unpack archives in the sandbox with the passwords from the config and analyze     │
+│                                    every extracted file [default: False]                                             │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 ```
 
@@ -98,14 +99,14 @@ Send traces to re-scan.
 │ *  TRACES  Path to folder with drakvuf-trace.log.zst and tcpdump.pcap or sandbox_logs.zip [required]                 │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 ╭─ Parameters ─────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ --rules -r          The path to the folder with the rules, a platform alias (windows, linux) resolved against        │
-│                     rules-path, or an archive with already compiled rules                                            │
-│ --out -o            The path where to save the results [default: sandbox]                                            │
-│ --local -l          Compile the rules locally using Docker (unix only) [default: False]                              │
-│ --unpack -U         Unpack downloaded logs (see the unpack command) [default: False]                                 │
-│ --wait-timeout -W   How long to wait for the task result in seconds (increase for heavy samples or large traces)     │
-│ --open-browser -ob  Open analysis link in the default browser [default: False]                                       │
-│ --json -J           Print results as JSON lines to stdout; messages and progress go to stderr [default: False]       │
+│ --rules -r PATH        The path to the folder with the rules, a platform alias (windows, linux) resolved against     │
+│                        rules-path, or an archive with already compiled rules                                         │
+│ --out -o PATH          The path where to save the results [default: sandbox]                                         │
+│ --local -l             Compile the rules locally using Docker (unix only) [default: False]                           │
+│ --unpack -U            Unpack downloaded logs (see the unpack command) [default: False]                              │
+│ --wait-timeout -W INT  How long to wait for the task result in seconds (increase for heavy samples or large traces)  │
+│ --open-browser -ob     Open analysis link in the default browser [default: False]                                    │
+│ --json -J              Print results as JSON lines to stdout; messages and progress go to stderr [default: False]    │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 ╭─ Download Options ───────────────────────────────────────────────────────────────────────────────────────────────────╮
 │ --all -a         Download all artifacts [default: False]                                                             │
@@ -119,7 +120,7 @@ Send traces to re-scan.
 │ --decompress -D  Decompress downloaded procdumps [default: False]                                                    │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 ╭─ Sandbox Options ────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ --key -k  The key to access the sandbox main [default: main]                                                         │
+│ --key -k STR  The key to access the sandbox main [default: main]                                                     │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 ```
 
@@ -134,9 +135,9 @@ Download any artifact from the sandbox.
 │ TASKS_ID  Links to tasks or task ids                                                                                 │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 ╭─ Parameters ─────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ --out -o     The path where to save the results [default: downloads]                                                 │
-│ --unpack -U  Unpack downloaded logs (see the unpack command) [default: False]                                        │
-│ --json -J    Print results as JSON lines to stdout; messages and progress go to stderr [default: False]              │
+│ --out -o PATH  The path where to save the results [default: downloads]                                               │
+│ --unpack -U    Unpack downloaded logs (see the unpack command) [default: False]                                      │
+│ --json -J      Print results as JSON lines to stdout; messages and progress go to stderr [default: False]            │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 ╭─ Download Options ───────────────────────────────────────────────────────────────────────────────────────────────────╮
 │ --all -a         Download all artifacts [default: False]                                                             │
@@ -153,15 +154,15 @@ Download any artifact from the sandbox.
 │ --sample -sa     Download the original sample submitted for analysis [default: False]                                │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 ╭─ Performance ────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ --concurrency -j  Maximum number of concurrent downloads [default: 16]                                               │
-│ --read-timeout    Read timeout in seconds for each download [default: 300]                                           │
+│ --concurrency -j INT  Maximum number of concurrent downloads [default: 16]                                           │
+│ --read-timeout INT    Read timeout in seconds for each download [default: 300]                                       │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 ╭─ Sandbox Options ────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ --key -k  The key to access the sandbox main [default: main]                                                         │
+│ --key -k STR  The key to access the sandbox main [default: main]                                                     │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 ╭─ Search ─────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ --query -q  Query for searching tasks (leave empty for last tasks)                                                   │
-│ --count -c  How many tasks find and download [default: 20]                                                           │
+│ --query -q STR  Query for searching tasks (leave empty for last tasks)                                               │
+│ --count -c INT  How many tasks find and download [default: 20]                                                       │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 ```
 
@@ -188,12 +189,12 @@ Generate short report from sandbox scans.
 │ *  SRC  Folder(s) with sandbox reports (recursive search will be used) [required]                                    │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 ╭─ Parameters ─────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ --mode -m         Report output format [choices: cli, md] [default: cli]                                             │
+│ --mode -m CHOICE  Report output format [choices: cli, md] [default: cli]                                             │
 │ --suspicious -su  Include suspicious detects [default: False]                                                        │
 │ --json -J         Print results as JSON lines to stdout; messages and progress go to stderr [default: False]         │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 ╭─ Sandbox Options ────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ --key -k  The key to access the sandbox main                                                                         │
+│ --key -k STR  The key to access the sandbox main                                                                     │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 ```
 
@@ -209,7 +210,7 @@ Get available images in the sandbox.
 │ --json -J       Print results as JSON lines to stdout; messages and progress go to stderr [default: False]           │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 ╭─ Sandbox Options ────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ --key -k  The key to access the sandbox main [default: main]                                                         │
+│ --key -k STR  The key to access the sandbox main [default: main]                                                     │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 ```
 
@@ -236,11 +237,11 @@ Upload an email and get its headers.
 │ *  EMAILS  The path to the email files [required]                                                                    │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 ╭─ Parameters ─────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ --out -o   The path where to save the results [default: downloads]                                                   │
-│ --json -J  Print results as JSON lines to stdout; messages and progress go to stderr [default: False]                │
+│ --out -o PATH  The path where to save the results [default: downloads]                                               │
+│ --json -J      Print results as JSON lines to stdout; messages and progress go to stderr [default: False]            │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 ╭─ Sandbox Options ────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ --key -k  The key to access the sandbox main [default: main]                                                         │
+│ --key -k STR  The key to access the sandbox main [default: main]                                                     │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 ```
 
@@ -256,8 +257,8 @@ Compile rules into an archive for third-party services.
 │                      rules-path, or an archive with already compiled rules [required]                                │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 ╭─ Parameters ─────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ --out -o    The path where to save the results [default: compiled-rules.local.tmp]                                   │
-│ --local -l  Compile the rules locally using Docker (unix only) [default: False]                                      │
+│ --out -o PATH  The path where to save the results [default: compiled-rules.local.tmp]                                │
+│ --local -l     Compile the rules locally using Docker (unix only) [default: False]                                   │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 ```
 
@@ -287,14 +288,14 @@ Send files to scan with the sandbox.
 │ *  FILES  Path to the files or folders to scan [required]                                                            │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 ╭─ Parameters ─────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ --rules -r           The path to the folder with the rules, a platform alias (windows, linux) resolved against       │
-│                      rules-path, or an archive with already compiled rules                                           │
-│ --out -o             The path where to save the results [default: sandbox]                                           │
-│ --local -l           Compile the rules locally using Docker (unix only) [default: False]                             │
-│ --unpack -U          Unpack downloaded logs (see the unpack command) [default: False]                                │
-│ --upload-timeout -T  Upload timeout in seconds (increase if upload big files) [default: 300]                         │
-│ --open-browser -ob   Open analysis link in the default browser [default: False]                                      │
-│ --json -J            Print results as JSON lines to stdout; messages and progress go to stderr [default: False]      │
+│ --rules -r PATH          The path to the folder with the rules, a platform alias (windows, linux) resolved against   │
+│                          rules-path, or an archive with already compiled rules                                       │
+│ --out -o PATH            The path where to save the results [default: sandbox]                                       │
+│ --local -l               Compile the rules locally using Docker (unix only) [default: False]                         │
+│ --unpack -U              Unpack downloaded logs (see the unpack command) [default: False]                            │
+│ --upload-timeout -T INT  Upload timeout in seconds (increase if upload big files) [default: 300]                     │
+│ --open-browser -ob       Open analysis link in the default browser [default: False]                                  │
+│ --json -J                Print results as JSON lines to stdout; messages and progress go to stderr [default: False]  │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 ╭─ Download Options ───────────────────────────────────────────────────────────────────────────────────────────────────╮
 │ --all -a         Download all artifacts [default: False]                                                             │
@@ -308,16 +309,16 @@ Send files to scan with the sandbox.
 │ --decompress -D  Decompress downloaded procdumps [default: False]                                                    │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 ╭─ Sandbox Options ────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ --image -i            The name of the image to scan (don't mix different platforms) Available images:                │
-│                       altworkstation-10-x64, astralinux-smolensk-x64, redos-8-x64, redos-murom-x64,                  │
-│                       ubuntu-jammy-x64, win10-1803-x64, win10-22H2-x64, win11-23H2-x64, win7-sp1-x64,                │
-│                       win7-sp1-x64-ics, win8.1-update1-x64, winserv2016-1198-x64, winserv2019-1879-x64               │
-│ --key -k              The key to access the sandbox main [default: main]                                             │
-│ --name -n             Fake name for the sandbox (if specified more than one file will be applied to all files)       │
-│ --timeout -t          Analysis duration in seconds [default: 300]                                                    │
-│ --syscall-hooks -s    Path to file with syscall hooks (file with syscall names split by newline)                     │
-│ --dll-hooks-dir -dll  Path to directory with dll hooks                                                               │
-│ --cmd                 Command line for file execution rundll32.exe {file},#1                                         │
+│ --image -i CHOICE|STR...   The name of the image to scan (don't mix different platforms) Available images:           │
+│                            altworkstation-10-x64, astralinux-smolensk-x64, redos-8-x64, redos-murom-x64,             │
+│                            ubuntu-jammy-x64, win10-1803-x64, win10-22H2-x64, win11-23H2-x64, win7-sp1-x64,           │
+│                            win7-sp1-x64-ics, win8.1-update1-x64, winserv2016-1198-x64, winserv2019-1879-x64          │
+│ --key -k STR...            The key to access the sandbox main [default: main]                                        │
+│ --name -n STR              Fake name for the sandbox (if specified more than one file will be applied to all files)  │
+│ --timeout -t INT           Analysis duration in seconds [default: 300]                                               │
+│ --syscall-hooks -s PATH    Path to file with syscall hooks (file with syscall names split by newline)                │
+│ --dll-hooks-dir -dll PATH  Path to directory with dll hooks                                                          │
+│ --cmd STR                  Command line for file execution rundll32.exe {file},#1                                    │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 ```
 

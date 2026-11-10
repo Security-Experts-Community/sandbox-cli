@@ -6,14 +6,14 @@ Send traces to re-scan.
 │ *  TRACES  Path to folder with drakvuf-trace.log.zst and tcpdump.pcap or sandbox_logs.zip [required]                 │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 ╭─ Parameters ─────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ --rules -r          The path to the folder with the rules, a platform alias (windows, linux) resolved against        │
-│                     rules-path, or an archive with already compiled rules                                            │
-│ --out -o            The path where to save the results [default: sandbox]                                            │
-│ --local -l          Compile the rules locally using Docker (unix only) [default: False]                              │
-│ --unpack -U         Unpack downloaded logs (see the unpack command) [default: False]                                 │
-│ --wait-timeout -W   How long to wait for the task result in seconds (increase for heavy samples or large traces)     │
-│ --open-browser -ob  Open analysis link in the default browser [default: False]                                       │
-│ --json -J           Print results as JSON lines to stdout; messages and progress go to stderr [default: False]       │
+│ --rules -r PATH        The path to the folder with the rules, a platform alias (windows, linux) resolved against     │
+│                        rules-path, or an archive with already compiled rules                                         │
+│ --out -o PATH          The path where to save the results [default: sandbox]                                         │
+│ --local -l             Compile the rules locally using Docker (unix only) [default: False]                           │
+│ --unpack -U            Unpack downloaded logs (see the unpack command) [default: False]                              │
+│ --wait-timeout -W INT  How long to wait for the task result in seconds (increase for heavy samples or large traces)  │
+│ --open-browser -ob     Open analysis link in the default browser [default: False]                                    │
+│ --json -J              Print results as JSON lines to stdout; messages and progress go to stderr [default: False]    │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 ╭─ Download Options ───────────────────────────────────────────────────────────────────────────────────────────────────╮
 │ --all -a         Download all artifacts [default: False]                                                             │
@@ -27,5 +27,5 @@ Send traces to re-scan.
 │ --decompress -D  Decompress downloaded procdumps [default: False]                                                    │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 ╭─ Sandbox Options ────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ --key -k  The key to access the sandbox main, second [default: main]                                                 │
+│ --key -k STR  The key to access the sandbox main, second [default: main]                                             │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯

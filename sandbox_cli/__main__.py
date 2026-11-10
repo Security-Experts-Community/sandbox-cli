@@ -34,14 +34,14 @@ def _json_requested(argv: list[str]) -> bool:
     return any(arg in {"--json", "-J"} for arg in argv)
 
 
-def _fail(reason: str, *, printed: bool = False) -> NoReturn:
+def _fail(reason: str, *, printed: bool = False, exit_code: int = 1) -> NoReturn:
     """
-    Report a command-level error (also as a JSON line with ``--json``) and exit with 1.
+    Report an error (also as a JSON line with ``--json``) and exit with the given code.
     """
     if not printed:
         console.error(reason)
     console.emit_json({"status": "error", "reason": reason})
-    sys.exit(1)
+    sys.exit(exit_code)
 
 
 def main() -> None:
@@ -62,7 +62,7 @@ def main() -> None:
         try:
             app(exit_on_error=not json_mode)
         except CycloptsError as e:
-            _fail(str(e), printed=True)
+            _fail(str(e), printed=True, exit_code=2)
     except KeyboardInterrupt:
         console.warning("Operation cancelled")
         console.emit_json({"status": "error", "reason": "cancelled"})

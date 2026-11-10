@@ -7,6 +7,6 @@ Compile rules into an archive for third-party services.
 │                      rules-path, or an archive with already compiled rules [required]                                │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 ╭─ Parameters ─────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ --out -o    The path where to save the results [default: compiled-rules.local.tmp]                                   │
-│ --local -l  Compile the rules locally using Docker (unix only) [default: False]                                      │
+│ --out -o PATH  The path where to save the results [default: compiled-rules.local.tmp]                                │
+│ --local -l     Compile the rules locally using Docker (unix only) [default: False]                                   │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯

@@ -97,6 +97,50 @@ def test_invalid_key_is_rejected() -> None:
     assert 'Key "missing" doesn\'t exist in config. Available keys: "main", "second"' in result.stdout
 
 
+@pytest.mark.parametrize("json_mode", [False, True], ids=["text", "json"])
+@pytest.mark.parametrize(
+    "command",
+    [
+        ["images", "--unknown-option"],
+        ["images", "--key"],
+        ["download", "--count", "invalid"],
+        ["scanner", "unknown-command"],
+    ],
+)
+def test_parse_errors_exit_with_code_two(command: list[str], json_mode: bool) -> None:
+    result = subprocess.run(
+        [sys.executable, "-m", "sandbox_cli", *command, *(["--json"] if json_mode else [])],
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+
+    assert result.returncode == 2
+    assert "Traceback" not in result.stdout + result.stderr
+    if json_mode:
+        [line] = result.stdout.splitlines()
+        record = json.loads(line)
+        assert record["status"] == "error"
+        assert record["reason"]
+        assert result.stderr
+    else:
+        assert "Error" in result.stdout + result.stderr
+
+
+@pytest.mark.parametrize("shell", ["bash", "zsh", "fish"])
+def test_completion_generation(shell: str) -> None:
+    result = subprocess.run(
+        [sys.executable, "-m", "sandbox_cli", "completion", shell],
+        capture_output=True,
+        text=True,
+        check=True,
+        timeout=30,
+    )
+
+    assert "sandbox-cli" in result.stdout
+    assert "Traceback" not in result.stdout + result.stderr
+
+
 def test_report_json_keeps_stdout_clean(tmp_path: Path) -> None:
     (tmp_path / "broken").mkdir()
     (tmp_path / "broken" / "report.json").write_text('{"data": {"scan_id": "1", "status": "FULL"}}')

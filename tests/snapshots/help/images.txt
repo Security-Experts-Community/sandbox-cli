@@ -7,5 +7,5 @@ Get available images in the sandbox.
 │ --json -J       Print results as JSON lines to stdout; messages and progress go to stderr [default: False]           │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 ╭─ Sandbox Options ────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ --key -k  The key to access the sandbox main, second [default: main]                                                 │
+│ --key -k STR  The key to access the sandbox main, second [default: main]                                             │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯

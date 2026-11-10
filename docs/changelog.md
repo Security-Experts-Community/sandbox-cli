@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Upgraded to `cyclopts>=5.3.3`. Help now shows value types (`PATH`, `INT`, `CHOICE`);
+  parse errors exit with code 2 in both text and JSON modes; command failures still
+  exit with code 1. Command names must match exactly: use `scan-new` and `re-scan`,
+  not `scannew` or `rescan`.
 - Migrated documentation to Zensical with the modern theme; terminal examples use
   standard code blocks instead of Termynal.
 

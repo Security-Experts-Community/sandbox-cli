@@ -39,7 +39,7 @@ def sample(tmp_path: Path) -> Path:
 @pytest.mark.parametrize("flag", ["-s", "-u", "-fe", "-pe", "-e"])
 def test_missing_hook_files(sample: Path, tmp_path: Path, flag: str) -> None:
     code, record = _run("scanner", "scan-new", str(sample), flag, str(tmp_path / "missing.txt"))
-    assert code == 1
+    assert code == 2
     assert record["status"] == "error"
     assert "missing.txt doesn't exist" in record["reason"]
 
@@ -51,7 +51,7 @@ def test_invalid_dll_hook(sample: Path, tmp_path: Path) -> None:
 
     code, record = _run("scanner", "scan-new", str(sample), "-dll", str(hooks))
 
-    assert code == 1
+    assert code == 2
     assert "kernel32.txt:2" in record["reason"]
     assert "RtlAllocateHeap" in record["reason"]
 
@@ -59,13 +59,13 @@ def test_invalid_dll_hook(sample: Path, tmp_path: Path) -> None:
 @pytest.mark.parametrize("value", ["not-an-ip", "c2.example.com", "999.1.1.1", "10.0.0.0/24"])
 def test_invalid_outbound_ip(sample: Path, value: str) -> None:
     code, record = _run("scanner", "scan-new", str(sample), "-oc", "10.0.0.1", "-oc", value)
-    assert code == 1
+    assert code == 2
     assert f"{value} is not an IP address" in record["reason"]
 
 
 def test_missing_rules_dir(sample: Path, tmp_path: Path) -> None:
     code, record = _run("scanner", "scan-new", str(sample), "-r", str(tmp_path / "no-rules"))
-    assert code == 1
+    assert code == 2
     assert "no-rules doesn't exist" in record["reason"]
 
 
@@ -123,7 +123,7 @@ def test_invalid_task_ids_are_listed_together() -> None:
 
 def test_missing_report_dir(tmp_path: Path) -> None:
     code, record = _run("report", str(tmp_path / "nothing"))
-    assert code == 1
+    assert code == 2
     assert "nothing doesn't exist" in record["reason"]
 
 

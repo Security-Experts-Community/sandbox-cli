@@ -83,11 +83,16 @@ priority, exclusions, email headers, completion) are in [scenarios.md](reference
 `out_dir` is absolute: read the results from there. `task_id` and `link` are `null` when
 the upload failed.
 
-When the whole command fails (bad arguments, missing files, invalid config, unknown key)
-stdout gets a single `{"status": "error", "reason": "…"}` line and the exit code is 1. When
-some tasks failed, the same kind of line (`"Failed 1 of 3 tasks"`) comes last, after the task lines. The CLI
-checks files, hooks, IP addresses, rules folders and task ids before uploading anything, so
-these errors come back within a second.
+When the whole command fails, stdout gets a single `{"status": "error", "reason": "…"}`
+line. Argument parsing and validation errors (unknown command or option, missing option
+value, invalid value type, invalid hook/IP/rules path) exit with code 2. Command-level
+failures (invalid config, unknown sandbox key, failed uploads or tasks) exit with code 1;
+interruption exits with 130. When some tasks failed, the same kind of line
+(`"Failed 1 of 3 tasks"`) comes last, after the task lines. The CLI checks files, hooks,
+IP addresses, rules folders and task ids before uploading anything, so these errors
+come back within a second.
+
+Command names must match exactly: use `scan-new` and `re-scan`, not `scannew` or `rescan`.
 
 ## Results
 
